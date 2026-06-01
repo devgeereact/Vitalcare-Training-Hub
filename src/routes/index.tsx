@@ -12,6 +12,10 @@ import CourseBuilderPage from "@/pages/platform/courses/CourseBuilderPage"
 import CourseOverviewPage from "@/pages/platform/courses/CourseOverviewPage"
 import MyCoursesPage from "@/pages/platform/courses/MyCoursesPage"
 import LessonPlayerPage from "@/pages/platform/courses/LessonPlayerPage"
+import QuizListPage from "@/pages/platform/assessments/QuizListPage"
+import QuizBuilderPage from "@/pages/platform/assessments/QuizBuilderPage"
+import TakeAssessmentPage from "@/pages/platform/assessments/TakeAssessmentPage"
+import ResultsPage from "@/pages/platform/assessments/ResultsPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -246,6 +250,33 @@ export const router = createBrowserRouter (
           element: (
             <RoleGuard roles={["admin", "super_admin", "trainer"]}>
               <CourseBuilderPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 📝 ASSESSMENTS
+        { path: "assessments/:id", element: <TakeAssessmentPage /> },
+        {
+          path: "assessments/builder",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <QuizListPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "assessments/builder/:id",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <QuizBuilderPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "assessments/results",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <ResultsPage />
             </RoleGuard>
           ),
         },
