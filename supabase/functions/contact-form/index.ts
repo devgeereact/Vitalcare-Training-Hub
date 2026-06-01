@@ -56,17 +56,32 @@ Deno.serve(async (req) => {
     </table>
     <p style="font-family:sans-serif;white-space:pre-wrap">${esc(message)}</p>`
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from,
-      to,
+  const subject = `Contact enquiry from ${name}`
+  async function send(payload: Record<string, unknown>) {
+    return fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+  }
+
+  // Primary: verified domain sender, deliver to all admins.
+  let res = await send({ from, to, reply_to: email, subject, html })
+
+  // Fallback: if the Resend account is still in testing mode (domain not yet
+  // verified), it rejects custom from/recipients with 403. Retry from the
+  // shared resend.dev sender to the account owner inbox so enquiries still land.
+  if (res.status === 403) {
+    const detail = await res.text()
+    console.warn("[contact-form] testing-mode fallback", detail)
+    res = await send({
+      from: "Vitalcare Training Hub <onboarding@resend.dev>",
+      to: [admin],
       reply_to: email,
-      subject: `Contact enquiry from ${name}`,
+      subject,
       html,
-    }),
-  })
+    })
+  }
 
   if (!res.ok) {
     const detail = await res.text()
