@@ -25,8 +25,9 @@ const VITALCARE_THEMES = [
   { id: "navy-minimal", label: "Navy Minimal", preview: "bg-gradient-to-br from-[#1b2e6b] to-[#142054]" },
 ]
 
+// Dedicated OAuth client for Calendar/Meet (separate from the sign-in client).
 const GOOGLE_CLIENT_ID =
-  "514521483785-18vjklh6jbao7j2k4h3ksdoobf9g4hug.apps.googleusercontent.com"
+  "100759784690-hdbfkuuuiftq9fcemcvkplfgd5j7qcv0.apps.googleusercontent.com"
 const OAUTH_REDIRECT =
   "https://mongirnapzzizmzcrkqp.supabase.co/functions/v1/google-oauth-callback"
 const OAUTH_SCOPES = [
