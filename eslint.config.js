@@ -42,4 +42,12 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Shadcn/ui primitives co-locate component + variant exports by design.
+    // react-refresh's only-export-components flags this as a false positive.
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

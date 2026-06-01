@@ -82,6 +82,9 @@ import SelectExamplesPage from "@/pages/forms/select/SelectExamplesPage"
 import FormRepeater from "@/pages/forms/FormRepeater"
 import LandingPage from "@/pages/dashboard/analytics/LandingPage"
 
+import AuthCallback from "@/pages/auth/callback"
+import { AuthGuard } from "@/guards/AuthGuard"
+
 export const router = createBrowserRouter (
   [
     // 🔐 AUTH ROUTES
@@ -89,6 +92,13 @@ export const router = createBrowserRouter (
       element: <AuthLayout />,
       errorElement: <ErrorPage />,
       children: [
+        // 🔑 Vitalcare auth (canonical paths)
+        {path: "sign-in", element: <CoverLoginPage /> },
+        {path: "sign-up", element: <CoverRegisterPage /> },
+        {path: "forgot-password", element: <CoverForgotPasswordPage /> },
+        {path: "reset-password", element: <CoverResetPasswordPage /> },
+        {path: "auth/callback", element: <AuthCallback /> },
+
         {path: "auth/basic/login", element: <LoginPage /> },
         {path: "auth/basic/register", element: <RegisterPage /> },
         {path: "auth/basic/forgot-password", element: <ForgotPasswordPage /> },
@@ -110,9 +120,13 @@ export const router = createBrowserRouter (
       ],
     },
 
-    // 📊 APP ROUTES
+    // 📊 APP ROUTES (authenticated platform shell)
     {
-      element: <AppLayout />,
+      element: (
+        <AuthGuard>
+          <AppLayout />
+        </AuthGuard>
+      ),
       errorElement: <ErrorPage />,
       children: [
         {index: true, element: <AnalyticsDashboard /> },

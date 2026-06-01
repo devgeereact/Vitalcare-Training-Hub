@@ -21,6 +21,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { ChevronsUpDownIcon, ShieldPlus, BadgeCheckIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/hooks/use-auth"
 
 export function NavUser({
   user,
@@ -34,6 +36,14 @@ export function NavUser({
  const { isMobile, state } = useSidebar()
 
 const collapsed = state === "collapsed"
+
+const navigate = useNavigate()
+const { signOut } = useAuth()
+
+const handleSignOut = async () => {
+  await signOut()
+  navigate("/sign-in", { replace: true })
+}
 
   return (
     <SidebarMenu>
@@ -125,10 +135,10 @@ const collapsed = state === "collapsed"
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator className="my-2"/>
-            <DropdownMenuItem className="gap-2 h-9">
-              <LogOutIcon className="!size-5" 
+            <DropdownMenuItem className="gap-2 h-9" onClick={handleSignOut}>
+              <LogOutIcon className="!size-5"
               />
-              Log out
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
