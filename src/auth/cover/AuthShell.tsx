@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
-import { Check } from "lucide-react"
+import { Link } from "react-router-dom"
+import { ArrowLeft, Check } from "lucide-react"
 import { COMPANY } from "@/lib/constants"
 
 const TRUST_BADGES = ["CSTF aligned", "CPD accredited", "CQC compliant"] as const
@@ -45,13 +46,19 @@ export function AuthShell({
         </svg>
 
         <div className="relative z-10">
-          <img
-            src="/logos/logo-horizontal-white.svg"
-            alt="Vitalcare Training Hub"
-            width={240}
-            height={60}
-            className="h-14 w-auto"
-          />
+          <Link
+            to="/"
+            aria-label="Vitalcare Training Hub home"
+            className="inline-block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy"
+          >
+            <img
+              src="/logos/logo-horizontal-white.svg"
+              alt="Vitalcare Training Hub"
+              width={240}
+              height={60}
+              className="h-14 w-auto"
+            />
+          </Link>
         </div>
 
         <div className="relative z-10 max-w-md">
@@ -82,12 +89,25 @@ export function AuthShell({
       {/* Form panel */}
       <div className="flex items-center justify-center bg-background p-6 md:p-10 lg:col-span-2">
         <div className="w-full max-w-sm">
+          {/* Back to home, always available */}
+          <Link
+            to="/"
+            className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 rounded-md"
+          >
+            <ArrowLeft className="size-4" /> Back to home
+          </Link>
           {/* Logo for mobile, where the brand panel is hidden */}
-          <img
-            src="/logos/logo-horizontal-navy.svg"
-            alt="Vitalcare Training Hub"
-            className="mb-8 h-10 w-auto lg:hidden"
-          />
+          <Link
+            to="/"
+            aria-label="Vitalcare Training Hub home"
+            className="block lg:hidden rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+          >
+            <img
+              src="/logos/logo-horizontal-navy.svg"
+              alt="Vitalcare Training Hub"
+              className="mb-8 h-10 w-auto"
+            />
+          </Link>
           <h1 className="font-display text-3xl text-foreground">{heading}</h1>
           {subheading ? (
             <p className="mt-2 text-sm text-muted-foreground">{subheading}</p>
