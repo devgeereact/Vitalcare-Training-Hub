@@ -11,10 +11,15 @@ our Vite + React 19 + TS + Tailwind + shadcn + TanStack + TipTap + Zustand).
 - 🆕 New — added to scope from the master vision (was not planned)
 - ⏭️ Later — deferred (Phase 2 / post-MVP, architecture-heavy)
 
-**Scope decisions (override CLAUDE.md where the user explicitly instructed):**
-- Ecommerce / Stripe / PayPal selling is now IN scope (CLAUDE.md "Stripe disabled" overridden by explicit instruction).
-- Roles extended from 4 to 6: `super_admin · admin · manager · trainer · content_editor · learner` (+ `guest` public). Requires `UserRole` type + RLS update.
-- SMS / WhatsApp notifications requested (CLAUDE.md disables SMS/Slack) — kept ⏭️ Later pending provider decision.
+**Scope decisions (confirmed):**
+- **Phase 6 order:** Core P0 first — Dashboard → Learners → Courses → Assessments → Sessions → Certificates. Store/ecommerce after core LMS works.
+- **Ecommerce IN scope**, payment via **PayPal + manual bank transfer**. **Stripe stays disabled** (honours CLAUDE.md "Stripe disabled" — parked as a conflict to revisit later).
+- **Roles extended 4 → 7** ✅ done: `super_admin · admin · manager · trainer · content_editor · learner · guest`. Type + `use-user` flags + enum migration `004_roles_expand.sql` landed. Per-role RLS refinement deferred until each role's features exist.
+
+**Parked conflicts (revisit later, do NOT build yet):**
+- Stripe (CLAUDE.md disables; using PayPal + bank transfer instead).
+- SMS / WhatsApp notifications (CLAUDE.md disables SMS/Slack).
+- Multi-tenant / white-label, REST API + webhooks, HRM/ATS, backup/restore.
 
 ---
 
@@ -29,7 +34,7 @@ our Vite + React 19 + TS + Tailwind + shadcn + TanStack + TipTap + Zustand).
 | Error pages (404/500/coming-soon) | ✅ Built |
 | Error pages 400/403/503 | 🆕 New |
 | OTP code verification | 🆕 New |
-| Role-based access (6 roles + guest) | 🟡 Planned (P2) — extend from 4 roles |
+| Role-based access (7 roles incl. guest) | ✅ Type/guard/enum done; per-role RLS as features land |
 | Session management & device tracking | 🆕 New |
 | Lock screen | 🆕 New |
 | SSO SAML 2.0 | ⏭️ Later |
@@ -170,8 +175,9 @@ our Vite + React 19 + TS + Tailwind + shadcn + TanStack + TipTap + Zustand).
 | **Product grid + list views** | 🆕 New |
 | **Course detail / sales page** | 🆕 New |
 | **Cart & checkout** | 🆕 New |
-| **Stripe integration** | 🆕 New (overrides CLAUDE.md disable) |
 | **PayPal integration** | 🆕 New |
+| **Bank transfer (manual, with reference + reconciliation)** | 🆕 New |
+| Stripe integration | ⏭️ Parked (CLAUDE.md disables) |
 | Fees collection + printable receipt | 🆕 New |
 | Coupon / promo code engine | 🆕 New |
 | Subscription / recurring billing | 🆕 New |

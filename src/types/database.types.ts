@@ -6,7 +6,14 @@
  *   supabase gen types typescript --project-id mongirnapzzizmzcrkqp > src/types/database.types.ts
  */
 
-export type UserRole = "super_admin" | "admin" | "trainer" | "learner"
+export type UserRole =
+  | "super_admin"
+  | "admin"
+  | "manager"
+  | "trainer"
+  | "content_editor"
+  | "learner"
+  | "guest"
 export type EnrollmentStatus =
   | "not_started"
   | "in_progress"
