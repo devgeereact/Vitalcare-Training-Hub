@@ -29,7 +29,9 @@ Deno.serve(async (req) => {
   const apiKey = Deno.env.get("RESEND_API_KEY")
   const from = Deno.env.get("RESEND_FROM") ?? "Vitalcare Training Hub <onboarding@resend.dev>"
   const admin = Deno.env.get("ADMIN_EMAIL") ?? "gakinz101@gmail.com"
-  const adminSecondary = Deno.env.get("ADMIN_EMAIL_SECONDARY")
+  // Secondary recipient only works once a custom domain is verified in Resend.
+  // The shared onboarding@resend.dev sender delivers to the account owner only.
+  const adminSecondary = Deno.env.get("ADMIN_EMAIL_SECONDARY_VERIFIED")
   if (!apiKey) return json({ error: "Email service not configured" }, 500)
 
   let body: Record<string, string>
@@ -67,8 +69,9 @@ Deno.serve(async (req) => {
   })
 
   if (!res.ok) {
-    console.error("[contact-form]", res.status, await res.text())
-    return json({ error: "Could not send message" }, 502)
+    const detail = await res.text()
+    console.error("[contact-form]", res.status, detail)
+    return json({ error: "Could not send message", detail }, 502)
   }
   return json({ ok: true })
 })
