@@ -1,0 +1,303 @@
+import { useEffect } from "react"
+import { useForm, type Resolver } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useNavigate, useParams, Link } from "react-router-dom"
+import { toast } from "sonner"
+import { ArrowLeft, AlertCircle } from "lucide-react"
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+
+import RichTextEditor from "@/components/courses/RichTextEditor"
+import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
+import {
+  courseFormSchema,
+  type CourseFormValues,
+} from "@/lib/validations/course.schema"
+import {
+  useCategories,
+  useCourse,
+  useCreateCourse,
+  useUpdateCourse,
+} from "@/lib/queries/courses.queries"
+
+const EMPTY: CourseFormValues = {
+  title: "",
+  summary: "",
+  description: "",
+  category_id: "",
+  is_cstf_aligned: false,
+  cpd_hours: 0,
+  duration_mins: 0,
+  is_published: false,
+}
+
+export default function CourseBuilderPage() {
+  const { id } = useParams()
+  const isEdit = !!id
+  const navigate = useNavigate()
+
+  const categories = useCategories()
+  const course = useCourse(id ?? "")
+  const createCourse = useCreateCourse()
+  const updateCourse = useUpdateCourse(id ?? "")
+
+  const form = useForm<CourseFormValues>({
+    resolver: zodResolver(courseFormSchema) as Resolver<CourseFormValues>,
+    defaultValues: EMPTY,
+  })
+
+  useEffect(() => {
+    if (isEdit && course.data) {
+      form.reset({
+        title: course.data.title,
+        summary: course.data.summary ?? "",
+        description: course.data.description ?? "",
+        category_id: course.data.category_id ?? "",
+        is_cstf_aligned: course.data.is_cstf_aligned,
+        cpd_hours: course.data.cpd_hours,
+        duration_mins: course.data.duration_mins,
+        is_published: course.data.is_published,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course.data, isEdit])
+
+  async function onSubmit(values: CourseFormValues) {
+    try {
+      if (isEdit) {
+        await updateCourse.mutateAsync(values)
+        toast.success("Course saved")
+      } else {
+        const newId = await createCourse.mutateAsync(values)
+        toast.success("Course created", { description: "Now add your curriculum." })
+        navigate(`/platform/courses/builder/${newId}`)
+      }
+    } catch {
+      toast.error("Could not save course")
+    }
+  }
+
+  const saving = createCourse.isPending || updateCourse.isPending
+
+  if (isEdit && course.isLoading) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-4">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
+  if (isEdit && course.isError) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <AlertCircle className="size-8 text-destructive" />
+        <p className="text-sm text-muted-foreground">Could not load this course.</p>
+        <Button variant="outline" size="sm" onClick={() => course.refetch()}>
+          Retry
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <Button asChild variant="ghost" size="sm" className="-ml-2">
+        <Link to="/platform/courses/manage">
+          <ArrowLeft className="mr-1.5 size-4" /> Back to courses
+        </Link>
+      </Button>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-2xl">
+            {isEdit ? "Edit course" : "New course"}
+          </CardTitle>
+          <CardDescription>
+            CSTF-aligned, CPD-accredited training content.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Moving and Handling" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="summary"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Summary</FormLabel>
+                    <FormControl>
+                      <Textarea rows={2} placeholder="One-line overview" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <RichTextEditor value={field.value ?? ""} onChange={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="category_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(categories.data ?? []).map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="cpd_hours"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CPD hours</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} step="0.5" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="duration_mins"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration (mins)</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-6">
+                <FormField
+                  control={form.control}
+                  name="is_cstf_aligned"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-3 space-y-0">
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div>
+                        <FormLabel>CSTF aligned</FormLabel>
+                        <FormDescription>Maps to the NHS framework</FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="is_published"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-3 space-y-0">
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div>
+                        <FormLabel>Published</FormLabel>
+                        <FormDescription>Visible to learners</FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button asChild variant="outline" type="button">
+                  <Link to="/platform/courses/manage">Cancel</Link>
+                </Button>
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving…" : isEdit ? "Save course" : "Create course"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {isEdit && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Curriculum</CardTitle>
+            <CardDescription>
+              Drag to reorder modules and lessons. Changes save automatically.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CurriculumBuilder courseId={id!} />
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}

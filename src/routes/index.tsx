@@ -7,6 +7,11 @@ import LearnersListPage from "@/pages/platform/learners/LearnersListPage"
 import LearnerNewPage from "@/pages/platform/learners/LearnerNewPage"
 import LearnerDetailPage from "@/pages/platform/learners/LearnerDetailPage"
 import LearnerEditPage from "@/pages/platform/learners/LearnerEditPage"
+import CoursesManagePage from "@/pages/platform/courses/CoursesManagePage"
+import CourseBuilderPage from "@/pages/platform/courses/CourseBuilderPage"
+import CourseOverviewPage from "@/pages/platform/courses/CourseOverviewPage"
+import MyCoursesPage from "@/pages/platform/courses/MyCoursesPage"
+import LessonPlayerPage from "@/pages/platform/courses/LessonPlayerPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -212,6 +217,35 @@ export const router = createBrowserRouter (
           element: (
             <RoleGuard roles={["admin", "super_admin", "manager"]}>
               <LearnerEditPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 📚 COURSES
+        { path: "courses", element: <MyCoursesPage /> },
+        { path: "courses/:id", element: <CourseOverviewPage /> },
+        { path: "courses/:id/learn/:lessonId", element: <LessonPlayerPage /> },
+        {
+          path: "courses/manage",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <CoursesManagePage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "courses/builder",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <CourseBuilderPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "courses/builder/:id",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <CourseBuilderPage />
             </RoleGuard>
           ),
         },

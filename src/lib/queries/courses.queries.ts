@@ -1,0 +1,491 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/lib/supabase/client"
+import type {
+  Course,
+  CourseCategory,
+  Lesson,
+  Module,
+  LessonType,
+} from "@/types/database.types"
+import type {
+  CourseFormValues,
+  LessonFormValues,
+} from "@/lib/validations/course.schema"
+
+export const coursesKeys = {
+  all: ["courses"] as const,
+  list: () => [...coursesKeys.all, "list"] as const,
+  published: () => [...coursesKeys.all, "published"] as const,
+  detail: (id: string) => [...coursesKeys.all, "detail", id] as const,
+  curriculum: (id: string) => [...coursesKeys.all, "curriculum", id] as const,
+  categories: () => ["course-categories"] as const,
+  myEnrolments: () => [...coursesKeys.all, "my-enrolments"] as const,
+}
+
+// ─── Categories ─────────────────────────────────────────────────────────────
+export async function getCategories(): Promise<CourseCategory[]> {
+  const { data, error } = await supabase
+    .from("course_categories")
+    .select("*")
+    .order("id", { ascending: true })
+  if (error) {
+    console.error("[getCategories]", error)
+    throw error
+  }
+  return (data ?? []) as CourseCategory[]
+}
+
+export function useCategories() {
+  return useQuery({
+    queryKey: coursesKeys.categories(),
+    queryFn: getCategories,
+    staleTime: 30 * 60 * 1000,
+  })
+}
+
+// ─── Course list ─────────────────────────────────────────────────────────────
+export interface CourseRow {
+  id: string
+  title: string
+  categoryName: string
+  cstf: boolean
+  cpdHours: number
+  status: "Published" | "Draft"
+  updatedAt: string
+}
+
+export async function getCourses(): Promise<CourseRow[]> {
+  const [courses, categories] = await Promise.all([
+    supabase
+      .from("courses")
+      .select("id, title, category_id, is_cstf_aligned, cpd_hours, is_published, updated_at")
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false }),
+    getCategories(),
+  ])
+  if (courses.error) {
+    console.error("[getCourses]", courses.error)
+    throw courses.error
+  }
+  const catName = new Map(categories.map((c) => [c.id, c.name]))
+  return (courses.data ?? []).map((c) => ({
+    id: c.id,
+    title: c.title,
+    categoryName: c.category_id ? catName.get(c.category_id) ?? "—" : "—",
+    cstf: c.is_cstf_aligned,
+    cpdHours: c.cpd_hours,
+    status: c.is_published ? "Published" : "Draft",
+    updatedAt: c.updated_at,
+  }))
+}
+
+export function useCourses() {
+  return useQuery({ queryKey: coursesKeys.list(), queryFn: getCourses })
+}
+
+// ─── Single course ───────────────────────────────────────────────────────────
+export async function getCourse(id: string): Promise<Course> {
+  const { data, error } = await supabase
+    .from("courses")
+    .select("*")
+    .eq("id", id)
+    .single()
+  if (error) {
+    console.error("[getCourse]", error)
+    throw error
+  }
+  return data as Course
+}
+
+export function useCourse(id: string) {
+  return useQuery({
+    queryKey: coursesKeys.detail(id),
+    queryFn: () => getCourse(id),
+    enabled: !!id,
+  })
+}
+
+// ─── Curriculum (modules + lessons) ──────────────────────────────────────────
+export interface CurriculumModule extends Module {
+  lessons: Lesson[]
+}
+
+export async function getCurriculum(
+  courseId: string,
+): Promise<CurriculumModule[]> {
+  const { data: modules, error } = await supabase
+    .from("modules")
+    .select("*")
+    .eq("course_id", courseId)
+    .is("deleted_at", null)
+    .order("position", { ascending: true })
+  if (error) {
+    console.error("[getCurriculum]", error)
+    throw error
+  }
+  if (!modules || modules.length === 0) return []
+
+  const moduleIds = modules.map((m) => m.id)
+  const { data: lessons } = await supabase
+    .from("lessons")
+    .select("*")
+    .in("module_id", moduleIds)
+    .is("deleted_at", null)
+    .order("position", { ascending: true })
+
+  return (modules as Module[]).map((m) => ({
+    ...m,
+    lessons: ((lessons ?? []) as Lesson[]).filter((l) => l.module_id === m.id),
+  }))
+}
+
+export function useCurriculum(courseId: string) {
+  return useQuery({
+    queryKey: coursesKeys.curriculum(courseId),
+    queryFn: () => getCurriculum(courseId),
+    enabled: !!courseId,
+  })
+}
+
+// ─── Course mutations ────────────────────────────────────────────────────────
+function toCourseRow(values: CourseFormValues) {
+  return {
+    title: values.title,
+    summary: values.summary || null,
+    description: values.description || null,
+    category_id: values.category_id,
+    is_cstf_aligned: values.is_cstf_aligned,
+    cpd_hours: values.cpd_hours,
+    duration_mins: values.duration_mins,
+    is_published: values.is_published,
+  }
+}
+
+export function useCreateCourse() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (values: CourseFormValues): Promise<string> => {
+      const { data: auth } = await supabase.auth.getUser()
+      const { data, error } = await supabase
+        .from("courses")
+        .insert({ ...toCourseRow(values), created_by: auth.user?.id ?? null })
+        .select("id")
+        .single()
+      if (error) {
+        console.error("[useCreateCourse]", error)
+        throw error
+      }
+      return data.id
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: coursesKeys.list() }),
+  })
+}
+
+export function useUpdateCourse(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (values: CourseFormValues) => {
+      const { error } = await supabase
+        .from("courses")
+        .update(toCourseRow(values))
+        .eq("id", id)
+      if (error) {
+        console.error("[useUpdateCourse]", error)
+        throw error
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: coursesKeys.detail(id) })
+      qc.invalidateQueries({ queryKey: coursesKeys.list() })
+    },
+  })
+}
+
+export function useDeleteCourse() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("courses")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id)
+      if (error) {
+        console.error("[useDeleteCourse]", error)
+        throw error
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: coursesKeys.list() }),
+  })
+}
+
+// ─── Module / lesson mutations ───────────────────────────────────────────────
+export function useCurriculumMutations(courseId: string) {
+  const qc = useQueryClient()
+  const invalidate = () =>
+    qc.invalidateQueries({ queryKey: coursesKeys.curriculum(courseId) })
+
+  const addModule = useMutation({
+    mutationFn: async ({ title, position }: { title: string; position: number }) => {
+      const { error } = await supabase
+        .from("modules")
+        .insert({ course_id: courseId, title, position })
+      if (error) throw error
+    },
+    onSuccess: invalidate,
+  })
+
+  const updateModule = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      const { error } = await supabase.from("modules").update({ title }).eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: invalidate,
+  })
+
+  const deleteModule = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("modules")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: invalidate,
+  })
+
+  const reorderModules = useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      await Promise.all(
+        orderedIds.map((id, i) =>
+          supabase.from("modules").update({ position: i }).eq("id", id),
+        ),
+      )
+    },
+    onSuccess: invalidate,
+  })
+
+  const addLesson = useMutation({
+    mutationFn: async ({
+      moduleId,
+      values,
+      position,
+    }: {
+      moduleId: string
+      values: LessonFormValues
+      position: number
+    }) => {
+      const { error } = await supabase.from("lessons").insert({
+        module_id: moduleId,
+        title: values.title,
+        type: values.type as LessonType,
+        content: values.content || null,
+        video_url: values.video_url || null,
+        scorm_url: values.scorm_url || null,
+        document_url: values.document_url || null,
+        duration_mins: values.duration_mins,
+        position,
+      })
+      if (error) throw error
+    },
+    onSuccess: invalidate,
+  })
+
+  const updateLesson = useMutation({
+    mutationFn: async ({ id, values }: { id: string; values: LessonFormValues }) => {
+      const { error } = await supabase
+        .from("lessons")
+        .update({
+          title: values.title,
+          type: values.type as LessonType,
+          content: values.content || null,
+          video_url: values.video_url || null,
+          scorm_url: values.scorm_url || null,
+          document_url: values.document_url || null,
+          duration_mins: values.duration_mins,
+        })
+        .eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: invalidate,
+  })
+
+  const deleteLesson = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("lessons")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: invalidate,
+  })
+
+  const reorderLessons = useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      await Promise.all(
+        orderedIds.map((id, i) =>
+          supabase.from("lessons").update({ position: i }).eq("id", id),
+        ),
+      )
+    },
+    onSuccess: invalidate,
+  })
+
+  return {
+    addModule,
+    updateModule,
+    deleteModule,
+    reorderModules,
+    addLesson,
+    updateLesson,
+    deleteLesson,
+    reorderLessons,
+  }
+}
+
+// ─── Enrolment ───────────────────────────────────────────────────────────────
+export interface MyCourse {
+  course: Course
+  enrolled: boolean
+  progressPct: number
+  enrolmentId: string | null
+}
+
+export async function getMyCourses(): Promise<MyCourse[]> {
+  const { data: auth } = await supabase.auth.getUser()
+  const uid = auth.user?.id
+  const [published, enrolments] = await Promise.all([
+    supabase
+      .from("courses")
+      .select("*")
+      .eq("is_published", true)
+      .is("deleted_at", null)
+      .order("title", { ascending: true }),
+    uid
+      ? supabase
+          .from("enrollments")
+          .select("id, course_id, progress_pct")
+          .eq("learner_id", uid)
+          .is("deleted_at", null)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+  if (published.error) {
+    console.error("[getMyCourses]", published.error)
+    throw published.error
+  }
+  const byCourse = new Map(
+    (enrolments.data ?? []).map((e) => [e.course_id, e]),
+  )
+  return (published.data as Course[]).map((c) => {
+    const e = byCourse.get(c.id)
+    return {
+      course: c,
+      enrolled: !!e,
+      progressPct: e?.progress_pct ?? 0,
+      enrolmentId: e?.id ?? null,
+    }
+  })
+}
+
+export function useMyCourses() {
+  return useQuery({ queryKey: coursesKeys.myEnrolments(), queryFn: getMyCourses })
+}
+
+export function useEnrolSelf() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (courseId: string) => {
+      const { data: auth } = await supabase.auth.getUser()
+      if (!auth.user) throw new Error("Not signed in")
+      const { error } = await supabase
+        .from("enrollments")
+        .insert({ course_id: courseId, learner_id: auth.user.id })
+      if (error) {
+        console.error("[useEnrolSelf]", error)
+        throw error
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: coursesKeys.myEnrolments() }),
+  })
+}
+
+// ─── Lesson progress (learner) ───────────────────────────────────────────────
+export function lessonProgressKey(courseId: string) {
+  return [...coursesKeys.all, "progress", courseId] as const
+}
+
+export async function getCompletedLessonIds(
+  lessonIds: string[],
+): Promise<Set<string>> {
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user || lessonIds.length === 0) return new Set()
+  const { data, error } = await supabase
+    .from("lesson_progress")
+    .select("lesson_id")
+    .eq("learner_id", auth.user.id)
+    .eq("completed", true)
+    .in("lesson_id", lessonIds)
+  if (error) {
+    console.error("[getCompletedLessonIds]", error)
+    return new Set()
+  }
+  return new Set((data ?? []).map((d) => d.lesson_id))
+}
+
+export function useCompletedLessons(courseId: string, lessonIds: string[]) {
+  return useQuery({
+    queryKey: [...lessonProgressKey(courseId), lessonIds.length],
+    queryFn: () => getCompletedLessonIds(lessonIds),
+    enabled: lessonIds.length > 0,
+  })
+}
+
+/** Mark a lesson complete and recompute the enrolment progress percentage. */
+export function useMarkLessonComplete(courseId: string, totalLessons: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (lessonId: string) => {
+      const { data: auth } = await supabase.auth.getUser()
+      if (!auth.user) throw new Error("Not signed in")
+      const uid = auth.user.id
+
+      const { error: upErr } = await supabase.from("lesson_progress").upsert(
+        {
+          learner_id: uid,
+          lesson_id: lessonId,
+          completed: true,
+          completed_at: new Date().toISOString(),
+        },
+        { onConflict: "learner_id,lesson_id" },
+      )
+      if (upErr) {
+        console.error("[useMarkLessonComplete]", upErr)
+        throw upErr
+      }
+
+      // Recompute progress for this learner's enrolment on the course.
+      const { count } = await supabase
+        .from("lesson_progress")
+        .select("lesson_id", { count: "exact", head: true })
+        .eq("learner_id", uid)
+        .eq("completed", true)
+      const pct =
+        totalLessons > 0
+          ? Math.min(100, Math.round(((count ?? 0) / totalLessons) * 100))
+          : 0
+      await supabase
+        .from("enrollments")
+        .update({
+          progress_pct: pct,
+          status: pct >= 100 ? "completed" : "in_progress",
+          completed_at: pct >= 100 ? new Date().toISOString() : null,
+        })
+        .eq("course_id", courseId)
+        .eq("learner_id", uid)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: lessonProgressKey(courseId) })
+      qc.invalidateQueries({ queryKey: coursesKeys.myEnrolments() })
+    },
+  })
+}
