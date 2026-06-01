@@ -16,6 +16,12 @@ import QuizListPage from "@/pages/platform/assessments/QuizListPage"
 import QuizBuilderPage from "@/pages/platform/assessments/QuizBuilderPage"
 import TakeAssessmentPage from "@/pages/platform/assessments/TakeAssessmentPage"
 import ResultsPage from "@/pages/platform/assessments/ResultsPage"
+import SessionsListPage from "@/pages/platform/sessions/SessionsListPage"
+import SessionFormPage from "@/pages/platform/sessions/SessionFormPage"
+import SessionDetailPage from "@/pages/platform/sessions/SessionDetailPage"
+import CheckInPage from "@/pages/platform/sessions/CheckInPage"
+import PlatformCalendarPage from "@/pages/platform/sessions/CalendarPage"
+import AttendanceLogPage from "@/pages/platform/sessions/AttendanceLogPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -277,6 +283,50 @@ export const router = createBrowserRouter (
           element: (
             <RoleGuard roles={["admin", "super_admin", "trainer"]}>
               <ResultsPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 📅 SESSIONS & ATTENDANCE
+        { path: "calendar", element: <PlatformCalendarPage /> },
+        { path: "sessions/:id/checkin", element: <CheckInPage /> },
+        {
+          path: "sessions",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <SessionsListPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "sessions/new",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <SessionFormPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "sessions/:id",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <SessionDetailPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "sessions/:id/edit",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <SessionFormPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "attendance",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <AttendanceLogPage />
             </RoleGuard>
           ),
         },
