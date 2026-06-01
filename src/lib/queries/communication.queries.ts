@@ -1,0 +1,246 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { supabase } from "@/lib/supabase/client"
+import type {
+  Announcement,
+  Message,
+  Notification,
+} from "@/types/database.types"
+
+/* ---------------------------------------------------------------- keys ---- */
+
+export const commKeys = {
+  notifications: (userId: string) => ["notifications", userId] as const,
+  threads: (userId: string) => ["messages", "threads", userId] as const,
+  thread: (userId: string, otherId: string) =>
+    ["messages", "thread", userId, otherId] as const,
+  announcements: () => ["announcements", "list"] as const,
+}
+
+/* --------------------------------------------------------- notifications -- */
+
+export function useNotifications(userId: string | undefined) {
+  return useQuery({
+    queryKey: commKeys.notifications(userId ?? "anon"),
+    enabled: !!userId,
+    queryFn: async (): Promise<Notification[]> => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", userId!)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(100)
+      if (error) {
+        console.error("[useNotifications]", error)
+        throw error
+      }
+      return (data ?? []) as Notification[]
+    },
+  })
+}
+
+export function useMarkNotification(userId: string | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { id?: string; all?: boolean }) => {
+      const now = new Date().toISOString()
+      let q = supabase.from("notifications").update({ read_at: now })
+      q = input.all
+        ? q.eq("user_id", userId!).is("read_at", null)
+        : q.eq("id", input.id!)
+      const { error } = await q
+      if (error) {
+        console.error("[useMarkNotification]", error)
+        throw error
+      }
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: commKeys.notifications(userId ?? "anon") }),
+  })
+}
+
+/* -------------------------------------------------------------- messages -- */
+
+export interface MessageThread {
+  otherId: string
+  otherName: string
+  lastBody: string
+  lastAt: string
+  unread: number
+}
+
+/** Group flat messages into per-correspondent threads for the inbox list. */
+export function useThreads(userId: string | undefined) {
+  return useQuery({
+    queryKey: commKeys.threads(userId ?? "anon"),
+    enabled: !!userId,
+    queryFn: async (): Promise<MessageThread[]> => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("id, sender_id, recipient_id, body, read_at, created_at")
+        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(500)
+      if (error) {
+        console.error("[useThreads]", error)
+        throw error
+      }
+      const rows = (data ?? []) as Message[]
+      const byOther = new Map<string, MessageThread>()
+      for (const m of rows) {
+        const otherId = m.sender_id === userId ? m.recipient_id : m.sender_id
+        const existing = byOther.get(otherId)
+        const incomingUnread =
+          m.recipient_id === userId && !m.read_at ? 1 : 0
+        if (!existing) {
+          byOther.set(otherId, {
+            otherId,
+            otherName: otherId,
+            lastBody: m.body,
+            lastAt: m.created_at,
+            unread: incomingUnread,
+          })
+        } else {
+          existing.unread += incomingUnread
+        }
+      }
+      const threads = [...byOther.values()]
+      const ids = threads.map((t) => t.otherId)
+      if (ids.length) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, full_name")
+          .in("id", ids)
+        const nameById = new Map(
+          (profiles ?? []).map((p) => [
+            p.id,
+            p.full_name ||
+              [p.first_name, p.last_name].filter(Boolean).join(" ") ||
+              "Unknown",
+          ]),
+        )
+        for (const t of threads) t.otherName = nameById.get(t.otherId) ?? "Unknown"
+      }
+      return threads
+    },
+  })
+}
+
+export function useThread(userId: string | undefined, otherId: string) {
+  return useQuery({
+    queryKey: commKeys.thread(userId ?? "anon", otherId),
+    enabled: !!userId && !!otherId,
+    queryFn: async (): Promise<Message[]> => {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .or(
+          `and(sender_id.eq.${userId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${userId})`,
+        )
+        .is("deleted_at", null)
+        .order("created_at", { ascending: true })
+      if (error) {
+        console.error("[useThread]", error)
+        throw error
+      }
+      return (data ?? []) as Message[]
+    },
+  })
+}
+
+export function useSendMessage(userId: string | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { recipientId: string; body: string }) => {
+      const body = input.body.trim()
+      if (!body) throw new Error("Message is empty")
+      const { error } = await supabase.from("messages").insert({
+        sender_id: userId!,
+        recipient_id: input.recipientId,
+        body,
+      })
+      if (error) {
+        console.error("[useSendMessage]", error)
+        throw error
+      }
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({
+        queryKey: commKeys.thread(userId ?? "anon", vars.recipientId),
+      })
+      qc.invalidateQueries({ queryKey: commKeys.threads(userId ?? "anon") })
+    },
+  })
+}
+
+/* --------------------------------------------------------- announcements -- */
+
+export interface AnnouncementRow extends Announcement {
+  authorName: string
+}
+
+export function useAnnouncements() {
+  return useQuery({
+    queryKey: commKeys.announcements(),
+    queryFn: async (): Promise<AnnouncementRow[]> => {
+      const { data, error } = await supabase
+        .from("announcements")
+        .select("*")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(100)
+      if (error) {
+        console.error("[useAnnouncements]", error)
+        throw error
+      }
+      const rows = (data ?? []) as Announcement[]
+      const authorIds = [
+        ...new Set(rows.map((r) => r.author_id).filter(Boolean)),
+      ] as string[]
+      const nameById = new Map<string, string>()
+      if (authorIds.length) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, full_name")
+          .in("id", authorIds)
+        for (const p of profiles ?? [])
+          nameById.set(
+            p.id,
+            p.full_name ||
+              [p.first_name, p.last_name].filter(Boolean).join(" ") ||
+              "Unknown",
+          )
+      }
+      return rows.map((r) => ({
+        ...r,
+        authorName: r.author_id ? nameById.get(r.author_id) ?? "Team" : "Team",
+      }))
+    },
+  })
+}
+
+export interface AnnouncementCreate {
+  title: string
+  body: string
+  authorId: string
+}
+
+export function useCreateAnnouncement() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: AnnouncementCreate) => {
+      const { error } = await supabase.from("announcements").insert({
+        title: input.title.trim(),
+        body: input.body.trim(),
+        author_id: input.authorId,
+        published_at: new Date().toISOString(),
+      })
+      if (error) {
+        console.error("[useCreateAnnouncement]", error)
+        throw error
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: commKeys.announcements() }),
+  })
+}

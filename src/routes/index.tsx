@@ -27,6 +27,13 @@ import CertTemplatesPage from "@/pages/platform/certificates/CertTemplatesPage"
 import CertVerifyPage from "@/pages/platform/certificates/CertVerifyPage"
 import AiAssistantPage from "@/pages/platform/ai/AiAssistantPage"
 import SettingsPage from "@/pages/platform/settings/SettingsPage"
+import NotificationsPage from "@/pages/platform/notifications/NotificationsPage"
+import MessagesPage from "@/pages/platform/messages/MessagesPage"
+import AnnouncementsPage from "@/pages/platform/announcements/AnnouncementsPage"
+import TrainersListPage from "@/pages/platform/trainers/TrainersListPage"
+import AnalyticsPage from "@/pages/platform/analytics/AnalyticsPage"
+import AuditLogPage from "@/pages/platform/audit/AuditLogPage"
+import PaymentsPage from "@/pages/platform/payments/PaymentsPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -364,6 +371,59 @@ export const router = createBrowserRouter (
 
         // 🤖 AI ASSISTANT
         { path: "ai", element: <AiAssistantPage /> },
+
+        // 📊 ANALYTICS (admin / manager / trainer)
+        {
+          path: "analytics",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
+              <AnalyticsPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "analytics/org",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <AnalyticsPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 👤 TRAINERS (admin / manager)
+        {
+          path: "trainers",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <TrainersListPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 💬 COMMUNICATION (any authenticated user)
+        { path: "notifications", element: <NotificationsPage /> },
+        { path: "messages", element: <MessagesPage /> },
+        { path: "announcements", element: <AnnouncementsPage /> },
+
+        // 💳 PAYMENTS (admin / manager)
+        {
+          path: "payments",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <PaymentsPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 📜 AUDIT LOG (super admin only)
+        {
+          path: "audit",
+          element: (
+            <RoleGuard roles={["super_admin"]}>
+              <AuditLogPage />
+            </RoleGuard>
+          ),
+        },
 
         // ⚙️ SETTINGS (any authenticated user)
         { path: "settings", element: <SettingsPage /> },
