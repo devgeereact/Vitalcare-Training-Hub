@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import { ChevronDown, Menu, X } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { ChevronDown, Menu, X, LayoutDashboard, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { NAV_ITEMS } from "@/data/nav"
+import { useAuth } from "@/hooks/use-auth"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 
 const FOCUS =
@@ -16,6 +19,18 @@ const FOCUS =
 export function Nav() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { session, profile, role, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  const signedIn = !!session && role !== "guest"
+  const firstName =
+    profile?.first_name || profile?.full_name?.split(" ")[0] || "Account"
+
+  async function handleSignOut() {
+    await signOut()
+    setMobileOpen(false)
+    navigate("/")
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -82,15 +97,57 @@ export function Nav() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            to="/sign-in"
-            className={cn(
-              "rounded-md border border-brand-navy px-4 py-2 text-sm font-semibold text-brand-navy transition-colors hover:bg-brand-navy hover:text-white",
-              FOCUS,
-            )}
-          >
-            Access the Platform
-          </Link>
+          {signedIn ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-md border border-brand-navy/20 bg-brand-navy/5 px-3 py-2 text-sm font-semibold text-brand-navy transition-colors hover:bg-brand-navy/10",
+                  FOCUS,
+                )}
+              >
+                <span className="flex size-6 items-center justify-center rounded-full bg-brand-navy text-xs font-semibold text-white">
+                  {firstName.charAt(0).toUpperCase()}
+                </span>
+                {firstName}
+                <ChevronDown className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel className="truncate font-normal text-muted-foreground">
+                  {profile?.email}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/platform/dashboard">
+                    <LayoutDashboard className="mr-2 size-4" /> Go to platform
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 size-4" /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link
+                to="/sign-in"
+                className={cn(
+                  "rounded-md px-4 py-2 text-sm font-semibold text-brand-navy transition-colors hover:bg-brand-navy/5",
+                  FOCUS,
+                )}
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/sign-up"
+                className={cn(
+                  "rounded-md bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark",
+                  FOCUS,
+                )}
+              >
+                Register
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile trigger */}
@@ -162,15 +219,50 @@ export function Nav() {
                   </Link>
                 ),
               )}
-              <Link
-                to="/sign-in"
-                className={cn(
-                  "mt-4 rounded-md bg-brand-navy px-4 py-2.5 text-center text-sm font-semibold text-white",
-                  FOCUS,
-                )}
-              >
-                Access the Platform
-              </Link>
+              {signedIn ? (
+                <div className="mt-4 space-y-2">
+                  <Link
+                    to="/platform/dashboard"
+                    className={cn(
+                      "block rounded-md bg-brand-navy px-4 py-2.5 text-center text-sm font-semibold text-white",
+                      FOCUS,
+                    )}
+                  >
+                    Go to platform
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className={cn(
+                      "block w-full rounded-md border border-brand-navy px-4 py-2.5 text-center text-sm font-semibold text-brand-navy",
+                      FOCUS,
+                    )}
+                  >
+                    Sign out ({firstName})
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-2">
+                  <Link
+                    to="/sign-in"
+                    className={cn(
+                      "block rounded-md border border-brand-navy px-4 py-2.5 text-center text-sm font-semibold text-brand-navy",
+                      FOCUS,
+                    )}
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    to="/sign-up"
+                    className={cn(
+                      "block rounded-md bg-brand-navy px-4 py-2.5 text-center text-sm font-semibold text-white",
+                      FOCUS,
+                    )}
+                  >
+                    Register
+                  </Link>
+                </div>
+              )}
             </nav>
           </div>
         </div>

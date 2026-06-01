@@ -22,6 +22,9 @@ import SessionDetailPage from "@/pages/platform/sessions/SessionDetailPage"
 import CheckInPage from "@/pages/platform/sessions/CheckInPage"
 import PlatformCalendarPage from "@/pages/platform/sessions/CalendarPage"
 import AttendanceLogPage from "@/pages/platform/sessions/AttendanceLogPage"
+import CertificatesListPage from "@/pages/platform/certificates/CertificatesListPage"
+import CertTemplatesPage from "@/pages/platform/certificates/CertTemplatesPage"
+import AiAssistantPage from "@/pages/platform/ai/AiAssistantPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -330,6 +333,27 @@ export const router = createBrowserRouter (
             </RoleGuard>
           ),
         },
+
+        // 🎓 CERTIFICATES
+        {
+          path: "certificates",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <CertificatesListPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "certificates/templates",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <CertTemplatesPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 🤖 AI ASSISTANT
+        { path: "ai", element: <AiAssistantPage /> },
         {path: "dashboard/crm", element: <CrmDashboard /> },
         {path: "dashboard/eCommerce", element: <EcommerceDashboard /> },
         {path: "dashboard/landing-page", element: <LandingPage /> },
