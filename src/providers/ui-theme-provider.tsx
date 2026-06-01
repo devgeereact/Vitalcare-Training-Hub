@@ -2,6 +2,11 @@ import { useEffect } from "react"
 import { useUIThemeStore } from "@/store/ui-theme.store"
 
 const CUSTOM_THEMES = [
+  "vitalcare-default",
+  "dark-clinical",
+  "light-professional",
+  "navy-minimal",
+  // legacy template themes (cleared if previously applied)
   "dark-blue",
   "classic-light",
   "gaussian-black",

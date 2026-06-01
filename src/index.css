@@ -527,3 +527,129 @@
 .gradient-cyan {
   background-image: linear-gradient(310deg, #2af598, #009efd);
 }
+/* ─── VITALCARE THEMES ─────────────────────────────────────────────────── */
+/* Applied by class on <html> via ui-theme.store + UIThemeProvider.          */
+
+/* Vitalcare (default): light app, navy sidebar, gold accents */
+.vitalcare-default {
+  --background: 210 40% 98%;            /* slate-50 */
+  --foreground: 222 47% 11%;            /* slate-900 */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 225 61% 27%;               /* navy #1b2e6b */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 43 65% 56%;                 /* gold #d4a843 */
+  --accent-foreground: 225 61% 18%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 43 65% 56%;                   /* gold focus ring */
+  --sidebar-background: 225 61% 27%;    /* navy */
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 43 65% 56%;        /* gold active */
+  --sidebar-primary-foreground: 225 61% 18%;
+  --sidebar-accent: 225 58% 21%;        /* navy-dark hover */
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 225 50% 22%;
+  --sidebar-ring: 43 65% 56%;
+}
+
+/* Dark Clinical: slate dark surface, gold accents */
+.dark-clinical {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 40% 14%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 40% 14%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 43 65% 56%;                /* gold primary on dark */
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 33% 18%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 18%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 43 65% 56%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 63% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 217 33% 20%;
+  --input: 217 33% 20%;
+  --ring: 43 65% 56%;
+  --sidebar-background: 222 47% 8%;
+  --sidebar-foreground: 210 40% 96%;
+  --sidebar-primary: 43 65% 56%;
+  --sidebar-primary-foreground: 222 47% 11%;
+  --sidebar-accent: 217 33% 16%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-border: 217 33% 18%;
+  --sidebar-ring: 43 65% 56%;
+}
+
+/* Light Professional: light grey app + sidebar, navy text */
+.light-professional {
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 225 61% 27%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 16% 93%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 16% 93%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 43 65% 56%;
+  --accent-foreground: 225 61% 18%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 20% 88%;
+  --input: 214 20% 88%;
+  --ring: 43 65% 56%;
+  --sidebar-background: 210 16% 96%;
+  --sidebar-foreground: 222 47% 20%;
+  --sidebar-primary: 225 61% 27%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 210 16% 90%;
+  --sidebar-accent-foreground: 225 61% 27%;
+  --sidebar-border: 214 20% 86%;
+  --sidebar-ring: 43 65% 56%;
+}
+
+/* Navy Minimal: navy app + deeper navy sidebar */
+.navy-minimal {
+  --background: 225 45% 13%;
+  --foreground: 0 0% 98%;
+  --card: 225 40% 16%;
+  --card-foreground: 0 0% 98%;
+  --popover: 225 40% 16%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 43 65% 56%;
+  --primary-foreground: 225 61% 14%;
+  --secondary: 225 33% 20%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 225 33% 20%;
+  --muted-foreground: 215 20% 70%;
+  --accent: 43 65% 56%;
+  --accent-foreground: 225 61% 14%;
+  --destructive: 0 63% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 225 30% 22%;
+  --input: 225 30% 22%;
+  --ring: 43 65% 56%;
+  --sidebar-background: 225 61% 14%;    /* navy-dark */
+  --sidebar-foreground: 0 0% 96%;
+  --sidebar-primary: 43 65% 56%;
+  --sidebar-primary-foreground: 225 61% 14%;
+  --sidebar-accent: 225 50% 19%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 225 40% 20%;
+  --sidebar-ring: 43 65% 56%;
+}

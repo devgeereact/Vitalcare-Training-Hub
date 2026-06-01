@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom"
 
 import AppLayout from "@/layouts/AppLayout"
+import ModuleComingSoon from "@/pages/platform/ModuleComingSoon"
 import AuthLayout from "@/layouts/AuthLayout"
 
 import AnalyticsDashboard from "@/pages/dashboard/analytics/AnalyticsDashboard"
@@ -172,6 +173,7 @@ export const router = createBrowserRouter (
       errorElement: <ErrorPage />,
       children: [
         {index: true, element: <AnalyticsDashboard /> },
+        {path: "dashboard", element: <AnalyticsDashboard /> },
         {path: "dashboard/analytics", element: <AnalyticsDashboard /> },
         {path: "dashboard/crm", element: <CrmDashboard /> },
         {path: "dashboard/eCommerce", element: <EcommerceDashboard /> },
@@ -248,10 +250,13 @@ export const router = createBrowserRouter (
         {path: "forms/form-repeat", element: <FormRepeater/>},
         
         
-        // ✅ 404 HANDLER
-        { path: "*", element: <NotFound /> },
+        // Platform modules still in development land here (branded notice)
+        { path: "*", element: <ModuleComingSoon /> },
       ],
     },
+
+    // 🌐 PUBLIC 404 (unknown non-platform routes)
+    { path: "*", element: <NotFound /> },
   ],
   {
     basename: "/",

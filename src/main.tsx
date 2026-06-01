@@ -27,8 +27,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <AuthProvider>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <UIThemeProvider>

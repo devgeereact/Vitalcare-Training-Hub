@@ -29,3 +29,6 @@ dist-ssr
 
 # Stray local working dir (not part of the app)
 memory/
+
+# TS build cache
+*.tsbuildinfo

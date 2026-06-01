@@ -1,31 +1,17 @@
-"use client"
-
 import {
-  AudioWaveform,
-  BookOpen,
-  Tv,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
   Gauge,
-  ShoppingCart,
-  LayoutGrid,
-  File,
-  Grid2x2,
-  Landmark,
-  LockKeyhole,
-  CircleUserRound,
-  ChartNoAxesCombined,
-  TriangleAlert,
-  Code,
-  Droplet
+  BookOpen,
+  ClipboardCheck,
+  CalendarDays,
+  Award,
+  Users,
+  MessagesSquare,
+  Video,
+  Sparkles,
+  Building2,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -36,438 +22,112 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// This is sample data.
+// Vitalcare Training Hub — platform navigation.
+// All URLs are absolute under /platform. Modules not yet built resolve to the
+// platform catch-all (a branded "in development" notice) until later phases.
 const data = {
   user: {
-    name: "Alex Martin",
-    email: "alex@example.com",
-    avatar: "https://untitledui.com/images/avatars/madeleine-pitts",
+    name: "Gideon Akinlotan",
+    email: "gideon@vitalcare.uk",
+    avatar: "",
   },
-  teams: [
-    {
-     name: "Vitalcare Training Hub",
-      logo: GalleryVerticalEnd,
-      plan: "CSTF-aligned TMS",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
-      title: "Dashboard",
+      title: "Overview",
       url: "#",
       icon: Gauge,
       isActive: true,
       items: [
-        {
-          title: "Analytics",
-          url: "dashboard/analytics",
-        },
-        {
-          title: "CRM",
-          url: "dashboard/crm",
-        },
-        {
-          title: "eCommerce",
-          url: "dashboard/eCommerce",
-        },
+        { title: "Dashboard", url: "/platform/dashboard" },
+        { title: "Analytics", url: "/platform/analytics" },
       ],
     },
     {
-      title: "eCommerce",
+      title: "Learning",
       url: "#",
-      icon: ShoppingCart,
-      items: [
-        {
-          title: "Product List",
-          url: "eCommerce/product-list",
-        },
-        {
-          title: "Product Grid",
-          url: "eCommerce/product-grid",
-        },
-        {
-          title: "Add Product",
-          url: "eCommerce/add-product",
-        },
-        {
-          title: "Categories",
-          url: "eCommerce/categories",
-        },
-        {
-          title: "Order List",
-          url: "eCommerce/order-list",
-        },
-        {
-          title: "Order Details",
-          url: "eCommerce/order-details",
-        },
-        {
-          title: "Customer List",
-          url: "eCommerce/customer-list",
-        },
-        {
-          title: "Customer Details",
-          url: "eCommerce/customer-details",
-        },
-        {
-          title: "Invoice",
-          url: "eCommerce/invoice",
-        },
-        
-      ],
-    },
-    {
-      title: "Widgets",
-      url: "#",
-      icon: Tv,
-      items: [
-        {
-          title: "Data Widgets",
-          url: "widgets/data",
-        },
-        {
-          title: "Statistics Widgets",
-          url: "widgets/statistics",
-        },
-      ],
-    },
-    {
-      title: "Applications",
-      url: "#",
-      icon: LayoutGrid,
-      items: [
-        {
-          title: "Chatbox",
-          url: "app/chatbox",
-        },
-         {
-          title: "Calendar",
-          url: "app/calendar",
-        },
-         {
-          title: "File Manager",
-          url: "app/file-manager",
-        },
-         {
-          title: "Invoice Card",
-          url: "app/invoice-card",
-        },
-      ],
-    },
-    {
-      title: "Components",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "Alerts",
-          url: "components/alerts",
-        },
-        {
-          title: "Accordion",
-          url: "components/accordion",
-        },
-        {
-          title: "Sooner",
-          url: "components/sooner",
-        },
-        {
-          title: "Badges",
-          url: "components/badges",
-        },
-        {
-          title: "Buttons",
-          url: "components/buttons",
-        },
-        {
-          title: "Cards",
-          url: "components/cards",
-        },
-        {
-          title: "List Groups",
-          url: "components/list-groups",
-        },
-        {
-          title: "Carousels",
-          url: "components/carousels",
-        },
-        {
-          title: "Media Object",
-          url: "components/media-object",
-        },
-        {
-          title: "Navbars",
-          url: "components/navbars",
-        },
-        {
-          title: "Progress",
-          url: "components/progress",
-        },
-        {
-          title: "Spinners",
-          url: "components/spinners",
-        },
-      ],
-    },
-    {
-      title: "Forms",
-      url: "#",
-      icon: File,
-      items: [
-        {
-          title: "Basic Inputs",
-          url: "forms/basic-inputs",
-        },
-        {
-          title: "Input Groups",
-          url: "forms/input-groups",
-        },
-        {
-          title: "Radio & Checkboxes",
-          url: "forms/radio-checkboxes",
-        },
-        {
-          title: "Form Layouts",
-          url: "forms/form-layouts",
-        },
-        {
-          title: "Form Wizard",
-          url: "forms/form-wizard",
-        },
-        {
-          title: "Text Editor",
-          url: "forms/text-editor",
-        },
-        {
-          title: "File Upload",
-          url: "forms/file-upload",
-        },
-        {
-          title: "Date Pickers",
-          url: "forms/date-pickers",
-        },
-        {
-          title: "Select",
-          url: "forms/select",
-        },
-        {
-          title: "Form Repeat",
-          url: "forms/form-repeat",
-        },
-      ],
-    },
-    {
-      title: "Tables",
-      url: "#",
-      icon: Grid2x2,
-      items: [
-        {
-          title: "Basic Tables",
-          url: "tables/basic-tables",
-        },
-        {
-          title: "Data Tables",
-          url: "tables/data-tables",
-        },
-        {
-          title: "Advanced Tables",
-          url: "tables/advanced-tables",
-        },
-      ],
-     },
-     {
-      title: "Icons",
-      url: "#",
-      icon: Droplet,
-      items: [
-        {
-          title: "Boxicons",
-          url: "icons/boxicons",
-        },
-         {
-          title: "Bootstrap",
-          url: "icons/bootstrap",
-        },
-         {
-          title: "Lucide",
-          url: "icons/lucide",
-        },
-      ],
-     },
-     {
-      title: "Pricing",
-      url: "pricing/pricing-tables",
-      icon: Landmark,
-    },
-    {
-      title: "Authentication",
-      url: "#",
-      icon: LockKeyhole,
-      items: [
-        {
-          title: "Basic",
-          url: "#",
-          items: [
-            {
-              title: "Login",
-              url: "auth/basic/login",
-            },
-            {
-              title: "Register",
-              url: "auth/basic/register",
-            },
-            {
-              title: "Verify Email",
-              url: "auth/basic/verify-email",
-            },
-            {
-              title: "Forgot Password",
-              url: "auth/basic/forgot-password",
-            },
-            {
-              title: "New Password",
-              url: "auth/basic/reset-password",
-            },
-            {
-              title: "Reset Success",
-              url: "auth/basic/password-reset-success",
-            },
-          ],
-        },
-        {
-          title: "Cover",
-          url: "#",
-          items: [
-            {
-              title: "Login",
-              url: "auth/cover/login",
-            },
-            {
-              title: "Register",
-              url: "auth/cover/register",
-            },
-            {
-              title: "Verify Email",
-              url: "auth/cover/verify-email",
-            },
-            {
-              title: "Forgot Password",
-              url: "auth/cover/forgot-password",
-            },
-            {
-              title: "New Password",
-              url: "auth/cover/new-password",
-            },
-            {
-              title: "Reset Success",
-              url: "auth/cover/password-reset-success",
-            },
-          ],
-        },
-      ],
-    },
-     {
-      title: "Accounts",
-      url: "#",
-      icon: CircleUserRound,
-      items: [
-        {
-          title: "Profile",
-          url: "account/profile",
-        },
-        {
-          title: "Edit Profile",
-          url: "account/edit-profile",
-        },
-        {
-          title: "Password Setting",
-          url: "account/password-setting",
-        },
-        {
-          title: "Noitifications",
-          url: "account/notifications",
-        },
-      ],
-    },
-     {
-      title: "Charts",
-      url: "#",
-      icon: ChartNoAxesCombined,
-      items: [
-        {
-          title: "ReCharts",
-          url: "charts/recharts",
-        },
-        {
-          title: "Apex Charts",
-          url: "charts/apex-charts",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "docs",
-      icon: Code,
-    },
-     {
-      title: "FAQ",
-      url: "faq",
       icon: BookOpen,
-    },
-     {
-      title: "Error Pages",
-      url: "#",
-      icon: TriangleAlert,
       items: [
-        {
-          title: "404 Not Found",
-          url: "error/error-404",
-        },
-        {
-          title: "500 Server Error",
-          url: "error/error-500",
-        },
-        {
-          title: "coming soon",
-          url: "error/coming-soon",
-        },
+        { title: "My Courses", url: "/platform/courses" },
+        { title: "All Courses", url: "/platform/courses/manage" },
+        { title: "Course Builder", url: "/platform/courses/builder" },
+        { title: "Enrolments", url: "/platform/enrolments" },
       ],
     },
-  ],
-  projects: [
     {
-      name: "Design Engineering",
+      title: "Assessments",
       url: "#",
-      icon: Frame,
+      icon: ClipboardCheck,
+      items: [
+        { title: "Quiz Builder", url: "/platform/assessments/builder" },
+        { title: "Assessment Results", url: "/platform/assessments/results" },
+      ],
     },
     {
-      name: "Sales & Marketing",
+      title: "Attendance",
       url: "#",
-      icon: PieChart,
+      icon: CalendarDays,
+      items: [
+        { title: "Calendar", url: "/platform/calendar" },
+        { title: "Sessions", url: "/platform/sessions" },
+        { title: "Attendance Log", url: "/platform/attendance" },
+      ],
     },
     {
-      name: "Travel",
+      title: "Certificates",
       url: "#",
-      icon: Map,
+      icon: Award,
+      items: [
+        { title: "Certificates", url: "/platform/certificates" },
+        { title: "Templates", url: "/platform/certificates/templates" },
+      ],
+    },
+    {
+      title: "People",
+      url: "#",
+      icon: Users,
+      items: [
+        { title: "Learners", url: "/platform/learners" },
+        { title: "Trainers", url: "/platform/trainers" },
+      ],
+    },
+    {
+      title: "Communication",
+      url: "#",
+      icon: MessagesSquare,
+      items: [
+        { title: "Notifications", url: "/platform/notifications" },
+        { title: "Messages", url: "/platform/messages" },
+        { title: "Announcements", url: "/platform/announcements" },
+      ],
+    },
+    {
+      title: "Virtual Training",
+      url: "/platform/virtual",
+      icon: Video,
+    },
+    {
+      title: "AI Assistant",
+      url: "/platform/ai",
+      icon: Sparkles,
+    },
+    {
+      title: "Organisation",
+      url: "#",
+      icon: Building2,
+      items: [
+        { title: "Analytics", url: "/platform/analytics/org" },
+        { title: "Payments", url: "/platform/payments" },
+        { title: "Settings", url: "/platform/settings" },
+        { title: "Audit Log", url: "/platform/audit" },
+      ],
     },
   ],
 }
 
-// This is the sidebar component used in the app layout.
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   onHoverChange?: (value: boolean) => void
 }
 
-// The sidebar component used in the app layout. It receives an `onHoverChange` prop to notify the parent layout when the sidebar is hovered or not.
 export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
   return (
     <div
@@ -475,30 +135,29 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
       onMouseLeave={() => onHoverChange?.(false)}
     >
       <Sidebar collapsible="icon" {...props}>
-        <SidebarHeader className="border-b h-16">
+        <SidebarHeader className="border-b border-sidebar-border h-16">
           <SidebarMenuButton size="lg" asChild className="px-2 py-3">
-              <a href="/">
-                <div className="flex aspect-square size-8 items-center justify-center mx-auto rounded-lg overflow-hidden">
-                  <img
-                    src="/logos/logo-round-navy.svg"
-                    alt="Vitalcare Training Hub"
-                    className="size-8"
-                  />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Vitalcare Training Hub</span>
-                  <span className="truncate text-xs">CSTF-aligned TMS</span>
-                </div>
-              </a>
-            </SidebarMenuButton>
+            <a href="/">
+              <div className="flex aspect-square size-8 items-center justify-center mx-auto rounded-lg overflow-hidden">
+                <img
+                  src="/logos/logo-round-white.svg"
+                  alt="Vitalcare Training Hub"
+                  className="size-8"
+                />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">Vitalcare Training Hub</span>
+                <span className="truncate text-xs opacity-80">CSTF-aligned TMS</span>
+              </div>
+            </a>
+          </SidebarMenuButton>
         </SidebarHeader>
 
         <SidebarContent>
           <NavMain items={data.navMain} />
-          <NavProjects projects={data.projects} />
         </SidebarContent>
 
-        <SidebarFooter className="border-t h-16 justify-center">
+        <SidebarFooter className="border-t border-sidebar-border h-16 justify-center">
           <NavUser user={data.user} />
         </SidebarFooter>
 

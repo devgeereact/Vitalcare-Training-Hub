@@ -1,8 +1,9 @@
-import { Outlet } from "react-router-dom"
+import { Outlet, Link, useLocation } from "react-router-dom"
 import { AppSidebar } from "@/components/app-sidebar"
+import BottomTabBar from "@/components/platform/BottomTabBar"
+import React from "react"
 import { NotificationDropdown } from "@/components/notification-dropdown"
 import { AppLauncherDropdown } from "@/components/appLauncher-dropdown"
-import { Button } from "@/components/ui/button"
 
 import {
   Breadcrumb,
@@ -30,6 +31,52 @@ import { cn } from "@/lib/utils"
 import { LanguageDropdown } from "@/components/language-dropdown"
 import { UserDropdown } from "@/components/UserDropdown"
 
+const CRUMB_LABELS: Record<string, string> = {
+  platform: "Platform",
+  ai: "AI Assistant",
+  org: "Organisation",
+  crm: "CRM",
+  manage: "All Courses",
+}
+
+function toLabel(seg: string) {
+  return (
+    CRUMB_LABELS[seg] ??
+    seg.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  )
+}
+
+function HeaderBreadcrumb() {
+  const { pathname } = useLocation()
+  const segments = pathname.split("/").filter(Boolean)
+
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        {segments.map((seg, i) => {
+          const href = "/" + segments.slice(0, i + 1).join("/")
+          const isLast = i === segments.length - 1
+          const target = seg === "platform" ? "/platform/dashboard" : href
+          return (
+            <React.Fragment key={href}>
+              <BreadcrumbItem>
+                {isLast ? (
+                  <BreadcrumbPage>{toLabel(seg)}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link to={target}>{toLabel(seg)}</Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+              {!isLast && <BreadcrumbSeparator />}
+            </React.Fragment>
+          )
+        })}
+      </BreadcrumbList>
+    </Breadcrumb>
+  )
+}
+
 export default function AppLayout() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(true)
@@ -37,7 +84,6 @@ export default function AppLayout() {
 
   const isExpanded = open || hovered
 
-  const [themesopen, themessetOpen] = useState(false)
 
   // Handle header background on scroll
   useEffect(() => {
@@ -79,19 +125,9 @@ export default function AppLayout() {
                 <SidebarTrigger
                   className="-ml-1 rounded-full h-10 w-10 [&_svg]:!size-5 hover:bg-muted/60 transition-colors"
                 />
-                <div className="header-quick-link hidden md:flex items-center gap-1">
-                   <Button variant="ghost" className="font-medium text-sm h-8 px-3 py-0 rounded-lg">
-                    Pricing
-                  </Button>
-                    <Button variant="ghost" className="font-medium text-sm h-8 px-3 py-0 rounded-lg">
-                      Docs
-                    </Button>
-                    <Button variant="ghost" className="font-medium text-sm h-8 px-3 py-0 rounded-lg">
-                      Reports
-                    </Button>
-                    <Button variant="ghost" className="font-medium text-sm h-8 px-3 py-0 rounded-lg">
-                      Support
-                    </Button>
+                <Separator orientation="vertical" className="mx-1 h-6 hidden md:block" />
+                <div className="hidden md:flex items-center">
+                  <HeaderBreadcrumb />
                 </div>
               </div>
 
@@ -113,12 +149,13 @@ export default function AppLayout() {
               </header>
 
         {/* PAGE CONTENT */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 pb-24 md:pb-6">
           <Outlet />
         </main>
 
         <Footer />
         <ThemeCustomizer />
+        <BottomTabBar />
       </SidebarInset>
     </SidebarProvider>
   )

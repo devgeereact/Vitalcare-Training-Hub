@@ -29,8 +29,10 @@ export function NavMain({ items }: { items: MenuItem[] }) {
   const location = useLocation()
 
   const isActiveRoute = (url: string) => {
-  return location.pathname.startsWith(`/${url}`)
-}
+    if (!url || url === "#") return false
+    const u = url.startsWith("/") ? url : `/${url}`
+    return location.pathname === u || location.pathname.startsWith(`${u}/`)
+  }
 
   const renderMenuItems = (menuItems: MenuItem[]) => {
     return menuItems.map((item) => {
@@ -96,7 +98,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
                     <SidebarMenuSubItem key={subItem.title}>
                       <Collapsible
                         defaultOpen={subItem.items.some((child) =>
-                          location.pathname.startsWith(`/${child.url}`)
+                          isActiveRoute(child.url)
                         )}
                       >
                         <CollapsibleTrigger asChild>
