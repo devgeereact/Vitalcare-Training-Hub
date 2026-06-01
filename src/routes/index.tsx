@@ -85,8 +85,49 @@ import LandingPage from "@/pages/dashboard/analytics/LandingPage"
 import AuthCallback from "@/pages/auth/callback"
 import { AuthGuard } from "@/guards/AuthGuard"
 
+// Marketing (public)
+import MarketingLayout from "@/layouts/MarketingLayout"
+import HomePage from "@/pages/marketing/HomePage"
+import AboutUsPage from "@/pages/marketing/AboutUsPage"
+import OurCoursesPage from "@/pages/marketing/OurCoursesPage"
+import CategoryPage from "@/pages/marketing/CategoryPage"
+import TrainingSolutionPage from "@/pages/marketing/TrainingSolutionPage"
+import VerifyCertPage from "@/pages/marketing/VerifyCertPage"
+import AccreditationsPage from "@/pages/marketing/AccreditationsPage"
+import BlogPage from "@/pages/marketing/BlogPage"
+import EventsPage from "@/pages/marketing/EventsPage"
+import ContactPage from "@/pages/marketing/ContactPage"
+import FAQLegalPage from "@/pages/marketing/legal/FAQPage"
+import PrivacyPolicyPage from "@/pages/marketing/legal/PrivacyPolicyPage"
+import RefundPolicyPage from "@/pages/marketing/legal/RefundPolicyPage"
+import CookiePolicyPage from "@/pages/marketing/legal/CookiePolicyPage"
+import TermsPage from "@/pages/marketing/legal/TermsPage"
+
 export const router = createBrowserRouter (
   [
+    // 🌐 MARKETING (public)
+    {
+      element: <MarketingLayout />,
+      errorElement: <ErrorPage />,
+      children: [
+        { index: true, element: <HomePage /> },
+        { path: "about-us", element: <AboutUsPage /> },
+        { path: "our-courses", element: <OurCoursesPage /> },
+        { path: "our-courses/:categorySlug", element: <CategoryPage /> },
+        { path: "training-solutions/:sector", element: <TrainingSolutionPage /> },
+        { path: "resources/verify-certificate", element: <VerifyCertPage /> },
+        { path: "resources/accreditations", element: <AccreditationsPage /> },
+        { path: "resources/blog", element: <BlogPage /> },
+        { path: "resources/events", element: <EventsPage /> },
+        { path: "contact-us", element: <ContactPage /> },
+        { path: "faq", element: <FAQLegalPage /> },
+        { path: "privacy-policy", element: <PrivacyPolicyPage /> },
+        { path: "refund-policy", element: <RefundPolicyPage /> },
+        { path: "cookie-policy", element: <CookiePolicyPage /> },
+        { path: "terms-and-conditions", element: <TermsPage /> },
+      ],
+    },
+
     // 🔐 AUTH ROUTES
     {
       element: <AuthLayout />,
@@ -120,8 +161,9 @@ export const router = createBrowserRouter (
       ],
     },
 
-    // 📊 APP ROUTES (authenticated platform shell)
+    // 📊 PLATFORM ROUTES (authenticated shell, mounted under /platform)
     {
+      path: "platform",
       element: (
         <AuthGuard>
           <AppLayout />

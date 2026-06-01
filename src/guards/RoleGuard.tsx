@@ -21,8 +21,7 @@ export function RoleGuard({
   if (loading) return <AuthLoading />
 
   if (!role || !roles.includes(role)) {
-    // Platform routes move under /platform/* in Phase 5; the shell is at / for now.
-    return <Navigate to="/" replace />
+    return <Navigate to="/platform" replace />
   }
 
   return <>{children}</>

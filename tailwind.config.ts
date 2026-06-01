@@ -76,6 +76,9 @@ const config: Config = {
           gold: "#d4a843",
           "gold-light": "#e8c26a",
         },
+        // Semantic (CSTF/CPD badges, status)
+        success: "#16a34a",
+        warning: "#d97706",
       },
       fontFamily: {
         display: ['"DM Serif Display"', "serif"],

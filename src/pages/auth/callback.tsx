@@ -23,7 +23,7 @@ export default function AuthCallback() {
         return
       }
       const redirect = searchParams.get("redirect")
-      const target = redirect ? decodeURIComponent(redirect) : "/"
+      const target = redirect ? decodeURIComponent(redirect) : "/platform"
       navigate(data.session ? target : "/sign-in", { replace: true })
     })
 

@@ -36,20 +36,20 @@ export type SubscriptionStatus =
   | "past_due"
   | "cancelled"
 
-interface Timestamps {
+type Timestamps = {
   created_at: string
   updated_at: string
   deleted_at: string | null
 }
 
-export interface Organisation extends Timestamps {
+export type Organisation = Timestamps & {
   id: string
   name: string
   slug: string | null
   sector: string | null
 }
 
-export interface Profile extends Timestamps {
+export type Profile = Timestamps & {
   id: string
   email: string
   first_name: string | null
@@ -61,20 +61,20 @@ export interface Profile extends Timestamps {
   phone: string | null
 }
 
-export interface Department extends Timestamps {
+export type Department = Timestamps & {
   id: string
   organisation_id: string
   name: string
 }
 
-export interface CourseCategory extends Timestamps {
+export type CourseCategory = Timestamps & {
   id: string
   name: string
   slug: string
   course_count: number
 }
 
-export interface Course extends Timestamps {
+export type Course = Timestamps & {
   id: string
   title: string
   slug: string | null
@@ -89,14 +89,14 @@ export interface Course extends Timestamps {
   created_by: string | null
 }
 
-export interface Module extends Timestamps {
+export type Module = Timestamps & {
   id: string
   course_id: string
   title: string
   position: number
 }
 
-export interface Lesson extends Timestamps {
+export type Lesson = Timestamps & {
   id: string
   module_id: string
   title: string
@@ -109,7 +109,7 @@ export interface Lesson extends Timestamps {
   position: number
 }
 
-export interface Enrollment extends Timestamps {
+export type Enrollment = Timestamps & {
   id: string
   learner_id: string
   course_id: string
@@ -119,7 +119,7 @@ export interface Enrollment extends Timestamps {
   completed_at: string | null
 }
 
-export interface LessonProgress extends Timestamps {
+export type LessonProgress = Timestamps & {
   id: string
   learner_id: string
   lesson_id: string
@@ -127,7 +127,7 @@ export interface LessonProgress extends Timestamps {
   completed_at: string | null
 }
 
-export interface Assessment extends Timestamps {
+export type Assessment = Timestamps & {
   id: string
   course_id: string | null
   title: string
@@ -140,7 +140,7 @@ export interface Assessment extends Timestamps {
   created_by: string | null
 }
 
-export interface Question extends Timestamps {
+export type Question = Timestamps & {
   id: string
   assessment_id: string
   type: QuestionType
@@ -149,7 +149,7 @@ export interface Question extends Timestamps {
   position: number
 }
 
-export interface QuestionOption extends Timestamps {
+export type QuestionOption = Timestamps & {
   id: string
   question_id: string
   label: string
@@ -157,7 +157,7 @@ export interface QuestionOption extends Timestamps {
   position: number
 }
 
-export interface AssessmentAttempt extends Timestamps {
+export type AssessmentAttempt = Timestamps & {
   id: string
   assessment_id: string
   learner_id: string
@@ -167,7 +167,7 @@ export interface AssessmentAttempt extends Timestamps {
   completed_at: string | null
 }
 
-export interface AttemptAnswer extends Timestamps {
+export type AttemptAnswer = Timestamps & {
   id: string
   attempt_id: string
   question_id: string
@@ -175,14 +175,14 @@ export interface AttemptAnswer extends Timestamps {
   is_correct: boolean | null
 }
 
-export interface RecurringTemplate extends Timestamps {
+export type RecurringTemplate = Timestamps & {
   id: string
   title: string
   rrule: string
   created_by: string | null
 }
 
-export interface TrainingSession extends Timestamps {
+export type TrainingSession = Timestamps & {
   id: string
   course_id: string | null
   trainer_id: string | null
@@ -202,7 +202,7 @@ export interface TrainingSession extends Timestamps {
   organisation_id: string | null
 }
 
-export interface SessionBooking extends Timestamps {
+export type SessionBooking = Timestamps & {
   id: string
   session_id: string
   learner_id: string
@@ -210,7 +210,7 @@ export interface SessionBooking extends Timestamps {
   waitlist_position: number | null
 }
 
-export interface AttendanceRecord extends Timestamps {
+export type AttendanceRecord = Timestamps & {
   id: string
   session_id: string
   learner_id: string
@@ -219,7 +219,7 @@ export interface AttendanceRecord extends Timestamps {
   marked_at: string | null
 }
 
-export interface CertificateTemplate extends Timestamps {
+export type CertificateTemplate = Timestamps & {
   id: string
   name: string
   canvas: Record<string, unknown>
@@ -228,7 +228,7 @@ export interface CertificateTemplate extends Timestamps {
   created_by: string | null
 }
 
-export interface LearnerCertificate extends Timestamps {
+export type LearnerCertificate = Timestamps & {
   id: string
   learner_id: string
   course_id: string | null
@@ -240,7 +240,7 @@ export interface LearnerCertificate extends Timestamps {
   expires_at: string | null
 }
 
-export interface SubscriptionPlan extends Timestamps {
+export type SubscriptionPlan = Timestamps & {
   id: string
   name: string
   slug: string | null
@@ -249,7 +249,7 @@ export interface SubscriptionPlan extends Timestamps {
   features: unknown
 }
 
-export interface Subscription extends Timestamps {
+export type Subscription = Timestamps & {
   id: string
   organisation_id: string
   plan_id: string | null
@@ -258,7 +258,7 @@ export interface Subscription extends Timestamps {
   ends_at: string | null
 }
 
-export interface Notification extends Timestamps {
+export type Notification = Timestamps & {
   id: string
   user_id: string
   type: NotificationType
@@ -268,7 +268,7 @@ export interface Notification extends Timestamps {
   read_at: string | null
 }
 
-export interface Message extends Timestamps {
+export type Message = Timestamps & {
   id: string
   sender_id: string
   recipient_id: string
@@ -276,7 +276,7 @@ export interface Message extends Timestamps {
   read_at: string | null
 }
 
-export interface Announcement extends Timestamps {
+export type Announcement = Timestamps & {
   id: string
   title: string
   body: string
@@ -286,7 +286,7 @@ export interface Announcement extends Timestamps {
   published_at: string | null
 }
 
-export interface TrainerProfile extends Timestamps {
+export type TrainerProfile = Timestamps & {
   id: string
   profile_id: string
   bio: string | null
@@ -294,7 +294,7 @@ export interface TrainerProfile extends Timestamps {
   zoom_personal_id: string | null
 }
 
-export interface TrainerAvailability extends Timestamps {
+export type TrainerAvailability = Timestamps & {
   id: string
   trainer_id: string
   weekday: number
@@ -302,14 +302,14 @@ export interface TrainerAvailability extends Timestamps {
   end_time: string
 }
 
-export interface AiConversation extends Timestamps {
+export type AiConversation = Timestamps & {
   id: string
   user_id: string
   title: string | null
   messages: unknown
 }
 
-export interface AuditLog {
+export type AuditLog = {
   id: string
   user_id: string | null
   action: string
@@ -319,14 +319,15 @@ export interface AuditLog {
   created_at: string
 }
 
-/** Build the standard { Row, Insert, Update } shape for a table. */
+/** Build the standard { Row, Insert, Update, Relationships } shape for a table. */
 type TableShape<Row, RequiredInsert extends keyof Row = never> = {
   Row: Row
   Insert: Partial<Row> & Pick<Row, RequiredInsert>
   Update: Partial<Row>
+  Relationships: []
 }
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       organisations: TableShape<Organisation, "name">
@@ -373,9 +374,10 @@ export interface Database {
         Row: AuditLog
         Insert: Partial<AuditLog> & Pick<AuditLog, "action">
         Update: Partial<AuditLog>
+        Relationships: []
       }
     }
-    Views: Record<string, never>
+    Views: { [_ in never]: never }
     Functions: {
       verify_certificate: {
         Args: { p_uuid: string }
@@ -400,5 +402,6 @@ export interface Database {
       notification_type: NotificationType
       subscription_status: SubscriptionStatus
     }
+    CompositeTypes: Record<string, never>
   }
 }

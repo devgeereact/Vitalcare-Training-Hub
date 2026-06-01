@@ -36,7 +36,9 @@ export default function CoverLoginPage() {
       return
     }
     const redirect = searchParams.get("redirect")
-    navigate(redirect ? decodeURIComponent(redirect) : "/", { replace: true })
+    navigate(redirect ? decodeURIComponent(redirect) : "/platform", {
+      replace: true,
+    })
   }
 
   const onGoogle = async () => {
