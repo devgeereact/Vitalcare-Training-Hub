@@ -27,11 +27,11 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
 
   const apiKey = Deno.env.get("RESEND_API_KEY")
-  const from = Deno.env.get("RESEND_FROM") ?? "Vitalcare Training Hub <onboarding@resend.dev>"
+  // vitalcare.uk is a verified Resend domain, so we send from info@vitalcare.uk
+  // and can deliver to any recipient.
+  const from = Deno.env.get("RESEND_FROM") ?? "Vitalcare Training Hub <info@vitalcare.uk>"
   const admin = Deno.env.get("ADMIN_EMAIL") ?? "gakinz101@gmail.com"
-  // Secondary recipient only works once a custom domain is verified in Resend.
-  // The shared onboarding@resend.dev sender delivers to the account owner only.
-  const adminSecondary = Deno.env.get("ADMIN_EMAIL_SECONDARY_VERIFIED")
+  const adminSecondary = Deno.env.get("ADMIN_EMAIL_SECONDARY")
   if (!apiKey) return json({ error: "Email service not configured" }, 500)
 
   let body: Record<string, string>
