@@ -143,6 +143,13 @@ export default function SessionDetailPage() {
             </p>
           )}
           {s.description && <p className="pt-1 text-sm">{s.description}</p>}
+          {s.zoom_join_url && (
+            <Button asChild size="sm" className="mt-2">
+              <a href={s.zoom_join_url} target="_blank" rel="noopener noreferrer">
+                <Video className="mr-1.5 size-4" /> Join Zoom meeting
+              </a>
+            </Button>
+          )}
         </CardContent>
       </Card>
 

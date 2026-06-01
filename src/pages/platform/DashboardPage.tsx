@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/table"
 
 import { StatCard } from "@/components/dashboard/StatCard"
+import WeatherWidget from "@/components/dashboard/WeatherWidget"
 import {
   useDashboardStats,
   useCompletionTrend,
@@ -111,11 +112,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-foreground">Dashboard</h1>
-        <p className="mt-1 text-muted-foreground">
-          Training activity across your organisation at a glance.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl text-foreground">Dashboard</h1>
+          <p className="mt-1 text-muted-foreground">
+            Training activity across your organisation at a glance.
+          </p>
+        </div>
+        <WeatherWidget />
       </div>
 
       {/* KPI cards */}

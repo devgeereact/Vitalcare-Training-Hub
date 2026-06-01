@@ -130,6 +130,27 @@ export function useCreateSession() {
         console.error("[useCreateSession]", error)
         throw error
       }
+
+      // Virtual sessions get a Zoom meeting (best-effort; failure is non-fatal).
+      if (v.is_virtual) {
+        try {
+          const start = new Date(v.starts_at)
+          const end = new Date(v.ends_at)
+          const duration = Math.max(15, Math.round((end.getTime() - start.getTime()) / 60000))
+          const { data: zoom, error: zErr } = await supabase.functions.invoke(
+            "zoom-create-meeting",
+            { body: { topic: v.title, start_time: start.toISOString(), duration } },
+          )
+          if (!zErr && zoom?.join_url) {
+            await supabase
+              .from("training_sessions")
+              .update({ zoom_meeting_id: zoom.id, zoom_join_url: zoom.join_url })
+              .eq("id", data.id)
+          }
+        } catch (zoomErr) {
+          console.error("[useCreateSession:zoom]", zoomErr)
+        }
+      }
       return data.id
     },
     onSuccess: () => {

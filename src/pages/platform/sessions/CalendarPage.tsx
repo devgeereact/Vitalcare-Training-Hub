@@ -5,23 +5,48 @@ import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
 import { Plus, AlertCircle } from "lucide-react"
 
+import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCalendarSessions } from "@/lib/queries/sessions.queries"
+import { getGcalEvents } from "@/lib/integrations/google-calendar"
 
 export default function CalendarPage() {
   const navigate = useNavigate()
   const { data, isLoading, isError, refetch } = useCalendarSessions()
 
-  const events = (data ?? []).map((s) => ({
-    id: s.id,
-    title: s.title,
-    start: s.startsAt,
-    end: s.endsAt,
-    backgroundColor: s.isVirtual ? "#d4a843" : "#1b2e6b",
-    borderColor: s.isVirtual ? "#d4a843" : "#1b2e6b",
-  }))
+  const { data: gcal } = useQuery({
+    queryKey: ["gcal-events"],
+    queryFn: () => {
+      const now = new Date()
+      const min = new Date(now.getTime() - 60 * 864e5).toISOString()
+      const max = new Date(now.getTime() + 120 * 864e5).toISOString()
+      return getGcalEvents(min, max)
+    },
+    staleTime: 15 * 60 * 1000,
+    retry: false,
+  })
+
+  const events = [
+    ...(data ?? []).map((s) => ({
+      id: s.id,
+      title: s.title,
+      start: s.startsAt,
+      end: s.endsAt,
+      backgroundColor: s.isVirtual ? "#d4a843" : "#1b2e6b",
+      borderColor: s.isVirtual ? "#d4a843" : "#1b2e6b",
+    })),
+    ...(gcal ?? []).map((e) => ({
+      id: e.id,
+      title: e.title,
+      start: e.start,
+      end: e.end,
+      backgroundColor: "#e8c26a",
+      borderColor: "#d4a843",
+      textColor: "#1b2e6b",
+    })),
+  ]
 
   return (
     <div className="space-y-6">
@@ -62,6 +87,8 @@ export default function CalendarPage() {
                 events={events}
                 eventClick={(info) => {
                   info.jsEvent.preventDefault()
+                  // Google Calendar overlay events have no session page.
+                  if (info.event.id.startsWith("gcal:")) return
                   navigate(`/platform/sessions/${info.event.id}`)
                 }}
                 height="auto"
