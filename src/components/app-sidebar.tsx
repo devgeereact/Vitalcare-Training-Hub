@@ -134,7 +134,6 @@ const data = {
       url: "#",
       icon: Building2,
       items: [
-        { title: "Analytics", url: "/platform/analytics/org" },
         { title: "Departments", url: "/platform/departments" },
         { title: "Payments", url: "/platform/payments" },
         { title: "Fees & Receipts", url: "/platform/payments/fees" },

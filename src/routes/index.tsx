@@ -34,6 +34,19 @@ import TrainersListPage from "@/pages/platform/trainers/TrainersListPage"
 import AnalyticsPage from "@/pages/platform/analytics/AnalyticsPage"
 import AuditLogPage from "@/pages/platform/audit/AuditLogPage"
 import PaymentsPage from "@/pages/platform/payments/PaymentsPage"
+import FeesReceiptsPage from "@/pages/platform/payments/FeesReceiptsPage"
+import EnrolmentsPage from "@/pages/platform/enrolments/EnrolmentsPage"
+import StaffPage from "@/pages/platform/staff/StaffPage"
+import DepartmentsPage from "@/pages/platform/departments/DepartmentsPage"
+import VirtualTrainingPage from "@/pages/platform/virtual/VirtualTrainingPage"
+import LibraryPage from "@/pages/platform/library/LibraryPage"
+import LearningPathsPage from "@/pages/platform/courses/LearningPathsPage"
+import CohortsPage from "@/pages/platform/cohorts/CohortsPage"
+import ForumsPage from "@/pages/platform/forums/ForumsPage"
+import HolidaysPage from "@/pages/platform/sessions/HolidaysPage"
+import StoreCataloguePage from "@/pages/platform/store/StoreCataloguePage"
+import StoreOrdersPage from "@/pages/platform/store/StoreOrdersPage"
+import StoreCouponsPage from "@/pages/platform/store/StoreCouponsPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -502,6 +515,96 @@ export const router = createBrowserRouter (
         {path: "forms/form-repeat", element: <FormRepeater/>},
         
         
+        // 📚 LEARNING (extended)
+        { path: "library", element: <LibraryPage /> },
+        { path: "courses/paths", element: <LearningPathsPage /> },
+        {
+          path: "enrolments",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
+              <EnrolmentsPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 🧑‍🤝‍🧑 PEOPLE (extended)
+        {
+          path: "staff",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <StaffPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "cohorts",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <CohortsPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 🎥 VIRTUAL TRAINING
+        { path: "virtual", element: <VirtualTrainingPage /> },
+
+        // 📅 SCHEDULING (extended)
+        {
+          path: "holidays",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
+              <HolidaysPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 💬 COMMUNICATION (extended)
+        { path: "forums", element: <ForumsPage /> },
+
+        // 🛍️ STORE
+        {
+          path: "store",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <StoreCataloguePage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "store/orders",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <StoreOrdersPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "store/coupons",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <StoreCouponsPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 🏢 ORGANISATION (extended)
+        {
+          path: "departments",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <DepartmentsPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "payments/fees",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <FeesReceiptsPage />
+            </RoleGuard>
+          ),
+        },
+
         // Platform modules still in development land here (branded notice)
         { path: "*", element: <ModuleComingSoon /> },
       ],

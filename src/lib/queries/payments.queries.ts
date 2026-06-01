@@ -21,6 +21,55 @@ export function usePlans() {
   })
 }
 
+export interface SubscriptionHistoryRow extends Subscription {
+  planName: string
+  pricePence: number
+  interval: string
+}
+
+export function useSubscriptionHistory(orgId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["payments", "history", orgId ?? "none"],
+    enabled: !!orgId,
+    queryFn: async (): Promise<SubscriptionHistoryRow[]> => {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("organisation_id", orgId!)
+        .is("deleted_at", null)
+        .order("started_at", { ascending: false })
+      if (error) {
+        console.error("[useSubscriptionHistory]", error)
+        throw error
+      }
+      const rows = (data ?? []) as Subscription[]
+      const planIds = [...new Set(rows.map((r) => r.plan_id).filter(Boolean))] as string[]
+      const planById = new Map<string, { name: string; price_pence: number; interval: string }>()
+      if (planIds.length) {
+        const { data: plans } = await supabase
+          .from("subscription_plans")
+          .select("id, name, price_pence, interval")
+          .in("id", planIds)
+        for (const p of plans ?? [])
+          planById.set(p.id, {
+            name: p.name,
+            price_pence: p.price_pence,
+            interval: p.interval,
+          })
+      }
+      return rows.map((r) => {
+        const plan = r.plan_id ? planById.get(r.plan_id) : undefined
+        return {
+          ...r,
+          planName: plan?.name ?? "Custom",
+          pricePence: plan?.price_pence ?? 0,
+          interval: plan?.interval ?? "—",
+        }
+      })
+    },
+  })
+}
+
 export interface OrgSubscription extends Subscription {
   planName: string
 }
