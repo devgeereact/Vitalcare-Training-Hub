@@ -3,6 +3,11 @@ import { createBrowserRouter } from "react-router-dom"
 import AppLayout from "@/layouts/AppLayout"
 import ModuleComingSoon from "@/pages/platform/ModuleComingSoon"
 import DashboardPage from "@/pages/platform/DashboardPage"
+import LearnersListPage from "@/pages/platform/learners/LearnersListPage"
+import LearnerNewPage from "@/pages/platform/learners/LearnerNewPage"
+import LearnerDetailPage from "@/pages/platform/learners/LearnerDetailPage"
+import LearnerEditPage from "@/pages/platform/learners/LearnerEditPage"
+import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
 import AnalyticsDashboard from "@/pages/dashboard/analytics/AnalyticsDashboard"
@@ -176,6 +181,40 @@ export const router = createBrowserRouter (
         {index: true, element: <DashboardPage /> },
         {path: "dashboard", element: <DashboardPage /> },
         {path: "dashboard/analytics", element: <AnalyticsDashboard /> },
+
+        // 👥 LEARNER MANAGEMENT (admin / manager)
+        {
+          path: "learners",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <LearnersListPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "learners/new",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <LearnerNewPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "learners/:id",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <LearnerDetailPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "learners/:id/edit",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <LearnerEditPage />
+            </RoleGuard>
+          ),
+        },
         {path: "dashboard/crm", element: <CrmDashboard /> },
         {path: "dashboard/eCommerce", element: <EcommerceDashboard /> },
         {path: "dashboard/landing-page", element: <LandingPage /> },
