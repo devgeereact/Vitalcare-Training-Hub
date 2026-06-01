@@ -21,6 +21,13 @@ const SECTION_LABELS: Record<string, string> = {
   payments: "Payments",
   settings: "Settings",
   audit: "Audit log",
+  store: "Store",
+  library: "Resource library",
+  cohorts: "Cohorts & teams",
+  staff: "Staff management",
+  forums: "Forums",
+  holidays: "Holidays",
+  departments: "Departments",
 }
 
 export default function ModuleComingSoon() {

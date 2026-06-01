@@ -9,6 +9,7 @@ import {
   Video,
   Sparkles,
   Building2,
+  ShoppingCart,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -50,6 +51,8 @@ const data = {
         { title: "My Courses", url: "/platform/courses" },
         { title: "All Courses", url: "/platform/courses/manage" },
         { title: "Course Builder", url: "/platform/courses/builder" },
+        { title: "Learning Paths", url: "/platform/courses/paths" },
+        { title: "Resource Library", url: "/platform/library" },
         { title: "Enrolments", url: "/platform/enrolments" },
       ],
     },
@@ -70,6 +73,7 @@ const data = {
         { title: "Calendar", url: "/platform/calendar" },
         { title: "Sessions", url: "/platform/sessions" },
         { title: "Attendance Log", url: "/platform/attendance" },
+        { title: "Holidays", url: "/platform/holidays" },
       ],
     },
     {
@@ -88,6 +92,8 @@ const data = {
       items: [
         { title: "Learners", url: "/platform/learners" },
         { title: "Trainers", url: "/platform/trainers" },
+        { title: "Cohorts & Teams", url: "/platform/cohorts" },
+        { title: "Staff", url: "/platform/staff" },
       ],
     },
     {
@@ -98,6 +104,17 @@ const data = {
         { title: "Notifications", url: "/platform/notifications" },
         { title: "Messages", url: "/platform/messages" },
         { title: "Announcements", url: "/platform/announcements" },
+        { title: "Forums", url: "/platform/forums" },
+      ],
+    },
+    {
+      title: "Store",
+      url: "#",
+      icon: ShoppingCart,
+      items: [
+        { title: "Catalogue", url: "/platform/store" },
+        { title: "Orders", url: "/platform/store/orders" },
+        { title: "Coupons", url: "/platform/store/coupons" },
       ],
     },
     {
@@ -116,7 +133,9 @@ const data = {
       icon: Building2,
       items: [
         { title: "Analytics", url: "/platform/analytics/org" },
+        { title: "Departments", url: "/platform/departments" },
         { title: "Payments", url: "/platform/payments" },
+        { title: "Fees & Receipts", url: "/platform/payments/fees" },
         { title: "Settings", url: "/platform/settings" },
         { title: "Audit Log", url: "/platform/audit" },
       ],
