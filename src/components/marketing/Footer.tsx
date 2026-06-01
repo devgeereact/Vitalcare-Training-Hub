@@ -17,63 +17,58 @@ const LINK =
 export function Footer() {
   return (
     <footer className="bg-brand-navy text-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-12 lg:px-8">
-        {/* Brand */}
-        <div className="lg:col-span-5">
-          <img
-            src="/logos/logo-horizontal-white.svg"
-            alt="Vitalcare Training Hub"
-            className="h-10 w-auto"
-          />
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/70">
-            CSTF-aligned, CPD-accredited healthcare training, overseen by a
-            registered nurse.
-          </p>
-          <p className="mt-5 text-sm text-white/60">
-            {COMPANY.address.line1}, {COMPANY.address.city}{" "}
-            {COMPANY.address.postcode}
-          </p>
-          <p className="mt-2 flex flex-wrap gap-x-4 text-sm">
-            <a href={`tel:${COMPANY.phone.replace(/\s/g, "")}`} className={LINK}>
-              {COMPANY.phone}
-            </a>
-            <a href={`mailto:${COMPANY.email}`} className={LINK}>
-              {COMPANY.email}
-            </a>
-          </p>
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-12">
+          {/* Brand */}
+          <div className="lg:col-span-8">
+            <img
+              src="/logos/logo-horizontal-white.svg"
+              alt="Vitalcare Training Hub"
+              className="h-10 w-auto"
+            />
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70">
+              CSTF-aligned, CPD-accredited healthcare training, overseen by a
+              registered nurse.
+            </p>
+            <p className="mt-5 text-sm text-white/60">
+              {COMPANY.address.line1}, {COMPANY.address.city}{" "}
+              {COMPANY.address.postcode}
+            </p>
+            <p className="mt-2 flex flex-wrap gap-x-4 text-sm">
+              <a href={`tel:${COMPANY.phone.replace(/\s/g, "")}`} className={LINK}>
+                {COMPANY.phone}
+              </a>
+              <a href={`mailto:${COMPANY.email}`} className={LINK}>
+                {COMPANY.email}
+              </a>
+            </p>
+          </div>
+
+          {/* Legal */}
+          <div className="lg:col-span-4">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-brand-gold">
+              Legal
+            </h2>
+            <ul className="mt-4 space-y-2.5 text-sm">
+              {LEGAL_LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link to={l.href} className={LINK}>
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
-        {/* Explore */}
-        <div className="lg:col-span-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-brand-gold">
-            Explore
-          </h2>
-          <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
-            {EXPLORE.map((l) => (
-              <li key={l.href}>
-                <Link to={l.href} className={LINK}>
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Legal */}
-        <div className="lg:col-span-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-brand-gold">
-            Legal
-          </h2>
-          <ul className="mt-4 space-y-2.5 text-sm">
-            {LEGAL_LINKS.map((l) => (
-              <li key={l.href}>
-                <Link to={l.href} className={LINK}>
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Explore — single line */}
+        <nav className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/10 pt-8 text-sm">
+          {EXPLORE.map((l) => (
+            <Link key={l.href} to={l.href} className={LINK}>
+              {l.label}
+            </Link>
+          ))}
+        </nav>
       </div>
 
       <div className="border-t border-white/10">

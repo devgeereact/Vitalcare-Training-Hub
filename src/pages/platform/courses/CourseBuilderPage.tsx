@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import RichTextEditor from "@/components/courses/RichTextEditor"
+import AiAssistButton from "@/components/ai/AiAssistButton"
 import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
 import {
   courseFormSchema,
@@ -59,7 +60,8 @@ const EMPTY: CourseFormValues = {
 }
 
 export default function CourseBuilderPage() {
-  const { id } = useParams()
+  const params = useParams()
+  const id = params.id && params.id !== "new" ? params.id : undefined
   const isEdit = !!id
   const navigate = useNavigate()
 
@@ -177,7 +179,21 @@ export default function CourseBuilderPage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Description</FormLabel>
+                      <AiAssistButton
+                        task="a course description"
+                        context={`Course title: ${form.getValues("title")}\nSummary: ${form.getValues("summary")}`}
+                        onInsert={(text) =>
+                          field.onChange(
+                            text
+                              .split(/\n{2,}/)
+                              .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+                              .join(""),
+                          )
+                        }
+                      />
+                    </div>
                     <FormControl>
                       <RichTextEditor value={field.value ?? ""} onChange={field.onChange} />
                     </FormControl>

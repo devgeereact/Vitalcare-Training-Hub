@@ -40,6 +40,15 @@ const collapsed = state === "collapsed"
 const navigate = useNavigate()
 const { signOut } = useAuth()
 
+const initials =
+  user.name
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "U"
+
 const handleSignOut = async () => {
   await signOut()
   navigate("/sign-in", { replace: true })
@@ -54,39 +63,39 @@ const handleSignOut = async () => {
     <button
       className="
         flex h-12 w-12 items-center justify-center
-        rounded-xl bg-muted mx-auto
+        rounded-xl mx-auto hover:bg-sidebar-accent
       "
     >
       <Avatar className="h-9 w-9 rounded-xl">
         <AvatarImage src={user.avatar} alt={user.name} />
-        <AvatarFallback>CN</AvatarFallback>
+        <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
+          {initials}
+        </AvatarFallback>
       </Avatar>
     </button>
   ) : (
     <SidebarMenuButton
       size="lg"
       className="
-        bg-muted px-2
+        px-2 text-sidebar-foreground
+        hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
         data-[state=open]:bg-sidebar-accent
         data-[state=open]:text-sidebar-accent-foreground
       "
     >
       <Avatar className="h-9 w-9 rounded-xl shrink-0">
         <AvatarImage src={user.avatar} alt={user.name} />
-        <AvatarFallback>CN</AvatarFallback>
+        <AvatarFallback className="rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
+          {initials}
+        </AvatarFallback>
       </Avatar>
 
       <div className="grid flex-1 text-left text-sm leading-tight">
-        <span className="truncate font-medium">
-          {user.name}
-        </span>
-
-        <span className="truncate text-xs">
-          {user.email}
-        </span>
+        <span className="truncate font-medium">{user.name}</span>
+        <span className="truncate text-xs opacity-80">{user.email}</span>
       </div>
 
-      <ChevronsUpDownIcon className="ml-auto size-4" />
+      <ChevronsUpDownIcon className="ml-auto size-4 opacity-80" />
     </SidebarMenuButton>
   )}
 </DropdownMenuTrigger>
@@ -100,7 +109,7 @@ const handleSignOut = async () => {
               <div className="flex items-center gap-2 text-left text-sm p-2">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>

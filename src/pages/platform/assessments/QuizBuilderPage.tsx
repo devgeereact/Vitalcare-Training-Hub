@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import QuestionDialog from "@/components/assessments/QuestionDialog"
+import AiAssistButton from "@/components/ai/AiAssistButton"
 import {
   assessmentFormSchema,
   type AssessmentFormValues,
@@ -309,9 +310,16 @@ export default function QuizBuilderPage() {
               <CardTitle>Questions</CardTitle>
               <CardDescription>Build the question bank.</CardDescription>
             </div>
-            <Button size="sm" onClick={() => setDialog({ q: null })}>
-              <Plus className="mr-1.5 size-4" /> Add question
-            </Button>
+            <div className="flex gap-2">
+              <AiAssistButton
+                task="quiz questions for this assessment"
+                context={`Assessment: ${form.getValues("title")}`}
+                label="Suggest questions"
+              />
+              <Button size="sm" onClick={() => setDialog({ q: null })}>
+                <Plus className="mr-1.5 size-4" /> Add question
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {questions.isLoading ? (

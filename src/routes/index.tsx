@@ -24,7 +24,9 @@ import PlatformCalendarPage from "@/pages/platform/sessions/CalendarPage"
 import AttendanceLogPage from "@/pages/platform/sessions/AttendanceLogPage"
 import CertificatesListPage from "@/pages/platform/certificates/CertificatesListPage"
 import CertTemplatesPage from "@/pages/platform/certificates/CertTemplatesPage"
+import CertVerifyPage from "@/pages/platform/certificates/CertVerifyPage"
 import AiAssistantPage from "@/pages/platform/ai/AiAssistantPage"
+import SettingsPage from "@/pages/platform/settings/SettingsPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -351,9 +353,20 @@ export const router = createBrowserRouter (
             </RoleGuard>
           ),
         },
+        {
+          path: "certificates/verify",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <CertVerifyPage />
+            </RoleGuard>
+          ),
+        },
 
         // 🤖 AI ASSISTANT
         { path: "ai", element: <AiAssistantPage /> },
+
+        // ⚙️ SETTINGS (any authenticated user)
+        { path: "settings", element: <SettingsPage /> },
         {path: "dashboard/crm", element: <CrmDashboard /> },
         {path: "dashboard/eCommerce", element: <EcommerceDashboard /> },
         {path: "dashboard/landing-page", element: <LandingPage /> },

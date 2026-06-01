@@ -14,6 +14,7 @@ import {
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
+import { useUser } from "@/hooks/use-user"
 import {
   Sidebar,
   SidebarContent,
@@ -82,6 +83,7 @@ const data = {
       icon: Award,
       items: [
         { title: "Certificates", url: "/platform/certificates" },
+        { title: "Verification", url: "/platform/certificates/verify" },
         { title: "Templates", url: "/platform/certificates/templates" },
       ],
     },
@@ -148,6 +150,15 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 }
 
 export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
+  const { profile } = useUser()
+  const currentUser = {
+    name:
+      profile?.full_name ||
+      [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ||
+      "Account",
+    email: profile?.email ?? "",
+    avatar: profile?.avatar_url ?? "",
+  }
   return (
     <div
       onMouseEnter={() => onHoverChange?.(true)}
@@ -177,7 +188,7 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
         </SidebarContent>
 
         <SidebarFooter className="border-t border-sidebar-border h-16 justify-center">
-          <NavUser user={data.user} />
+          <NavUser user={currentUser} />
         </SidebarFooter>
 
         <SidebarRail />

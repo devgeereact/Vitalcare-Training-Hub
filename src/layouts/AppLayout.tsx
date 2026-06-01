@@ -24,7 +24,6 @@ import { GlobalSearch } from "@/components/global-search"
 
 import Footer from "@/layouts/Footer"
 
-import ThemeCustomizer from "@/components/theme-customizer"
 
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
@@ -154,7 +153,6 @@ export default function AppLayout() {
         </main>
 
         <Footer />
-        <ThemeCustomizer />
         <BottomTabBar />
       </SidebarInset>
     </SidebarProvider>

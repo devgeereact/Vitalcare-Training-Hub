@@ -62,6 +62,63 @@ export function useCertificates() {
   return useQuery({ queryKey: certsKeys.list(), queryFn: getCertificates })
 }
 
+export interface CertStats {
+  total: number
+  active: number
+  expired: number
+  expiringSoon: number
+}
+
+export async function getCertStats(): Promise<CertStats> {
+  const now = new Date()
+  const in30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+  const { data, error } = await supabase
+    .from("learner_certificates")
+    .select("expires_at")
+    .is("deleted_at", null)
+  if (error) {
+    console.error("[getCertStats]", error)
+    throw error
+  }
+  const rows = data ?? []
+  let expired = 0
+  let expiringSoon = 0
+  for (const r of rows) {
+    if (!r.expires_at) continue
+    const exp = new Date(r.expires_at)
+    if (exp < now) expired += 1
+    else if (exp <= in30) expiringSoon += 1
+  }
+  return {
+    total: rows.length,
+    active: rows.length - expired,
+    expired,
+    expiringSoon,
+  }
+}
+
+export function useCertStats() {
+  return useQuery({ queryKey: [...certsKeys.all, "stats"], queryFn: getCertStats })
+}
+
+export interface VerifyResult {
+  learner_name: string
+  course_title: string
+  cpd_hours: number
+  issued_at: string
+  expires_at: string | null
+  is_valid: boolean
+}
+
+export async function verifyByUuid(uuid: string): Promise<VerifyResult | null> {
+  const { data, error } = await supabase.rpc("verify_certificate", { p_uuid: uuid.trim() })
+  if (error) {
+    console.error("[verifyByUuid]", error)
+    throw error
+  }
+  return (data?.[0] as VerifyResult) ?? null
+}
+
 export interface IssueCertInput {
   learnerId: string
   courseId: string | null

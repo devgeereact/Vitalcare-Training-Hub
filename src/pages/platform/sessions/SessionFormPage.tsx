@@ -35,6 +35,7 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
+import AiAssistButton from "@/components/ai/AiAssistButton"
 import { sessionFormSchema, type SessionFormValues } from "@/lib/validations/session.schema"
 import {
   useSession,
@@ -161,7 +162,14 @@ export default function SessionFormPage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Description</FormLabel>
+                      <AiAssistButton
+                        task="a training session description"
+                        context={`Session title: ${form.getValues("title")}`}
+                        onInsert={(text) => field.onChange(text)}
+                      />
+                    </div>
                     <FormControl>
                       <Textarea rows={2} placeholder="Optional details" {...field} />
                     </FormControl>
