@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom"
 
 import AppLayout from "@/layouts/AppLayout"
 import ModuleComingSoon from "@/pages/platform/ModuleComingSoon"
+import DashboardPage from "@/pages/platform/DashboardPage"
 import AuthLayout from "@/layouts/AuthLayout"
 
 import AnalyticsDashboard from "@/pages/dashboard/analytics/AnalyticsDashboard"
@@ -172,8 +173,8 @@ export const router = createBrowserRouter (
       ),
       errorElement: <ErrorPage />,
       children: [
-        {index: true, element: <AnalyticsDashboard /> },
-        {path: "dashboard", element: <AnalyticsDashboard /> },
+        {index: true, element: <DashboardPage /> },
+        {path: "dashboard", element: <DashboardPage /> },
         {path: "dashboard/analytics", element: <AnalyticsDashboard /> },
         {path: "dashboard/crm", element: <CrmDashboard /> },
         {path: "dashboard/eCommerce", element: <EcommerceDashboard /> },
