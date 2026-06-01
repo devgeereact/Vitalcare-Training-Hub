@@ -131,17 +131,20 @@ export function useCreateSession() {
         throw error
       }
 
+      const start = new Date(v.starts_at)
+      const end = new Date(v.ends_at)
+      let joinUrl: string | null = null
+
       // Virtual sessions get a Zoom meeting (best-effort; failure is non-fatal).
       if (v.is_virtual) {
         try {
-          const start = new Date(v.starts_at)
-          const end = new Date(v.ends_at)
           const duration = Math.max(15, Math.round((end.getTime() - start.getTime()) / 60000))
           const { data: zoom, error: zErr } = await supabase.functions.invoke(
             "zoom-create-meeting",
             { body: { topic: v.title, start_time: start.toISOString(), duration } },
           )
           if (!zErr && zoom?.join_url) {
+            joinUrl = zoom.join_url
             await supabase
               .from("training_sessions")
               .update({ zoom_meeting_id: zoom.id, zoom_join_url: zoom.join_url })
@@ -151,6 +154,32 @@ export function useCreateSession() {
           console.error("[useCreateSession:zoom]", zoomErr)
         }
       }
+
+      // Sync to Google Calendar (best-effort).
+      try {
+        const { data: gcal, error: gErr } = await supabase.functions.invoke(
+          "gcal-sync-event",
+          {
+            body: {
+              title: v.title,
+              description: v.description || "",
+              start: start.toISOString(),
+              end: end.toISOString(),
+              location: v.venue || (v.is_virtual ? "Online" : ""),
+              joinUrl,
+            },
+          },
+        )
+        if (!gErr && gcal?.eventId) {
+          await supabase
+            .from("training_sessions")
+            .update({ gcal_event_id: gcal.eventId })
+            .eq("id", data.id)
+        }
+      } catch (gcalErr) {
+        console.error("[useCreateSession:gcal]", gcalErr)
+      }
+
       return data.id
     },
     onSuccess: () => {
