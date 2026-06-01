@@ -204,9 +204,20 @@ export type TrainingSession = Timestamps & {
   status: SessionStatus
   zoom_meeting_id: string | null
   zoom_join_url: string | null
+  meet_url: string | null
   gcal_event_id: string | null
   template_id: string | null
   organisation_id: string | null
+}
+
+export type GoogleOauthToken = {
+  id: string
+  refresh_token: string
+  scope: string | null
+  connected_email: string | null
+  connected_by: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type SessionBooking = Timestamps & {
@@ -377,6 +388,12 @@ export type Database = {
         "trainer_id" | "weekday" | "start_time" | "end_time"
       >
       ai_conversations: TableShape<AiConversation, "user_id">
+      google_oauth_tokens: {
+        Row: GoogleOauthToken
+        Insert: Partial<GoogleOauthToken> & Pick<GoogleOauthToken, "refresh_token">
+        Update: Partial<GoogleOauthToken>
+        Relationships: []
+      }
       audit_logs: {
         Row: AuditLog
         Insert: Partial<AuditLog> & Pick<AuditLog, "action">

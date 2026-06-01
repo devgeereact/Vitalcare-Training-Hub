@@ -133,10 +133,37 @@ export function useCreateSession() {
 
       const start = new Date(v.starts_at)
       const end = new Date(v.ends_at)
-      let joinUrl: string | null = null
+      const patch: Partial<TrainingSession> = {}
 
-      // Virtual sessions get a Zoom meeting (best-effort; failure is non-fatal).
-      if (v.is_virtual) {
+      // Primary: Google Calendar event + Meet link (virtual) via OAuth.
+      let haveMeetLink = false
+      try {
+        const { data: g, error: gErr } = await supabase.functions.invoke(
+          "gmeet-create-event",
+          {
+            body: {
+              title: v.title,
+              description: v.description || "",
+              start: start.toISOString(),
+              end: end.toISOString(),
+              location: v.venue || (v.is_virtual ? "Online (Google Meet)" : ""),
+              withMeet: v.is_virtual,
+            },
+          },
+        )
+        if (!gErr && g?.eventId) {
+          patch.gcal_event_id = g.eventId
+          if (g.meetUrl) {
+            patch.meet_url = g.meetUrl
+            haveMeetLink = true
+          }
+        }
+      } catch (gErr) {
+        console.error("[useCreateSession:gmeet]", gErr)
+      }
+
+      // Backup: Zoom for virtual sessions when no Meet link was created.
+      if (v.is_virtual && !haveMeetLink) {
         try {
           const duration = Math.max(15, Math.round((end.getTime() - start.getTime()) / 60000))
           const { data: zoom, error: zErr } = await supabase.functions.invoke(
@@ -144,42 +171,17 @@ export function useCreateSession() {
             { body: { topic: v.title, start_time: start.toISOString(), duration } },
           )
           if (!zErr && zoom?.join_url) {
-            joinUrl = zoom.join_url
-            await supabase
-              .from("training_sessions")
-              .update({ zoom_meeting_id: zoom.id, zoom_join_url: zoom.join_url })
-              .eq("id", data.id)
+            patch.zoom_meeting_id = zoom.id
+            patch.zoom_join_url = zoom.join_url
           }
         } catch (zoomErr) {
           console.error("[useCreateSession:zoom]", zoomErr)
         }
       }
 
-      // Sync to Google Calendar (best-effort).
-      try {
-        const { data: gcal, error: gErr } = await supabase.functions.invoke(
-          "gcal-sync-event",
-          {
-            body: {
-              title: v.title,
-              description: v.description || "",
-              start: start.toISOString(),
-              end: end.toISOString(),
-              location: v.venue || (v.is_virtual ? "Online" : ""),
-              joinUrl,
-            },
-          },
-        )
-        if (!gErr && gcal?.eventId) {
-          await supabase
-            .from("training_sessions")
-            .update({ gcal_event_id: gcal.eventId })
-            .eq("id", data.id)
-        }
-      } catch (gcalErr) {
-        console.error("[useCreateSession:gcal]", gcalErr)
+      if (Object.keys(patch).length > 0) {
+        await supabase.from("training_sessions").update(patch).eq("id", data.id)
       }
-
       return data.id
     },
     onSuccess: () => {

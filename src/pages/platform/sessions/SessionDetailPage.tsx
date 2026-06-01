@@ -143,13 +143,22 @@ export default function SessionDetailPage() {
             </p>
           )}
           {s.description && <p className="pt-1 text-sm">{s.description}</p>}
-          {s.zoom_join_url && (
-            <Button asChild size="sm" className="mt-2">
-              <a href={s.zoom_join_url} target="_blank" rel="noopener noreferrer">
-                <Video className="mr-1.5 size-4" /> Join Zoom meeting
-              </a>
-            </Button>
-          )}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {s.meet_url && (
+              <Button asChild size="sm">
+                <a href={s.meet_url} target="_blank" rel="noopener noreferrer">
+                  <Video className="mr-1.5 size-4" /> Join Google Meet
+                </a>
+              </Button>
+            )}
+            {s.zoom_join_url && (
+              <Button asChild size="sm" variant={s.meet_url ? "outline" : "default"}>
+                <a href={s.zoom_join_url} target="_blank" rel="noopener noreferrer">
+                  <Video className="mr-1.5 size-4" /> Join Zoom meeting
+                </a>
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
