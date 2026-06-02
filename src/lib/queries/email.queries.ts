@@ -125,6 +125,23 @@ export const mailKeys = {
   detail: (id: string) => ["mail", "detail", id] as const,
 }
 
+const KNOWN_CATEGORIES: ReadonlySet<string> = new Set([
+  "work",
+  "private",
+  "support",
+  "social",
+])
+
+/** Normalise a raw mail_messages row into a safe MailRow: attachments always
+ *  an array, category constrained to the known set (legacy/unknown labels are
+ *  dropped to null so rendering never indexes a missing map entry). */
+function normaliseMailRow(raw: MailRow): MailRow {
+  const attachments = Array.isArray(raw.attachments) ? raw.attachments : []
+  const category =
+    raw.category && KNOWN_CATEGORIES.has(raw.category) ? raw.category : null
+  return { ...raw, attachments, category }
+}
+
 /** Messages for a folder, optionally filtered by a label/category. Trash is
  *  excluded everywhere except the Trash folder; "important" is a virtual
  *  folder across non-trashed mail flagged important. */
@@ -134,12 +151,13 @@ export function useMailList(folder: MailFolder, category: MailCategory | "all" =
     queryFn: async (): Promise<MailRow[]> => {
       let q = mailTable().select("*")
 
-      if (folder === "trash") {
-        q = q.eq("folder", "trash")
-      } else if (folder === "important") {
+      // Each folder uses a single, unambiguous predicate. The Important view is
+      // a virtual folder over all non-trashed mail flagged important, so it is
+      // the only one that needs the extra "not trash" guard.
+      if (folder === "important") {
         q = q.eq("important", true).neq("folder", "trash")
       } else {
-        q = q.eq("folder", folder).neq("folder", "trash")
+        q = q.eq("folder", folder)
       }
 
       if (category !== "all") q = q.eq("category", category)
@@ -152,7 +170,7 @@ export function useMailList(folder: MailFolder, category: MailCategory | "all" =
         console.error("[useMailList]", error)
         throw error
       }
-      return (data ?? []) as MailRow[]
+      return (Array.isArray(data) ? data : []).map(normaliseMailRow)
     },
   })
 }

@@ -57,6 +57,20 @@ function isImage(type: string | null): boolean {
   return !!type && type.startsWith("image/")
 }
 
+/** Format a timestamp as HH:mm, returning "" for missing/invalid values. */
+function timeLabel(value: string | null | undefined): string {
+  if (!value) return ""
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? "" : format(d, "HH:mm")
+}
+
+/** Relative time label, safe against missing/invalid timestamps. */
+function relativeLabel(value: string | null | undefined): string {
+  if (!value) return ""
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? "" : formatDistanceToNow(d, { addSuffix: true })
+}
+
 function ThreadView({
   userId,
   otherId,
@@ -170,22 +184,22 @@ function ThreadView({
   }
 
   return (
-    <div className="flex h-[calc(100svh-12rem)] flex-col">
-      <div className="flex items-center gap-2 border-b border-border p-3">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border p-3">
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onBack}>
           <ArrowLeft className="size-4" />
         </Button>
-        <span className="flex size-9 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
           {otherName.slice(0, 1).toUpperCase()}
         </span>
-        <p className="font-medium">{otherName}</p>
+        <p className="min-w-0 flex-1 truncate font-medium">{otherName}</p>
         <ScheduleMeetingButton
           otherName={otherName}
           onScheduled={(body) => send.mutateAsync({ recipientId: otherId, body })}
         />
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-10 w-2/3" />
@@ -208,7 +222,7 @@ function ThreadView({
               >
                 <div
                   className={cn(
-                    "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm",
+                    "max-w-[80%] min-w-0 overflow-hidden rounded-2xl px-3.5 py-2 text-sm sm:max-w-[75%]",
                     mine
                       ? "rounded-br-sm bg-brand-navy text-white"
                       : "rounded-bl-sm bg-muted text-foreground",
@@ -221,7 +235,7 @@ function ThreadView({
                           <img
                             src={m.attachment_url}
                             alt={m.attachment_name ?? "attachment"}
-                            className="max-h-48 rounded-lg object-cover"
+                            className="max-h-48 max-w-full rounded-lg object-cover"
                             loading="lazy"
                           />
                         </a>
@@ -231,24 +245,30 @@ function ThreadView({
                           target="_blank"
                           rel="noopener noreferrer"
                           className={cn(
-                            "flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs underline-offset-2 hover:underline",
+                            "flex min-w-0 items-center gap-2 rounded-lg px-2.5 py-2 text-xs underline-offset-2 hover:underline",
                             mine ? "bg-white/15" : "bg-background",
                           )}
                         >
                           <FileText className="size-4 shrink-0" />
-                          <span className="truncate">{m.attachment_name ?? "Attachment"}</span>
+                          <span className="min-w-0 truncate">
+                            {m.attachment_name ?? "Attachment"}
+                          </span>
                         </a>
                       )}
                     </div>
                   )}
-                  {m.body && <p className="whitespace-pre-wrap">{m.body}</p>}
+                  {m.body && (
+                    <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                      {m.body}
+                    </p>
+                  )}
                   <p
                     className={cn(
                       "mt-1 flex items-center justify-end gap-1 text-[10px]",
                       mine ? "text-white/60" : "text-muted-foreground",
                     )}
                   >
-                    {format(new Date(m.created_at), "HH:mm")}
+                    {timeLabel(m.created_at)}
                     {mine &&
                       (m.read_at ? (
                         <CheckCheck className="size-3.5 text-sky-300" />
@@ -264,7 +284,7 @@ function ThreadView({
         <div ref={endRef} />
       </div>
 
-      <div className="border-t border-border p-3">
+      <div className="shrink-0 border-t border-border p-3">
         {attachment && (
           <div className="mb-2 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs">
             {isImage(attachment.type) ? (
@@ -287,7 +307,7 @@ function ThreadView({
             </button>
           </div>
         )}
-        <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 items-center gap-1.5">
           <input
             ref={fileRef}
             type="file"
@@ -320,6 +340,7 @@ function ThreadView({
             placeholder="Write a message…"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            className="min-w-0 flex-1"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()
@@ -472,15 +493,15 @@ export default function MessagesPage() {
       </div>
 
       <Card className="overflow-hidden">
-        <div className="grid lg:grid-cols-[320px_1fr]">
+        <div className="grid h-[calc(100svh-13rem)] min-h-[28rem] lg:grid-cols-[320px_minmax(0,1fr)]">
           {/* Thread list */}
           <div
             className={cn(
-              "border-r border-border",
-              active ? "hidden lg:block" : "block",
+              "flex min-h-0 min-w-0 flex-col border-r border-border lg:overflow-hidden",
+              active ? "hidden lg:flex" : "flex",
             )}
           >
-            <div className="border-b border-border p-3">
+            <div className="shrink-0 border-b border-border p-3">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -491,6 +512,7 @@ export default function MessagesPage() {
                 />
               </div>
             </div>
+            <div className="min-h-0 flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="space-y-2 p-4">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -537,7 +559,7 @@ export default function MessagesPage() {
                             {t.otherName}
                           </span>
                           <span className="shrink-0 text-[10px] text-muted-foreground">
-                            {formatDistanceToNow(new Date(t.lastAt), { addSuffix: true })}
+                            {relativeLabel(t.lastAt)}
                           </span>
                         </span>
                         <span className="block truncate text-xs text-muted-foreground">
@@ -554,10 +576,11 @@ export default function MessagesPage() {
                 ))}
               </ul>
             )}
+            </div>
           </div>
 
           {/* Conversation */}
-          <div className={cn(active ? "block" : "hidden lg:block")}>
+          <div className={cn("min-h-0 min-w-0", active ? "block" : "hidden lg:block")}>
             {active && user?.id ? (
               <ThreadView
                 userId={user.id}
@@ -566,7 +589,7 @@ export default function MessagesPage() {
                 onBack={() => setActive(null)}
               />
             ) : (
-              <div className="flex h-full min-h-[400px] flex-col items-center justify-center gap-2 text-center">
+              <div className="flex h-full min-h-[24rem] flex-col items-center justify-center gap-2 text-center">
                 <MessageSquare className="size-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
                   Select a conversation to start reading.

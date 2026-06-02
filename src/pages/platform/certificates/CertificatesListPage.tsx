@@ -317,6 +317,7 @@ export default function CertificatesListPage() {
                               courseTitle: c.courseTitle,
                               cpdHours: c.cpdHours,
                               issuedAt: c.issuedAt,
+                              expiresAt: c.expiresAt,
                               verificationUuid: c.verificationUuid,
                               preset: template.data?.preset,
                               titleText: template.data?.titleText,

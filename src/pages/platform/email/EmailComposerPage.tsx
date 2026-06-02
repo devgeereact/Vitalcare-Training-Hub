@@ -115,6 +115,20 @@ function initials(name: string | null, addr: string | null): string {
   return (parts[0][0] + parts[1][0]).toUpperCase()
 }
 
+/** Parse a timestamp safely. Returns null for missing or invalid values so the
+ *  UI never renders "Invalid Date" or throws inside date-fns. */
+function safeDate(value: string | null | undefined): Date | null {
+  if (!value) return null
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+/** Look up category styling, guarding against legacy/unknown labels. */
+function categoryMeta(category: string | null): { label: string; dot: string } | null {
+  if (!category) return null
+  return CATEGORY_META[category as MailCategory] ?? null
+}
+
 function cleanBody(raw: string): string {
   return raw
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -277,8 +291,8 @@ export default function EmailComposerPage() {
                               {m.important && (
                                 <Star className="size-3 fill-brand-gold text-brand-gold" />
                               )}
-                              {m.received_at
-                                ? formatDistanceToNow(new Date(m.received_at), {
+                              {safeDate(m.received_at)
+                                ? formatDistanceToNow(safeDate(m.received_at)!, {
                                     addSuffix: true,
                                   })
                                 : ""}
@@ -292,17 +306,17 @@ export default function EmailComposerPage() {
                           </span>
                           <span className="flex items-center gap-2">
                             <span className="block flex-1 truncate text-xs text-muted-foreground">
-                              {m.snippet}
+                              {m.snippet ?? ""}
                             </span>
-                            {m.category && (
+                            {categoryMeta(m.category) && (
                               <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
                                 <span
                                   className={cn(
                                     "size-2 rounded-full",
-                                    CATEGORY_META[m.category].dot,
+                                    categoryMeta(m.category)!.dot,
                                   )}
                                 />
-                                {CATEGORY_META[m.category].label}
+                                {categoryMeta(m.category)!.label}
                               </span>
                             )}
                           </span>
@@ -421,6 +435,9 @@ function MailDetail({
   onDeleteForever: () => void
 }) {
   const body = mail.body_text || cleanBody(mail.body_html || mail.snippet || "")
+  const receivedAt = safeDate(mail.received_at)
+  const detailCategory = categoryMeta(mail.category)
+  const attachments = Array.isArray(mail.attachments) ? mail.attachments : []
   return (
     <div className="space-y-4 p-5">
       <div className="flex items-center justify-between gap-2">
@@ -504,16 +521,14 @@ function MailDetail({
           <p className="mt-1 text-sm text-muted-foreground">
             {mail.from_name ? `${mail.from_name} · ` : ""}
             {mail.from_addr || (mail.to_addr ? `To: ${mail.to_addr}` : "")}
-            {mail.received_at
-              ? ` · ${format(new Date(mail.received_at), "EEE d MMM yyyy, HH:mm")}`
-              : ""}
+            {receivedAt ? ` · ${format(receivedAt, "EEE d MMM yyyy, HH:mm")}` : ""}
           </p>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {mail.is_draft && <Badge variant="secondary">Draft</Badge>}
-            {mail.category && (
+            {detailCategory && (
               <Badge variant="secondary" className="gap-1">
-                <span className={cn("size-2 rounded-full", CATEGORY_META[mail.category].dot)} />
-                {CATEGORY_META[mail.category].label}
+                <span className={cn("size-2 rounded-full", detailCategory.dot)} />
+                {detailCategory.label}
               </Badge>
             )}
           </div>
@@ -524,12 +539,12 @@ function MailDetail({
         {body || "(no content)"}
       </div>
 
-      {mail.attachments?.length > 0 && (
+      {attachments.length > 0 && (
         <div className="space-y-1.5 rounded-lg border border-border p-3">
           <p className="text-xs font-medium text-muted-foreground">
-            Attachments ({mail.attachments.length})
+            Attachments ({attachments.length})
           </p>
-          {mail.attachments.map((a, i) => (
+          {attachments.map((a, i) => (
             <a
               key={i}
               href={a.url}
@@ -900,7 +915,9 @@ function BroadcastDialog({
                       <p className="text-[11px] text-muted-foreground">
                         {c.status === "sent"
                           ? `Sent to ${c.sent_count}`
-                          : `For ${format(new Date(c.scheduled_at), "d MMM, HH:mm")}`}
+                          : safeDate(c.scheduled_at)
+                            ? `For ${format(safeDate(c.scheduled_at)!, "d MMM, HH:mm")}`
+                            : "Not scheduled"}
                       </p>
                     </div>
                     <Badge variant="secondary" className={STATUS_STYLE[c.status]}>

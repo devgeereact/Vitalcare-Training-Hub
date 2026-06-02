@@ -34,6 +34,10 @@ export interface ManagedFile {
   ref: string
   /** Drive view link when available. */
   url?: string
+  /** Drive direct download/content link when available. */
+  downloadUrl?: string
+  /** MIME type when the source reports it. */
+  mime?: string
 }
 
 export const BUCKET = "files"
@@ -46,9 +50,32 @@ const DOC_EXT = [
   "odt", "ods", "odp", "md", "pages", "key", "numbers",
 ]
 
-function extOf(name: string): string {
+export function extOf(name: string): string {
   const m = name.toLowerCase().match(/\.([a-z0-9]+)$/)
   return m ? m[1] : ""
+}
+
+/** Media kind decides how a file is previewed in the dialog. */
+export type PreviewKind = "image" | "pdf" | "video" | "audio" | "other"
+
+const PREVIEW_IMAGE_EXT = ["png", "jpg", "jpeg", "gif", "webp", "svg"]
+const PREVIEW_VIDEO_EXT = ["mp4", "webm", "mov"]
+const PREVIEW_AUDIO_EXT = ["mp3", "wav", "m4a", "ogg"]
+
+/** Decide how a file should be previewed, from filename and (optional) mime. */
+export function previewKind(name: string, mime?: string): PreviewKind {
+  const m = (mime ?? "").toLowerCase()
+  if (m.startsWith("image/")) return "image"
+  if (m === "application/pdf") return "pdf"
+  if (m.startsWith("video/")) return "video"
+  if (m.startsWith("audio/")) return "audio"
+
+  const ext = extOf(name)
+  if (PREVIEW_IMAGE_EXT.includes(ext)) return "image"
+  if (ext === "pdf") return "pdf"
+  if (PREVIEW_VIDEO_EXT.includes(ext)) return "video"
+  if (PREVIEW_AUDIO_EXT.includes(ext)) return "audio"
+  return "other"
 }
 
 /** Decide the type folder from a filename and (optional) mime type. */
@@ -112,6 +139,7 @@ async function listBucket(): Promise<ManagedFile[]> {
       folder: categorise(f.name, f.metadata?.mimetype as string | undefined),
       backend: "bucket" as const,
       ref: f.name,
+      mime: (f.metadata?.mimetype as string | undefined) ?? undefined,
     }))
 }
 
@@ -139,6 +167,8 @@ export function useManagedFiles() {
             backend: "drive" as const,
             ref: f.id,
             url: f.webViewLink ?? f.webContentLink,
+            downloadUrl: f.webContentLink ?? f.webViewLink,
+            mime: f.mimeType,
           }))
           return { backend: "drive", files }
         }
@@ -227,4 +257,63 @@ export async function bucketDownloadUrl(path: string): Promise<string | null> {
     return null
   }
   return data.signedUrl
+}
+
+export interface PreviewSource {
+  /** Working URL for the chosen preview element. */
+  url: string
+  /** How the file should be rendered. */
+  kind: PreviewKind
+  /**
+   * Drive viewer/preview embeds expect an iframe rather than a raw media tag,
+   * so the dialog renders an iframe regardless of media kind when this is set.
+   */
+  embed: boolean
+}
+
+const DRIVE_ID = /[-\w]{25,}/
+
+function driveFileId(f: ManagedFile): string | null {
+  if (f.ref && DRIVE_ID.test(f.ref)) return f.ref
+  const fromUrl = (f.url ?? "").match(DRIVE_ID)
+  return fromUrl ? fromUrl[0] : null
+}
+
+/**
+ * Resolve a working preview URL for a file.
+ *   - Bucket objects: a short-lived signed URL (raw media, embeds inline).
+ *   - Drive objects: Google's inline preview iframe URL when an id is known,
+ *     otherwise the view link the list query exposes.
+ */
+export async function resolvePreviewSource(
+  f: ManagedFile,
+): Promise<PreviewSource | null> {
+  const kind = previewKind(f.name, f.mime)
+
+  if (f.backend === "bucket") {
+    const url = await bucketDownloadUrl(f.ref)
+    if (!url) return null
+    return { url, kind, embed: false }
+  }
+
+  // Drive: use Google's embeddable preview iframe so private files render
+  // without a separate signed-URL round trip.
+  const id = driveFileId(f)
+  if (id) {
+    return {
+      url: `https://drive.google.com/file/d/${id}/preview`,
+      kind,
+      embed: kind !== "other",
+    }
+  }
+  if (f.url) return { url: f.url, kind, embed: true }
+  return null
+}
+
+/** Resolve a working download URL for any file. */
+export async function resolveDownloadUrl(
+  f: ManagedFile,
+): Promise<string | null> {
+  if (f.backend === "drive") return f.downloadUrl ?? f.url ?? null
+  return bucketDownloadUrl(f.ref)
 }
