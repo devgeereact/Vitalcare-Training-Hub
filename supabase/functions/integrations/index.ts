@@ -28,6 +28,11 @@ const CATALOGUE: { id: string; label: string; keys: string[] }[] = [
     label: "SMTP (send via your own mail server)",
     keys: ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_FROM"],
   },
+  {
+    id: "imap",
+    label: "IMAP (pull your inbox)",
+    keys: ["IMAP_HOST", "IMAP_PORT"],
+  },
   { id: "google_oauth", label: "Google sign-in", keys: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"] },
   { id: "google_meet", label: "Google Meet & Calendar", keys: ["GCAL_CALENDAR_ID"] },
   { id: "zoom", label: "Zoom (backup video)", keys: ["ZOOM_ACCOUNT_ID", "ZOOM_CLIENT_ID", "ZOOM_CLIENT_SECRET"] },

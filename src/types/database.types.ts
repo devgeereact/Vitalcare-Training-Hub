@@ -287,6 +287,20 @@ export type AnnouncementAck = {
   acknowledged_at: string
 }
 
+export type MailMessage = {
+  id: string
+  message_id: string | null
+  uid: number | null
+  from_name: string | null
+  from_addr: string | null
+  subject: string | null
+  snippet: string | null
+  body_html: string | null
+  received_at: string | null
+  seen: boolean
+  created_at: string
+}
+
 export type Reminder = {
   id: string
   user_id: string
@@ -655,6 +669,12 @@ export type Database = {
         Row: Reminder
         Insert: Partial<Reminder> & Pick<Reminder, "user_id" | "title" | "remind_at">
         Update: Partial<Reminder>
+        Relationships: []
+      }
+      mail_messages: {
+        Row: MailMessage
+        Insert: Partial<MailMessage>
+        Update: Partial<MailMessage>
         Relationships: []
       }
       calendar_events: {
