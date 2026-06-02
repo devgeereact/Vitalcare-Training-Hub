@@ -1,11 +1,14 @@
 // Supabase Edge Function: imap-sync
 // Pulls recent INBOX messages over IMAP into mail_messages.
-//  - cron (x-cron-secret): syncs the org mailbox (SMTP_*/IMAP_*), owner_id null.
-//  - user JWT with {scope:"me"}: syncs the caller's personal mail account
-//    (user_mail_accounts), owner_id = caller.
+//  - cron (x-cron-secret): org mailbox (owner null) or {scope:"users"} for all
+//    connected employee mailboxes.
+//  - user JWT: the caller's personal mailbox (owner_id = caller).
+//
+// NOTE: IMAP over npm:imapflow is best-effort on Supabase Edge — some hosts'
+// TLS handshakes abort the isolate. SMTP send (denomailer) is reliable; for
+// guaranteed inbox sync, run this against a dedicated IMAP worker instead.
 //
 // Deploy: supabase functions deploy imap-sync --no-verify-jwt
-// Secrets: CRON_SECRET, IMAP_HOST/IMAP_PORT or SMTP_*, SUPABASE_* (auto)
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { ImapFlow } from "npm:imapflow@1.0.171"
@@ -31,49 +34,66 @@ async function syncMailbox(admin: SupabaseClient, mb: Mailbox): Promise<number> 
     secure: true,
     auth: { user: mb.user, pass: mb.pass },
     logger: false,
+    greetingTimeout: 10000,
+    connectionTimeout: 15000,
+    socketTimeout: 25000,
+    disableAutoIdle: true,
   })
-  let stored = 0
-  await client.connect()
-  const lock = await client.getMailboxLock("INBOX")
-  try {
-    const mboxInfo = client.mailbox
-    const total = typeof mboxInfo === "object" && mboxInfo ? mboxInfo.exists : 0
-    if (total > 0) {
-      const start = Math.max(1, total - 29)
-      for await (const msg of client.fetch(`${start}:*`, {
-        uid: true,
-        envelope: true,
-        source: true,
-      })) {
-        const env = msg.envelope
-        const messageId = env?.messageId ?? `uid-${mb.ownerId ?? "org"}-${msg.uid}`
-        const fromObj = env?.from?.[0]
-        const raw = msg.source ? new TextDecoder().decode(msg.source) : ""
-        const bodyStart = raw.indexOf("\r\n\r\n")
-        const bodyRaw = bodyStart >= 0 ? raw.slice(bodyStart + 4) : raw
-        const text = bodyRaw.replace(/<[^>]+>/g, " ")
-        const { error } = await admin.from("mail_messages").upsert(
-          {
-            message_id: messageId,
-            uid: msg.uid,
-            owner_id: mb.ownerId,
-            from_name: fromObj?.name ?? null,
-            from_addr: fromObj?.address ?? null,
-            subject: env?.subject ?? "(no subject)",
-            snippet: snippet(text),
-            body_html: bodyRaw.slice(0, 50000),
-            received_at: env?.date ? new Date(env.date).toISOString() : null,
-          },
-          { onConflict: "message_id" },
-        )
-        if (!error) stored++
+
+  const work = async (): Promise<number> => {
+    let stored = 0
+    await client.connect()
+    const lock = await client.getMailboxLock("INBOX")
+    try {
+      const mboxInfo = client.mailbox
+      const total = typeof mboxInfo === "object" && mboxInfo ? mboxInfo.exists : 0
+      if (total > 0) {
+        const start = Math.max(1, total - 29)
+        for await (const msg of client.fetch(`${start}:*`, {
+          uid: true,
+          envelope: true,
+          source: true,
+        })) {
+          const env = msg.envelope
+          const messageId = env?.messageId ?? `uid-${mb.ownerId ?? "org"}-${msg.uid}`
+          const fromObj = env?.from?.[0]
+          const raw = msg.source ? new TextDecoder().decode(msg.source) : ""
+          const bodyStart = raw.indexOf("\r\n\r\n")
+          const bodyRaw = bodyStart >= 0 ? raw.slice(bodyStart + 4) : raw
+          const text = bodyRaw.replace(/<[^>]+>/g, " ")
+          const { error } = await admin.from("mail_messages").upsert(
+            {
+              message_id: messageId,
+              uid: msg.uid,
+              owner_id: mb.ownerId,
+              from_name: fromObj?.name ?? null,
+              from_addr: fromObj?.address ?? null,
+              subject: env?.subject ?? "(no subject)",
+              snippet: snippet(text),
+              body_html: bodyRaw.slice(0, 50000),
+              received_at: env?.date ? new Date(env.date).toISOString() : null,
+            },
+            { onConflict: "message_id" },
+          )
+          if (!error) stored++
+        }
       }
+    } finally {
+      lock.release()
     }
-  } finally {
-    lock.release()
+    await client.logout()
+    return stored
   }
-  await client.logout()
-  return stored
+
+  const timeout = new Promise<number>((_, reject) =>
+    setTimeout(() => {
+      try {
+        client.close()
+      } catch { /* ignore */ }
+      reject(new Error("IMAP timed out"))
+    }, 30000),
+  )
+  return await Promise.race([work(), timeout])
 }
 
 Deno.serve(async (req) => {
@@ -84,10 +104,14 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   )
 
+  let body: Record<string, unknown> = {}
+  try {
+    body = await req.json()
+  } catch { /* empty */ }
+
   const secret = Deno.env.get("CRON_SECRET")
   const viaCron = !!secret && req.headers.get("x-cron-secret") === secret
 
-  // Personal mailbox sync (signed-in user, their own account).
   if (!viaCron) {
     const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "")
     const { data: u } = await admin.auth.getUser(token)
@@ -111,13 +135,39 @@ Deno.serve(async (req) => {
       })
       return json({ ok: true, stored })
     } catch (e) {
-      const error = e instanceof Error ? e.message : String(e)
-      console.error("[imap-sync user]", error)
-      return json({ ok: false, error }, 502)
+      return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 502)
     }
   }
 
-  // Cron: org mailbox.
+  if (body.scope === "users") {
+    try {
+      const { data: accounts } = await admin
+        .from("user_mail_accounts")
+        .select("user_id, email, smtp_host, smtp_pass, imap_host, imap_port")
+        .eq("active", true)
+        .limit(50)
+      let total = 0
+      let synced = 0
+      for (const a of accounts ?? []) {
+        try {
+          total += await syncMailbox(admin, {
+            host: a.imap_host || a.smtp_host,
+            port: a.imap_port ?? 993,
+            user: a.email,
+            pass: a.smtp_pass,
+            ownerId: a.user_id,
+          })
+          synced++
+        } catch (e) {
+          console.error("[imap-sync users]", a.email, e instanceof Error ? e.message : e)
+        }
+      }
+      return json({ ok: true, accounts: synced, stored: total })
+    } catch (e) {
+      return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 502)
+    }
+  }
+
   const host = (await getSecret(admin, "IMAP_HOST")) ?? (await getSecret(admin, "SMTP_HOST"))
   const port = Number((await getSecret(admin, "IMAP_PORT")) ?? "993")
   const user = await getSecret(admin, "SMTP_USER")
@@ -127,8 +177,6 @@ Deno.serve(async (req) => {
     const stored = await syncMailbox(admin, { host, port, user, pass, ownerId: null })
     return json({ ok: true, stored })
   } catch (e) {
-    const error = e instanceof Error ? e.message : String(e)
-    console.error("[imap-sync org]", error)
-    return json({ ok: false, error }, 502)
+    return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 502)
   }
 })

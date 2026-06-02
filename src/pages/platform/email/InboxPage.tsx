@@ -109,7 +109,7 @@ export default function InboxPage() {
         <div>
           <h1 className="font-display text-3xl text-foreground">Inbox</h1>
           <p className="mt-1 text-muted-foreground">
-            Mail pulled from info@vitalcare.uk. Syncs automatically every 10 minutes.
+            Your received mail. Use Sync now to pull the latest from your mailbox.
           </p>
         </div>
         <div className="flex gap-2">
