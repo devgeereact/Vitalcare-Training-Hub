@@ -6,6 +6,7 @@ import { NotificationDropdown } from "@/components/notification-dropdown"
 import AnnouncementPopup from "@/components/platform/AnnouncementPopup"
 import ProfileCompletionBanner from "@/components/platform/ProfileCompletionBanner"
 import AutoAttendance from "@/components/platform/AutoAttendance"
+import { IdleLockProvider } from "@/components/auth/IdleLock"
 
 import {
   Breadcrumb,
@@ -122,6 +123,7 @@ export default function AppLayout() {
 
 
   return (
+    <IdleLockProvider>
     <SidebarProvider open={isExpanded} onOpenChange={setOpen}>
       <AppSidebar onHoverChange={setHovered} />
 
@@ -170,5 +172,6 @@ export default function AppLayout() {
         <AutoAttendance />
       </SidebarInset>
     </SidebarProvider>
+    </IdleLockProvider>
   )
 }

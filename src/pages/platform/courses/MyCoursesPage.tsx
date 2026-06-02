@@ -324,7 +324,7 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
             <div key={course.id} className="flex flex-col">
               <CourseCard
                 title={course.title}
-                href={`/platform/courses/${course.id}`}
+                onView={() => setSelected({ course, enrolled, progressPct })}
                 categoryName={
                   course.category_id
                     ? categoryNames.get(course.category_id) ?? null
@@ -408,6 +408,12 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
                 />
               )}
               <DialogHeader>
+                {selected.course.category_id &&
+                  categoryNames.get(selected.course.category_id) && (
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-gold">
+                      {categoryNames.get(selected.course.category_id)}
+                    </p>
+                  )}
                 <DialogTitle className="font-display text-2xl">
                   {selected.course.title}
                 </DialogTitle>
@@ -462,29 +468,14 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
                 {selected.enrolled ? (
                   <Button asChild>
                     <RLink to={`/platform/courses/${selected.course.id}`}>
-                      <PlayCircle className="mr-2 size-4" /> Continue learning
-                    </RLink>
-                  </Button>
-                ) : canManage ? (
-                  <Button asChild>
-                    <RLink to={`/platform/courses/${selected.course.id}`}>
-                      View course
+                      <PlayCircle className="mr-2 size-4" /> Continue
                     </RLink>
                   </Button>
                 ) : (
-                  <Button
-                    disabled={enrol.isPending}
-                    onClick={() =>
-                      enrol
-                        .mutateAsync(selected.course.id)
-                        .then(() => {
-                          toast.success("Enrolled")
-                          setSelected(null)
-                        })
-                        .catch(() => toast.error("Could not enrol"))
-                    }
-                  >
-                    Enrol on this course
+                  <Button asChild>
+                    <RLink to={`/platform/courses/${selected.course.id}`}>
+                      {canManage ? "Open course" : "View course"}
+                    </RLink>
                   </Button>
                 )}
               </DialogFooter>

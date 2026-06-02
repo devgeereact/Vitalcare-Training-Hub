@@ -7,8 +7,18 @@ import { driveImageUrl } from "@/lib/drive-image"
 
 export interface CourseCardProps {
   title: string
-  /** Where the primary button links to. */
-  href: string
+  /**
+   * Where the primary button links to. Used only when `onView` is not
+   * supplied; when `onView` is provided the card opens a preview instead of
+   * navigating.
+   */
+  href?: string
+  /**
+   * Optional click handler for the thumbnail, title, and primary button. When
+   * set, the card behaves as a button that opens a preview rather than a link
+   * that navigates away. Takes precedence over `href`.
+   */
+  onView?: () => void
   categoryName?: string | null
   cpdHours?: number | null
   durationMins?: number | null
@@ -26,6 +36,7 @@ export interface CourseCardProps {
 export function CourseCard({
   title,
   href,
+  onView,
   categoryName,
   cpdHours,
   durationMins,
@@ -38,6 +49,24 @@ export function CourseCard({
   // Google Drive links into <img>-safe CDN URLs.
   const thumb = driveImageUrl(thumbnailUrl, 600)
 
+  const mediaClass =
+    "block aspect-video w-full overflow-hidden bg-muted text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
+  const media = thumb ? (
+    <img
+      src={thumb}
+      alt=""
+      loading="lazy"
+      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+    />
+  ) : (
+    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+      <BookOpen className="size-7" aria-hidden />
+    </div>
+  )
+
+  const titleClass =
+    "rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
+
   return (
     <Card
       className={cn(
@@ -45,24 +74,15 @@ export function CourseCard({
         className,
       )}
     >
-      <Link
-        to={href}
-        className="block aspect-video w-full overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
-        aria-label={title}
-      >
-        {thumb ? (
-          <img
-            src={thumb}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <BookOpen className="size-7" aria-hidden />
-          </div>
-        )}
-      </Link>
+      {onView ? (
+        <button type="button" onClick={onView} className={mediaClass} aria-label={title}>
+          {media}
+        </button>
+      ) : (
+        <Link to={href ?? "#"} className={mediaClass} aria-label={title}>
+          {media}
+        </Link>
+      )}
 
       <div className="flex flex-1 flex-col p-4">
         {categoryName ? (
@@ -72,12 +92,15 @@ export function CourseCard({
         ) : null}
 
         <h3 className="line-clamp-2 text-base font-semibold leading-snug text-brand-navy">
-          <Link
-            to={href}
-            className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
-          >
-            {title}
-          </Link>
+          {onView ? (
+            <button type="button" onClick={onView} className={titleClass}>
+              {title}
+            </button>
+          ) : (
+            <Link to={href ?? "#"} className={titleClass}>
+              {title}
+            </Link>
+          )}
         </h3>
 
         <dl className="mt-3 space-y-1.5 text-sm text-muted-foreground">
@@ -109,12 +132,22 @@ export function CourseCard({
         ) : null}
 
         <div className="mt-4 pt-1">
-          <Link
-            to={href}
-            className="inline-flex w-full items-center justify-center rounded-md bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
-          >
-            {ctaLabel}
-          </Link>
+          {onView ? (
+            <button
+              type="button"
+              onClick={onView}
+              className="inline-flex w-full items-center justify-center rounded-md bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+            >
+              {ctaLabel}
+            </button>
+          ) : (
+            <Link
+              to={href ?? "#"}
+              className="inline-flex w-full items-center justify-center rounded-md bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+            >
+              {ctaLabel}
+            </Link>
+          )}
         </div>
       </div>
     </Card>
