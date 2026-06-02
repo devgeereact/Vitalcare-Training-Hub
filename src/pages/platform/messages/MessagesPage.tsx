@@ -2,14 +2,26 @@ import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { formatDistanceToNow, format } from "date-fns"
 import { toast } from "sonner"
-import { MessageSquare, AlertCircle, Send, ArrowLeft } from "lucide-react"
+import { MessageSquare, AlertCircle, Send, ArrowLeft, Video, Loader2 } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
+import { useUser } from "@/hooks/use-user"
+import { supabase } from "@/lib/supabase/client"
+import { useCreateSession } from "@/lib/queries/sessions.queries"
 import {
   useThreads,
   useThread,
@@ -55,6 +67,10 @@ function ThreadView({
           {otherName.slice(0, 1).toUpperCase()}
         </span>
         <p className="font-medium">{otherName}</p>
+        <ScheduleMeetingButton
+          otherName={otherName}
+          onScheduled={(body) => send.mutateAsync({ recipientId: otherId, body })}
+        />
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -120,6 +136,106 @@ function ThreadView({
         </Button>
       </div>
     </div>
+  )
+}
+
+function ScheduleMeetingButton({
+  otherName,
+  onScheduled,
+}: {
+  otherName: string
+  onScheduled: (body: string) => Promise<unknown>
+}) {
+  const { isAdmin } = useUser()
+  const createSession = useCreateSession()
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState(`Meeting with ${otherName}`)
+  const [when, setWhen] = useState("")
+  const [busy, setBusy] = useState(false)
+
+  if (!isAdmin) return null
+
+  async function schedule() {
+    if (!when) {
+      toast.error("Choose a date and time.")
+      return
+    }
+    setBusy(true)
+    try {
+      const start = new Date(when)
+      const end = new Date(start.getTime() + 30 * 60000)
+      const id = await createSession.mutateAsync({
+        title,
+        description: "",
+        course_id: "",
+        trainer_id: "",
+        starts_at: start.toISOString(),
+        ends_at: end.toISOString(),
+        venue: "",
+        capacity: 0,
+        is_virtual: true,
+        is_public: false,
+        meeting_provider: "google_meet",
+      })
+      const { data: s } = await supabase
+        .from("training_sessions")
+        .select("meet_url, zoom_join_url")
+        .eq("id", id)
+        .single()
+      const link = s?.meet_url || s?.zoom_join_url
+      const body = link
+        ? `📅 Meeting scheduled: ${title} on ${start.toLocaleString("en-GB")}\nJoin: ${link}`
+        : `📅 Meeting scheduled: ${title} on ${start.toLocaleString("en-GB")} (link to follow).`
+      await onScheduled(body)
+      toast.success("Meeting scheduled and shared")
+      setOpen(false)
+      setWhen("")
+    } catch {
+      toast.error("Could not schedule the meeting.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="ml-auto">
+          <Video className="mr-1.5 size-4" /> Schedule
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Schedule a virtual meeting</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="mb-1.5 block text-xs">Title</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <Label className="mb-1.5 block text-xs">Date &amp; time</Label>
+            <Input
+              type="datetime-local"
+              value={when}
+              onChange={(e) => setWhen(e.target.value)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Creates a Google Meet (Zoom backup) and shares the link in this chat.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={schedule} disabled={busy}>
+            {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
+            Schedule
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

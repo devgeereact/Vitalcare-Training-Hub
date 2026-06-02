@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 import RichTextEditor from "@/components/courses/RichTextEditor"
 import AiAssistButton from "@/components/ai/AiAssistButton"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
 import MediaUpload from "@/components/courses/MediaUpload"
 import CourseExtrasEditor from "@/components/courses/CourseExtrasEditor"
@@ -153,6 +154,22 @@ export default function CourseBuilderPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <div className="flex justify-end">
+                <AiFieldsButton
+                  subject="a healthcare training course"
+                  context={`Working title: ${form.getValues("title") || "(none)"}`}
+                  fields={[
+                    { key: "title", label: "Title", format: "text" },
+                    { key: "summary", label: "Summary", format: "text" },
+                    { key: "description", label: "Description", format: "html" },
+                  ]}
+                  onApply={(v) => {
+                    if (v.title) form.setValue("title", v.title.slice(0, 120))
+                    if (v.summary) form.setValue("summary", v.summary.slice(0, 300))
+                    if (v.description) form.setValue("description", v.description)
+                  }}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="title"

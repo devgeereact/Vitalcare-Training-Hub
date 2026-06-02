@@ -29,6 +29,7 @@ import {
 import CourseDiscussion from "@/components/platform/CourseDiscussion"
 import CourseReviews from "@/components/courses/CourseReviews"
 import CourseFaqs from "@/components/courses/CourseFaqs"
+import { driveImageUrl } from "@/lib/drive-image"
 import { usePrerequisites } from "@/lib/queries/course-extras.queries"
 import { useAuth } from "@/hooks/use-auth"
 import { CheckCircle2, Circle, Lock } from "lucide-react"
@@ -80,7 +81,7 @@ export default function CourseOverviewPage() {
       <Card className="overflow-hidden">
         {c.thumbnail_url && (
           <img
-            src={c.thumbnail_url}
+            src={driveImageUrl(c.thumbnail_url, 1400)}
             alt={c.title}
             className="aspect-[21/9] w-full object-cover"
           />

@@ -41,6 +41,7 @@ import {
 } from "@/lib/queries/store.queries"
 import { useCourses } from "@/lib/queries/courses.queries"
 import { COMPANY } from "@/lib/constants"
+import { driveImageUrl } from "@/lib/drive-image"
 import type { Product } from "@/types/database.types"
 
 export default function StoreCataloguePage() {
@@ -205,7 +206,7 @@ export default function StoreCataloguePage() {
           {data!.map((p) => (
             <Card key={p.id} className="flex flex-col overflow-hidden">
               {p.thumbnail_url && (
-                <img src={p.thumbnail_url} alt={p.name} className="aspect-video w-full object-cover" />
+                <img src={driveImageUrl(p.thumbnail_url, 600)} alt={p.name} className="aspect-video w-full object-cover" />
               )}
               <CardHeader className="pb-2">
                 <CardTitle className="text-base leading-snug">{p.name}</CardTitle>

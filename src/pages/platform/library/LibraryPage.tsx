@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLibrary } from "@/lib/queries/library.queries"
+import { driveImageUrl } from "@/lib/drive-image"
 
 export default function LibraryPage() {
   const { data, isLoading, isError, refetch } = useLibrary()
@@ -83,7 +84,7 @@ export default function LibraryPage() {
             <Card key={r.id} className="flex flex-col overflow-hidden">
               {r.thumbnailUrl && (
                 <img
-                  src={r.thumbnailUrl}
+                  src={driveImageUrl(r.thumbnailUrl, 600)}
                   alt={r.title}
                   className="aspect-video w-full object-cover"
                 />

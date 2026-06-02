@@ -4,6 +4,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { driveImageUrl } from "@/lib/drive-image"
 import { supabase } from "@/lib/supabase/client"
 
 const BUCKET = "course-media"
@@ -96,7 +97,7 @@ export default function MediaUpload({
 
       {value && variant === "image" ? (
         <div className="relative w-full max-w-sm overflow-hidden rounded-lg border border-border">
-          <img src={value} alt="Preview" className="aspect-video w-full object-cover" />
+          <img src={driveImageUrl(value, 600)} alt="Preview" className="aspect-video w-full object-cover" />
           <button
             type="button"
             onClick={() => onChange("")}
