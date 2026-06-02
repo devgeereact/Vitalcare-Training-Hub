@@ -33,6 +33,7 @@ export function WizardProvider({ children }: WizardProviderProps) {
 }
 
 // 4. Export the Hook
+// eslint-disable-next-line react-refresh/only-export-components -- template co-locates the wizard hook with its provider
 export function useWizard() {
   const context = useContext(WizardContext)
 

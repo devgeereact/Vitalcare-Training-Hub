@@ -65,6 +65,7 @@ export default function ShadcnFullCalendar() {
 
         {/* Center Title */}
         <h2 className="text-lg font-semibold">
+          {/* eslint-disable-next-line react-hooks/refs -- template reads FullCalendar's live title */}
           {calendarRef.current?.getApi().view.title}
         </h2>
 
@@ -112,7 +113,7 @@ export default function ShadcnFullCalendar() {
   editable
   selectable
 
-  datesSet={(arg) => setCurrentView(arg.view.type as any)}
+  datesSet={(arg) => setCurrentView(arg.view.type as typeof currentView)}
 
   dateClick={(info) => {
     setSelectedDate(info.dateStr)

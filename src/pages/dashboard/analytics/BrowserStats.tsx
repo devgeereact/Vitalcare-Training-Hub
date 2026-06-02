@@ -36,12 +36,15 @@ const gradientMap: Record<string, [string, string]> = {
   other: ["#f7971e", "#ffd200"],
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+type TooltipEntry = { name: string; value: number | string }
+type TooltipProps = { active?: boolean; payload?: TooltipEntry[] }
+
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (!active || !payload?.length) return null
 
   return (
     <div className="rounded-lg border bg-background p-2 shadow-md">
-      {payload.map((entry: any, index: number) => {
+      {payload.map((entry: TooltipEntry, index: number) => {
         const key = entry.name.toLowerCase() // 👈 IMPORTANT
         const gradient = gradientMap[key]
 

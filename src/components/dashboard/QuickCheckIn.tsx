@@ -97,7 +97,7 @@ export function QuickCheckIn({ session, loading = false }: Props): JSX.Element {
   return (
     <>
       <Card className={cardClass}>
-        <CardContent className="p-0">
+        <CardContent className="h-full p-0">
           {/* Whole card is the trigger: opens the check-in dialog. */}
           <button
             type="button"
@@ -105,15 +105,20 @@ export function QuickCheckIn({ session, loading = false }: Props): JSX.Element {
               setDone(false)
               setOpen(true)
             }}
-            className={`flex w-full flex-col gap-4 p-5 text-left transition-opacity hover:opacity-95 ${focus}`}
+            className={`flex h-full w-full flex-col gap-5 p-5 text-left transition-opacity hover:opacity-95 ${focus}`}
           >
             {header}
-            {/* Scannable barcode: check in, or open Vitalcare on a phone. */}
-            <span className="mx-auto rounded-xl bg-white p-3 shadow-sm">
-              <QRCodeSVG value={checkInUrl} size={140} fgColor="#1b2e6b" />
-            </span>
-            <span className="text-center text-xs text-white/70">
-              Scan to check in, or open Vitalcare on your phone
+            {/* Scannable barcode, centred so the card fills cleanly. */}
+            <div className="flex flex-1 flex-col items-center justify-center gap-3">
+              <span className="rounded-2xl bg-white p-3 shadow-sm">
+                <QRCodeSVG value={checkInUrl} size={150} fgColor="#1b2e6b" />
+              </span>
+              <span className="text-center text-xs text-white/70">
+                Scan to check in, or open Vitalcare on your phone
+              </span>
+            </div>
+            <span className="flex items-center justify-center gap-2 rounded-lg bg-white/10 py-2.5 text-sm font-semibold transition-colors hover:bg-white/20">
+              <QrCode className="size-4" /> Check in now
             </span>
           </button>
         </CardContent>

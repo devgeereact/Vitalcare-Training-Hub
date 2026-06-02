@@ -18,11 +18,14 @@ interface Props {
 /** Latest announcements, newest first. Parent owns loading/empty/error. */
 export function NoticeBoard({ items }: Props): JSX.Element {
   return (
-    <ul className="divide-y divide-border">
+    <ul className="-my-1 divide-y divide-border">
       {items.map((n) => (
-        <li key={n.id} className="flex gap-3 py-3">
+        <li
+          key={n.id}
+          className="flex gap-3 rounded-lg px-1 py-3 transition-colors hover:bg-muted/50"
+        >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
-            <Megaphone className="size-4" />
+            <Megaphone className="size-4" aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <Link

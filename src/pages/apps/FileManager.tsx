@@ -10,6 +10,7 @@ import {
   Search,
   MoreHorizontal,
   Plus,
+  type LucideIcon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -36,7 +37,7 @@ export default function FileManagerPage() {
         <div className="space-y-1 text-sm">
           <p className="font-semibold">My Drive</p>
 
-          {[
+          {([
             ["All Files", Folder],
             ["My Devices", Folder],
             ["Recents", Folder],
@@ -47,7 +48,7 @@ export default function FileManagerPage() {
             ["Videos", Video],
             ["Audio", Music],
             ["Zip Files", Archive],
-          ].map(([label, Icon]: any) => (
+          ] as [string, LucideIcon][]).map(([label, Icon]) => (
             <div
               key={label}
               className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-muted cursor-pointer"
@@ -79,11 +80,11 @@ export default function FileManagerPage() {
 
         {/* Cloud Storage */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
+          {([
             ["Google Drive", "45.5 GB", "50 GB", 90],
             ["Dropbox", "1.2 GB", "3 GB", 40],
             ["OneDrive", "2.5 GB", "3 GB", 80],
-          ].map(([name, used, total, percent]: any) => (
+          ] as [string, string, string, number][]).map(([name, used, total, percent]) => (
             <div
               key={name}
               className="rounded-xl border bg-background p-4 space-y-2"

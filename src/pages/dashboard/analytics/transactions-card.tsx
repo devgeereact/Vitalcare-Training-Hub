@@ -25,7 +25,8 @@ import {
   Film,
   DollarSign,
   Apple,
-  Tickets
+  Tickets,
+  type LucideIcon,
 } from "lucide-react"
 
 /* ---------------------------------- */
@@ -61,7 +62,7 @@ const STATUS_STYLES: Record<string, string> = {
 /* Icon + Color Helpers */
 /* ---------------------------------- */
 
-const ICON_MAP: Record<string, any> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   YouTube: Youtube,
   "John Doe": UserIcon,
   "Sans Brothers": CreditCardIcon,

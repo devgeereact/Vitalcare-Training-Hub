@@ -35,6 +35,8 @@ export function EventDialog({
   const [end, setEnd] = useState("")
   const [color, setColor] = useState("#3b82f6")
 
+  // Template pattern: sync local form state when the edited event changes.
+  /* eslint-disable react-hooks/set-state-in-effect -- form state mirrors the incoming event */
   useEffect(() => {
     if (event) {
       setTitle(event.title)
@@ -50,6 +52,7 @@ export function EventDialog({
       setColor("#3b82f6")
     }
   }, [event, selectedDate])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSave = () => {
     onSave({

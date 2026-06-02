@@ -315,7 +315,14 @@ export function useCreateSession() {
 
       // Backup: if a virtual session still has no link, fall back to Zoom.
       if (v.is_virtual && !haveLink) {
-        await createZoom()
+        haveLink = await createZoom()
+      }
+
+      // Last resort: a virtual session should always have a join link. If both
+      // Google Meet and Zoom were unavailable, use a deterministic Jitsi room
+      // so the session can still go ahead. Real Meet links are preferred above.
+      if (v.is_virtual && !haveLink && !patch.meet_url) {
+        patch.meet_url = `https://meet.jit.si/vitalcare-session-${data.id}`
       }
 
       if (Object.keys(patch).length > 0) {

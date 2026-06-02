@@ -49,22 +49,24 @@ export function GradientStatCard({
 }: GradientStatCardProps): JSX.Element {
   const t = TONE[tone]
   return (
-    <Card className={`overflow-hidden border-0 shadow-sm ${t.card}`}>
-      <CardContent className="flex items-center gap-4 p-5">
+    <Card className={`h-full overflow-hidden border-0 shadow-sm ${t.card}`}>
+      <CardContent className="flex h-full items-center gap-4 p-5">
         <div
           className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${t.icon}`}
         >
-          <Icon className="size-6" />
+          <Icon className="size-6" aria-hidden="true" />
         </div>
-        <div className="min-w-0">
-          <p className={`text-sm ${t.label}`}>{label}</p>
+        <div className="min-w-0 flex-1">
+          <p className={`truncate text-sm font-medium ${t.label}`}>{label}</p>
           {loading ? (
-            <Skeleton className="mt-1 h-7 w-16 bg-white/30" />
+            <Skeleton className="mt-1.5 h-8 w-16 bg-white/30" />
           ) : (
-            <p className="font-display text-2xl leading-tight">{value}</p>
+            <p className="mt-0.5 font-display text-3xl leading-none tabular-nums">
+              {value}
+            </p>
           )}
           {hint && !loading && (
-            <p className={`mt-0.5 text-xs ${t.label}`}>{hint}</p>
+            <p className={`mt-1 truncate text-xs ${t.label}`}>{hint}</p>
           )}
         </div>
       </CardContent>

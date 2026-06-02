@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import { createMeetEvent } from "@/lib/integrations/google-calendar"
 import type { OneToOneRequest } from "@/types/database.types"
 
 export const o2oKeys = {
@@ -193,11 +194,29 @@ export function useDecideOneToOne(deciderId: string | undefined) {
       if (!input.trainerId || !input.scheduledAt) {
         throw new Error("Assign a trainer and time to approve.")
       }
-      const startIso = new Date(input.scheduledAt).toISOString()
+      const start = new Date(input.scheduledAt)
+      const startIso = start.toISOString()
+      // 1:1s run for an hour by default.
+      const endIso = new Date(start.getTime() + 60 * 60 * 1000).toISOString()
 
-      // A ready-to-use meeting link (Jitsi needs no API/account). Deterministic
-      // per request so both parties land in the same room.
-      const meetUrl = `https://meet.jit.si/vitalcare-1to1-${input.id}`
+      // Prefer a real Google Meet link via the connected Google account. When
+      // Google is not connected, or the call fails, fall back to a Jitsi room
+      // so approval never breaks. The Jitsi link is deterministic per request
+      // so both parties land in the same room.
+      const jitsiUrl = `https://meet.jit.si/vitalcare-1to1-${input.id}`
+      let meetUrl = jitsiUrl
+      let gcalEventId: string | null = null
+      const meet = await createMeetEvent({
+        title: input.title,
+        description: "Vitalcare 1:1 support session.",
+        start: startIso,
+        end: endIso,
+        location: "Online (Google Meet)",
+      })
+      if (meet.meetUrl) {
+        meetUrl = meet.meetUrl
+        gcalEventId = meet.eventId
+      }
 
       const { data: row, error } = await supabase
         .from("one_to_one_requests")
@@ -213,6 +232,19 @@ export function useDecideOneToOne(deciderId: string | undefined) {
         .select("learner_id")
         .single()
       if (error) throw error
+
+      // Persist the Google Calendar event id when we created one. The column
+      // exists (migration 050) but is not in the generated database types yet,
+      // so the update payload is built as a typed record and cast once at this
+      // isolated point (justified: keeps the rest of the file fully typed).
+      if (gcalEventId) {
+        const patch: Record<string, string> = { gcal_event_id: gcalEventId }
+        const { error: gErr } = await supabase
+          .from("one_to_one_requests")
+          .update(patch as Partial<OneToOneRequest>)
+          .eq("id", input.id)
+        if (gErr) console.error("[useDecideOneToOne:gcal_event_id]", gErr)
+      }
 
       // The approved 1:1 surfaces on each party's calendar live (read from
       // one_to_one_requests), so no static calendar_events row is needed.

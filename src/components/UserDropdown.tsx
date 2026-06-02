@@ -19,10 +19,13 @@ import {
   Download,
   DollarSign,
   LogOut,
+  Smartphone,
 } from "lucide-react"
 
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
+import { QrLoginDialog } from "@/components/auth/QrLoginDialog"
 
 const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
@@ -34,6 +37,7 @@ const ROLE_LABELS: Record<string, string> = {
 export function UserDropdown() {
   const navigate = useNavigate()
   const { user, profile, role, signOut } = useAuth()
+  const [qrOpen, setQrOpen] = useState(false)
 
   const displayName =
     profile?.full_name ||
@@ -55,6 +59,7 @@ export function UserDropdown() {
   }
 
   return (
+    <>
     <DropdownMenu>
       {/* Trigger */}
       <DropdownMenuTrigger asChild>
@@ -114,6 +119,11 @@ export function UserDropdown() {
           Earnings
         </DropdownMenuItem>
 
+        <DropdownMenuItem className="gap-2 h-9" onClick={() => setQrOpen(true)}>
+          <Smartphone className="!size-5" />
+          Sign in on phone
+        </DropdownMenuItem>
+
         <DropdownMenuSeparator className="border-1 my-2" />
 
         {/* Logout */}
@@ -128,5 +138,7 @@ export function UserDropdown() {
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
+    <QrLoginDialog open={qrOpen} onOpenChange={setQrOpen} />
+    </>
   )
 }

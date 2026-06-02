@@ -2,7 +2,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangleIcon, Bell, CheckCircle2Icon, XCircleIcon } from "lucide-react"
 
 export function AlertsBasic() {
-0
     return (
         <div className="w-full max-w-3xl items-start gap-4 mx-auto space-y-6">
 

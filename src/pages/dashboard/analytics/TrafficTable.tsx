@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
+// eslint-disable-next-line react-refresh/only-export-components -- template sample data co-located with component
 export const trafficTableData = [
   {
     month: "January",

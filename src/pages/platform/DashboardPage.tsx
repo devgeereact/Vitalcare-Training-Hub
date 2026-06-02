@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import {
   Table,
@@ -121,20 +122,68 @@ function EmptyState({
   )
 }
 
+function greeting(): string {
+  const h = new Date().getHours()
+  if (h < 12) return "Good morning"
+  if (h < 18) return "Good afternoon"
+  return "Good evening"
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  super_admin: "Super admin",
+  admin: "Administrator",
+  trainer: "Trainer",
+  learner: "Learner",
+}
+
 function PageHeader({
   title,
   subtitle,
+  roleLabel,
 }: {
   title: string
   subtitle: string
+  roleLabel?: string
 }): JSX.Element {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 className="font-display text-3xl text-foreground">{title}</h1>
-        <p className="mt-1 text-muted-foreground">{subtitle}</p>
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-display text-3xl leading-tight text-foreground">
+            {title}
+          </h1>
+          {roleLabel && (
+            <Badge
+              variant="outline"
+              className="border-brand-navy/20 bg-brand-navy/5 text-brand-navy"
+            >
+              {roleLabel}
+            </Badge>
+          )}
+        </div>
+        <p className="mt-1.5 text-muted-foreground">{subtitle}</p>
       </div>
       <WeatherWidget />
+    </div>
+  )
+}
+
+/** Section heading for grouping dashboard cards with consistent rhythm. */
+function SectionHeading({
+  title,
+  description,
+}: {
+  title: string
+  description?: string
+}): JSX.Element {
+  return (
+    <div className="space-y-0.5">
+      <h2 className="font-display text-xl leading-tight text-foreground">
+        {title}
+      </h2>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
     </div>
   )
 }
@@ -156,12 +205,12 @@ function statusLabel(s: string): string {
 function NoticeBoardCard(): JSX.Element {
   const announcements = useAnnouncements()
   return (
-    <Card>
+    <Card className="flex h-full flex-col">
       <CardHeader>
         <CardTitle>Notice board</CardTitle>
         <CardDescription>Latest announcements for the team</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1">
         {announcements.isLoading ? (
           <ListSkeleton />
         ) : announcements.isError ? (
@@ -190,7 +239,13 @@ function NoticeBoardCard(): JSX.Element {
 
 // ─── Admin / super_admin dashboard ───────────────────────────────────────────
 
-function AdminDashboard(): JSX.Element {
+function AdminDashboard({
+  name,
+  roleLabel,
+}: {
+  name: string
+  roleLabel: string
+}): JSX.Element {
   const stats = useDashboardStats()
   const trend = useCompletionTrend()
   const attendance = useAttendanceBreakdown()
@@ -200,10 +255,11 @@ function AdminDashboard(): JSX.Element {
   const topLearners = useTopLearners()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        title="Dashboard"
+        title={`${greeting()}${name ? `, ${name}` : ""}`}
         subtitle="Training activity across your organisation at a glance."
+        roleLabel={roleLabel}
       />
 
       {/* KPI cards */}
@@ -214,7 +270,7 @@ function AdminDashboard(): JSX.Element {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
           <GradientStatCard
             label="Total learners"
             value={stats.data?.totalLearners ?? 0}
@@ -247,226 +303,247 @@ function AdminDashboard(): JSX.Element {
       )}
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <QuickCheckIn
-            session={sessions.data?.[0] ?? null}
-            loading={sessions.isLoading}
-          />
+      <section className="space-y-4">
+        <SectionHeading
+          title="Get started"
+          description="Record attendance and jump to your most-used tools."
+        />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <QuickCheckIn
+              session={sessions.data?.[0] ?? null}
+              loading={sessions.isLoading}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <QuickLinks role="admin" />
+          </div>
         </div>
-        <div className="lg:col-span-2">
-          <QuickLinks role="admin" />
-        </div>
-      </div>
+      </section>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Course completions</CardTitle>
-            <CardDescription>
-              Completed enrolments, last 6 months
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {trend.isLoading ? (
-              <ChartSkeleton />
-            ) : trend.isError ? (
-              <ErrorState onRetry={() => trend.refetch()} />
-            ) : (trend.data?.data.reduce((a, b) => a + b, 0) ?? 0) === 0 ? (
-              <EmptyState
-                icon={Award}
-                message="No completions yet. They will appear here as learners finish courses."
-              />
-            ) : (
-              <Suspense fallback={<ChartSkeleton />}>
-                <CompletionTrendChart
-                  categories={trend.data!.categories}
-                  data={trend.data!.data}
+      {/* Performance */}
+      <section className="space-y-4">
+        <SectionHeading
+          title="Performance"
+          description="Completions, attendance and fees across the organisation."
+        />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <Card className="flex flex-col lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Course completions</CardTitle>
+              <CardDescription>
+                Completed enrolments, last 6 months
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              {trend.isLoading ? (
+                <ChartSkeleton />
+              ) : trend.isError ? (
+                <ErrorState onRetry={() => trend.refetch()} />
+              ) : (trend.data?.data.reduce((a, b) => a + b, 0) ?? 0) === 0 ? (
+                <EmptyState
+                  icon={Award}
+                  message="No completions yet. They will appear here as learners finish courses."
                 />
-              </Suspense>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Attendance</CardTitle>
-            <CardDescription>Recorded session attendance</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {attendance.isLoading ? (
-              <ListSkeleton />
-            ) : attendance.isError ? (
-              <ErrorState onRetry={() => attendance.refetch()} />
-            ) : (attendance.data?.total ?? 0) === 0 ? (
-              <EmptyState
-                icon={CalendarDays}
-                message="No attendance recorded yet."
-              />
-            ) : (
-              <AttendanceBars
-                labels={attendance.data!.labels}
-                series={attendance.data!.series}
-                total={attendance.data!.total}
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Revenue + Notice board */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Fees overview</CardTitle>
-            <CardDescription>
-              Invoiced, collected and outstanding
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {revenue.isLoading ? (
-              <ChartSkeleton />
-            ) : revenue.isError ? (
-              <ErrorState onRetry={() => revenue.refetch()} />
-            ) : (revenue.data?.invoiceCount ?? 0) === 0 ? (
-              <EmptyState
-                icon={Banknote}
-                message="No invoices raised yet."
-                cta={{ label: "Go to payments", to: "/platform/payments" }}
-              />
-            ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div className="rounded-lg border border-border p-3">
-                    <p className="text-xs text-muted-foreground">Billed</p>
-                    <p className="font-display text-xl text-brand-navy">
-                      {gbp(revenue.data!.billedPence)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border p-3">
-                    <p className="text-xs text-muted-foreground">Collected</p>
-                    <p className="font-display text-xl text-success">
-                      {gbp(revenue.data!.paidPence)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border p-3">
-                    <p className="text-xs text-muted-foreground">Outstanding</p>
-                    <p className="font-display text-xl text-brand-gold">
-                      {gbp(revenue.data!.outstandingPence)}
-                    </p>
-                  </div>
-                </div>
+              ) : (
                 <Suspense fallback={<ChartSkeleton />}>
-                  <RevenueChart
-                    billed={revenue.data!.billedPence / 100}
-                    paid={revenue.data!.paidPence / 100}
-                    outstanding={revenue.data!.outstandingPence / 100}
+                  <CompletionTrendChart
+                    categories={trend.data!.categories}
+                    data={trend.data!.data}
                   />
                 </Suspense>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
 
-        <NoticeBoardCard />
-      </div>
+          <Card className="flex flex-col">
+            <CardHeader>
+              <CardTitle>Attendance</CardTitle>
+              <CardDescription>Recorded session attendance</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col justify-center">
+              {attendance.isLoading ? (
+                <ListSkeleton />
+              ) : attendance.isError ? (
+                <ErrorState onRetry={() => attendance.refetch()} />
+              ) : (attendance.data?.total ?? 0) === 0 ? (
+                <EmptyState
+                  icon={CalendarDays}
+                  message="No attendance recorded yet."
+                />
+              ) : (
+                <AttendanceBars
+                  labels={attendance.data!.labels}
+                  series={attendance.data!.series}
+                  total={attendance.data!.total}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Tables + top learners */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent enrolments</CardTitle>
-            <CardDescription>Latest learners to join a course</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {enrolments.isLoading ? (
-              <ListSkeleton />
-            ) : enrolments.isError ? (
-              <ErrorState onRetry={() => enrolments.refetch()} />
-            ) : (enrolments.data?.length ?? 0) === 0 ? (
-              <EmptyState
-                icon={Inbox}
-                message="No enrolments yet."
-                cta={{ label: "Manage learners", to: "/platform/learners" }}
-              />
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Learner</TableHead>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {enrolments.data!.map((e) => (
-                    <TableRow key={e.id}>
-                      <TableCell className="font-medium">
-                        {e.learnerName}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {e.courseTitle}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_VARIANT[e.status]}`}
-                        >
-                          {statusLabel(e.status)}
-                        </span>
-                      </TableCell>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <Card className="flex flex-col lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Fees overview</CardTitle>
+              <CardDescription>
+                Invoiced, collected and outstanding
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              {revenue.isLoading ? (
+                <ChartSkeleton />
+              ) : revenue.isError ? (
+                <ErrorState onRetry={() => revenue.refetch()} />
+              ) : (revenue.data?.invoiceCount ?? 0) === 0 ? (
+                <EmptyState
+                  icon={Banknote}
+                  message="No invoices raised yet."
+                  cta={{ label: "Go to payments", to: "/platform/payments" }}
+                />
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      <p className="text-xs text-muted-foreground">Billed</p>
+                      <p className="mt-0.5 font-display text-xl text-brand-navy tabular-nums">
+                        {gbp(revenue.data!.billedPence)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      <p className="text-xs text-muted-foreground">Collected</p>
+                      <p className="mt-0.5 font-display text-xl text-success tabular-nums">
+                        {gbp(revenue.data!.paidPence)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      <p className="text-xs text-muted-foreground">
+                        Outstanding
+                      </p>
+                      <p className="mt-0.5 font-display text-xl text-brand-gold tabular-nums">
+                        {gbp(revenue.data!.outstandingPence)}
+                      </p>
+                    </div>
+                  </div>
+                  <Suspense fallback={<ChartSkeleton />}>
+                    <RevenueChart
+                      billed={revenue.data!.billedPence / 100}
+                      paid={revenue.data!.paidPence / 100}
+                      outstanding={revenue.data!.outstandingPence / 100}
+                    />
+                  </Suspense>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <NoticeBoardCard />
+        </div>
+      </section>
+
+      {/* Activity */}
+      <section className="space-y-4">
+        <SectionHeading
+          title="Activity"
+          description="Recent enrolments, top learners and what's coming up."
+        />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <Card className="flex flex-col lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Recent enrolments</CardTitle>
+              <CardDescription>
+                Latest learners to join a course
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              {enrolments.isLoading ? (
+                <ListSkeleton />
+              ) : enrolments.isError ? (
+                <ErrorState onRetry={() => enrolments.refetch()} />
+              ) : (enrolments.data?.length ?? 0) === 0 ? (
+                <EmptyState
+                  icon={Inbox}
+                  message="No enrolments yet."
+                  cta={{ label: "Manage learners", to: "/platform/learners" }}
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Learner</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {enrolments.data!.map((e) => (
+                      <TableRow key={e.id}>
+                        <TableCell className="font-medium">
+                          {e.learnerName}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {e.courseTitle}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_VARIANT[e.status]}`}
+                          >
+                            {statusLabel(e.status)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
 
+          <Card className="flex flex-col">
+            <CardHeader>
+              <CardTitle>Top learners</CardTitle>
+              <CardDescription>By courses completed</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              {topLearners.isLoading ? (
+                <ListSkeleton />
+              ) : topLearners.isError ? (
+                <ErrorState onRetry={() => topLearners.refetch()} />
+              ) : (topLearners.data?.length ?? 0) === 0 ? (
+                <EmptyState
+                  icon={Trophy}
+                  message="No completions recorded yet."
+                />
+              ) : (
+                <TopLearnersList items={topLearners.data!} />
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Upcoming sessions */}
         <Card>
           <CardHeader>
-            <CardTitle>Top learners</CardTitle>
-            <CardDescription>By courses completed</CardDescription>
+            <CardTitle>Upcoming sessions</CardTitle>
+            <CardDescription>Next scheduled training</CardDescription>
           </CardHeader>
           <CardContent>
-            {topLearners.isLoading ? (
+            {sessions.isLoading ? (
               <ListSkeleton />
-            ) : topLearners.isError ? (
-              <ErrorState onRetry={() => topLearners.refetch()} />
-            ) : (topLearners.data?.length ?? 0) === 0 ? (
+            ) : sessions.isError ? (
+              <ErrorState onRetry={() => sessions.refetch()} />
+            ) : (sessions.data?.length ?? 0) === 0 ? (
               <EmptyState
-                icon={Trophy}
-                message="No completions recorded yet."
+                icon={CalendarDays}
+                message="No upcoming sessions."
+                cta={{ label: "View calendar", to: "/platform/calendar" }}
               />
             ) : (
-              <TopLearnersList items={topLearners.data!} />
+              <SessionsList items={sessions.data!} />
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* Upcoming sessions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming sessions</CardTitle>
-          <CardDescription>Next scheduled training</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {sessions.isLoading ? (
-            <ListSkeleton />
-          ) : sessions.isError ? (
-            <ErrorState onRetry={() => sessions.refetch()} />
-          ) : (sessions.data?.length ?? 0) === 0 ? (
-            <EmptyState
-              icon={CalendarDays}
-              message="No upcoming sessions."
-              cta={{ label: "View calendar", to: "/platform/calendar" }}
-            />
-          ) : (
-            <SessionsList items={sessions.data!} />
-          )}
-        </CardContent>
-      </Card>
+      </section>
     </div>
   )
 }
@@ -475,17 +552,22 @@ function AdminDashboard(): JSX.Element {
 
 function TrainerDashboard({
   trainerId,
+  name,
+  roleLabel,
 }: {
   trainerId: string
+  name: string
+  roleLabel: string
 }): JSX.Element {
   const stats = useTrainerStats(trainerId)
   const sessions = useTrainerUpcomingSessions(trainerId)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        title="Your dashboard"
+        title={`${greeting()}${name ? `, ${name}` : ""}`}
         subtitle="Your sessions, courses and learners at a glance."
+        roleLabel={roleLabel}
       />
 
       {stats.isError ? (
@@ -521,43 +603,55 @@ function TrainerDashboard({
       )}
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <QuickCheckIn
-            session={sessions.data?.[0] ?? null}
-            loading={sessions.isLoading}
-          />
+      <section className="space-y-4">
+        <SectionHeading
+          title="Get started"
+          description="Check in to a session or open the tools you use most."
+        />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <QuickCheckIn
+              session={sessions.data?.[0] ?? null}
+              loading={sessions.isLoading}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <QuickLinks role="trainer" />
+          </div>
         </div>
-        <div className="lg:col-span-2">
-          <QuickLinks role="trainer" />
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading
+          title="Your week"
+          description="Sessions you are leading and the latest team notices."
+        />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <Card className="flex flex-col lg:col-span-2">
+            <CardHeader>
+              <CardTitle>My upcoming sessions</CardTitle>
+              <CardDescription>Sessions you are leading</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              {sessions.isLoading ? (
+                <ListSkeleton />
+              ) : sessions.isError ? (
+                <ErrorState onRetry={() => sessions.refetch()} />
+              ) : (sessions.data?.length ?? 0) === 0 ? (
+                <EmptyState
+                  icon={CalendarDays}
+                  message="You have no upcoming sessions."
+                  cta={{ label: "View sessions", to: "/platform/sessions" }}
+                />
+              ) : (
+                <SessionsList items={sessions.data!} showJoin />
+              )}
+            </CardContent>
+          </Card>
+
+          <NoticeBoardCard />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>My upcoming sessions</CardTitle>
-            <CardDescription>Sessions you are leading</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {sessions.isLoading ? (
-              <ListSkeleton />
-            ) : sessions.isError ? (
-              <ErrorState onRetry={() => sessions.refetch()} />
-            ) : (sessions.data?.length ?? 0) === 0 ? (
-              <EmptyState
-                icon={CalendarDays}
-                message="You have no upcoming sessions."
-                cta={{ label: "View sessions", to: "/platform/sessions" }}
-              />
-            ) : (
-              <SessionsList items={sessions.data!} showJoin />
-            )}
-          </CardContent>
-        </Card>
-
-        <NoticeBoardCard />
-      </div>
+      </section>
     </div>
   )
 }
@@ -566,8 +660,12 @@ function TrainerDashboard({
 
 function LearnerDashboard({
   learnerId,
+  name,
+  roleLabel,
 }: {
   learnerId: string
+  name: string
+  roleLabel: string
 }): JSX.Element {
   const stats = useLearnerStats(learnerId)
   const myCourses = useMyCourses()
@@ -578,10 +676,11 @@ function LearnerDashboard({
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <PageHeader
-        title="Your learning"
+        title={`${greeting()}${name ? `, ${name}` : ""}`}
         subtitle="Your courses, sessions and certificates in one place."
+        roleLabel={roleLabel}
       />
 
       {stats.isError ? (
@@ -617,80 +716,95 @@ function LearnerDashboard({
       )}
 
       {/* Quick actions */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <QuickCheckIn
-            session={sessions.data?.[0] ?? null}
-            loading={sessions.isLoading}
-          />
+      <section className="space-y-4">
+        <SectionHeading
+          title="Get started"
+          description="Check in to a session or jump back into your learning."
+        />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <QuickCheckIn
+              session={sessions.data?.[0] ?? null}
+              loading={sessions.isLoading}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <QuickLinks role="learner" />
+          </div>
         </div>
-        <div className="lg:col-span-2">
-          <QuickLinks role="learner" />
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading
+          title="Your learning"
+          description="Pick up where you left off and see what's coming up."
+        />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <Card className="flex flex-col lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Courses in progress</CardTitle>
+              <CardDescription>Pick up where you left off</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              {myCourses.isLoading ? (
+                <ListSkeleton />
+              ) : myCourses.isError ? (
+                <ErrorState onRetry={() => myCourses.refetch()} />
+              ) : inProgress.length === 0 ? (
+                <EmptyState
+                  icon={ClipboardList}
+                  message="No courses in progress. Browse the catalogue to enrol."
+                  cta={{ label: "Find a course", to: "/platform/courses" }}
+                />
+              ) : (
+                <ul className="-my-1 divide-y divide-border">
+                  {inProgress.slice(0, 6).map((c) => (
+                    <li
+                      key={c.course.id}
+                      className="rounded-lg px-1 py-3 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="mb-1.5 flex items-center justify-between gap-3">
+                        <Link
+                          to={`/platform/courses/${c.course.id}`}
+                          className="min-w-0 flex-1 truncate text-sm font-medium text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
+                        >
+                          {c.course.title}
+                        </Link>
+                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                          {c.progressPct}%
+                        </span>
+                      </div>
+                      <Progress value={c.progressPct} className="h-2" />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="flex flex-col">
+            <CardHeader>
+              <CardTitle>My upcoming sessions</CardTitle>
+              <CardDescription>Sessions you are booked onto</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              {sessions.isLoading ? (
+                <ListSkeleton />
+              ) : sessions.isError ? (
+                <ErrorState onRetry={() => sessions.refetch()} />
+              ) : (sessions.data?.length ?? 0) === 0 ? (
+                <EmptyState
+                  icon={CalendarDays}
+                  message="No upcoming sessions booked."
+                  cta={{ label: "View calendar", to: "/platform/calendar" }}
+                />
+              ) : (
+                <SessionsList items={sessions.data!} showJoin />
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Courses in progress</CardTitle>
-            <CardDescription>Pick up where you left off</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {myCourses.isLoading ? (
-              <ListSkeleton />
-            ) : myCourses.isError ? (
-              <ErrorState onRetry={() => myCourses.refetch()} />
-            ) : inProgress.length === 0 ? (
-              <EmptyState
-                icon={ClipboardList}
-                message="No courses in progress. Browse the catalogue to enrol."
-                cta={{ label: "Find a course", to: "/platform/courses" }}
-              />
-            ) : (
-              <ul className="divide-y divide-border">
-                {inProgress.slice(0, 6).map((c) => (
-                  <li key={c.course.id} className="py-3">
-                    <div className="mb-1.5 flex items-center justify-between gap-3">
-                      <Link
-                        to={`/platform/courses/${c.course.id}`}
-                        className="min-w-0 flex-1 truncate text-sm font-medium text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
-                      >
-                        {c.course.title}
-                      </Link>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {c.progressPct}%
-                      </span>
-                    </div>
-                    <Progress value={c.progressPct} className="h-2" />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>My upcoming sessions</CardTitle>
-            <CardDescription>Sessions you are booked onto</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {sessions.isLoading ? (
-              <ListSkeleton />
-            ) : sessions.isError ? (
-              <ErrorState onRetry={() => sessions.refetch()} />
-            ) : (sessions.data?.length ?? 0) === 0 ? (
-              <EmptyState
-                icon={CalendarDays}
-                message="No upcoming sessions booked."
-                cta={{ label: "View calendar", to: "/platform/calendar" }}
-              />
-            ) : (
-              <SessionsList items={sessions.data!} showJoin />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      </section>
 
       <NoticeBoardCard />
     </div>
@@ -700,13 +814,16 @@ function LearnerDashboard({
 // ─── Role router ─────────────────────────────────────────────────────────────
 
 export default function DashboardPage(): JSX.Element {
-  const { profile, isAdmin, isTrainer, loading } = useUser()
+  const { profile, role, isAdmin, isTrainer, loading } = useUser()
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-9 w-48" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-5 w-80" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-24 w-full rounded-xl" />
           ))}
@@ -716,9 +833,27 @@ export default function DashboardPage(): JSX.Element {
     )
   }
 
-  if (isAdmin) return <AdminDashboard />
-  if (isTrainer && profile) return <TrainerDashboard trainerId={profile.id} />
-  if (profile) return <LearnerDashboard learnerId={profile.id} />
+  const firstName =
+    profile?.first_name?.trim() || profile?.full_name?.trim().split(" ")[0] || ""
+  const roleLabel = role ? (ROLE_LABEL[role] ?? "") : ""
+
+  if (isAdmin) return <AdminDashboard name={firstName} roleLabel={roleLabel} />
+  if (isTrainer && profile)
+    return (
+      <TrainerDashboard
+        trainerId={profile.id}
+        name={firstName}
+        roleLabel={roleLabel}
+      />
+    )
+  if (profile)
+    return (
+      <LearnerDashboard
+        learnerId={profile.id}
+        name={firstName}
+        roleLabel={roleLabel}
+      />
+    )
 
   // No profile resolved: minimal safe fallback.
   return (

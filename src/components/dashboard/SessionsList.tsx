@@ -22,14 +22,17 @@ interface Props {
 /** Upcoming sessions list, shared across roles. Parent owns states. */
 export function SessionsList({ items, showJoin = false }: Props): JSX.Element {
   return (
-    <ul className="divide-y divide-border">
+    <ul className="-my-1 divide-y divide-border">
       {items.map((s) => (
-        <li key={s.id} className="flex items-center gap-3 py-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <li
+          key={s.id}
+          className="flex items-center gap-3 rounded-lg px-1 py-3 transition-colors hover:bg-muted/50"
+        >
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             {s.isVirtual ? (
-              <Video className="size-4" />
+              <Video className="size-4" aria-hidden="true" />
             ) : (
-              <MapPin className="size-4" />
+              <MapPin className="size-4" aria-hidden="true" />
             )}
           </div>
           <div className="min-w-0 flex-1">

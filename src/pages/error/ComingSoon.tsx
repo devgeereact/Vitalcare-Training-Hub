@@ -30,6 +30,8 @@ export default function ComingSoon() {
   const [email, setEmail] = useState("")
 
   useEffect(() => {
+    // Mount guard plus countdown timer setup (template pattern).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
 
     const targetDate = new Date()
