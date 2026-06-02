@@ -224,6 +224,61 @@ export function useDeleteCourse() {
 }
 
 // ─── Module / lesson mutations ───────────────────────────────────────────────
+export interface ImportModule {
+  title: string
+  lessons: { title: string; content: string }[]
+}
+
+export function useImportCurriculum(courseId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (
+      modules: ImportModule[],
+    ): Promise<{ modules: number; lessons: number }> => {
+      // Append after existing modules.
+      const { count } = await supabase
+        .from("modules")
+        .select("*", { count: "exact", head: true })
+        .eq("course_id", courseId)
+        .is("deleted_at", null)
+      let mPos = count ?? 0
+      let lessonTotal = 0
+
+      for (const m of modules) {
+        const { data: mod, error } = await supabase
+          .from("modules")
+          .insert({ course_id: courseId, title: m.title, position: mPos++ })
+          .select("id")
+          .single()
+        if (error) {
+          console.error("[useImportCurriculum:module]", error)
+          throw error
+        }
+        if (m.lessons.length) {
+          const { error: lErr } = await supabase.from("lessons").insert(
+            m.lessons.map((l, i) => ({
+              module_id: mod.id,
+              title: l.title,
+              type: "text" as LessonType,
+              content: l.content || null,
+              duration_mins: 0,
+              position: i,
+            })),
+          )
+          if (lErr) {
+            console.error("[useImportCurriculum:lessons]", lErr)
+            throw lErr
+          }
+          lessonTotal += m.lessons.length
+        }
+      }
+      return { modules: modules.length, lessons: lessonTotal }
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: coursesKeys.curriculum(courseId) }),
+  })
+}
+
 export function useCurriculumMutations(courseId: string) {
   const qc = useQueryClient()
   const invalidate = () =>

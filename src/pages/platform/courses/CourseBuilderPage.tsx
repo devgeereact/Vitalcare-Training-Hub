@@ -39,6 +39,7 @@ import AiAssistButton from "@/components/ai/AiAssistButton"
 import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
 import MediaUpload from "@/components/courses/MediaUpload"
 import CourseExtrasEditor from "@/components/courses/CourseExtrasEditor"
+import ImportCurriculumDialog from "@/components/courses/ImportCurriculumDialog"
 import {
   courseFormSchema,
   type CourseFormValues,
@@ -327,10 +328,15 @@ export default function CourseBuilderPage() {
       {isEdit && (
         <Card>
           <CardHeader>
-            <CardTitle>Curriculum</CardTitle>
-            <CardDescription>
-              Drag to reorder modules and lessons. Changes save automatically.
-            </CardDescription>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <CardTitle>Curriculum</CardTitle>
+                <CardDescription>
+                  Drag to reorder modules and lessons. Changes save automatically.
+                </CardDescription>
+              </div>
+              <ImportCurriculumDialog courseId={id!} />
+            </div>
           </CardHeader>
           <CardContent>
             <CurriculumBuilder courseId={id!} />
