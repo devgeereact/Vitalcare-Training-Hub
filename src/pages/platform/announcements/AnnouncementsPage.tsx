@@ -35,15 +35,17 @@ export default function AnnouncementsPage() {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
+  const [actionAt, setActionAt] = useState("")
 
   function submit() {
     if (!title.trim() || !body.trim() || !profile?.id) return
     create
-      .mutateAsync({ title, body, authorId: profile.id })
+      .mutateAsync({ title, body, authorId: profile.id, actionAt: actionAt || null })
       .then(() => {
         toast.success("Announcement published")
         setTitle("")
         setBody("")
+        setActionAt("")
         setOpen(false)
       })
       .catch(() => toast.error("Could not publish. Please try again."))
@@ -91,6 +93,16 @@ export default function AnnouncementsPage() {
                       onInsert={(text) => setBody(text)}
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs text-muted-foreground">
+                    Action date &amp; time (optional — sets reminders for readers)
+                  </label>
+                  <Input
+                    type="datetime-local"
+                    value={actionAt}
+                    onChange={(e) => setActionAt(e.target.value)}
+                  />
                 </div>
               </div>
               <DialogFooter>

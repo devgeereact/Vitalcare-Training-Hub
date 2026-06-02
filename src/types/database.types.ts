@@ -259,6 +259,24 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type AnnouncementAck = {
+  id: string
+  announcement_id: string
+  user_id: string
+  acknowledged_at: string
+}
+
+export type Reminder = {
+  id: string
+  user_id: string
+  title: string
+  body: string | null
+  link: string | null
+  remind_at: string
+  sent: boolean
+  created_at: string
+}
+
 export type CalendarEvent = {
   id: string
   title: string
@@ -479,6 +497,7 @@ export type Announcement = Timestamps & {
   organisation_id: string | null
   course_id: string | null
   published_at: string | null
+  action_at: string | null
 }
 
 export type TrainerProfile = Timestamps & {
@@ -596,6 +615,19 @@ export type Database = {
         Row: EmailCampaign
         Insert: Partial<EmailCampaign> & Pick<EmailCampaign, "subject" | "message">
         Update: Partial<EmailCampaign>
+        Relationships: []
+      }
+      announcement_acks: {
+        Row: AnnouncementAck
+        Insert: Partial<AnnouncementAck> &
+          Pick<AnnouncementAck, "announcement_id" | "user_id">
+        Update: Partial<AnnouncementAck>
+        Relationships: []
+      }
+      reminders: {
+        Row: Reminder
+        Insert: Partial<Reminder> & Pick<Reminder, "user_id" | "title" | "remind_at">
+        Update: Partial<Reminder>
         Relationships: []
       }
       calendar_events: {

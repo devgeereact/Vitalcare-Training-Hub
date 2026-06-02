@@ -224,6 +224,7 @@ export interface AnnouncementCreate {
   title: string
   body: string
   authorId: string
+  actionAt?: string | null
 }
 
 export function useCreateAnnouncement() {
@@ -235,6 +236,7 @@ export function useCreateAnnouncement() {
         body: input.body.trim(),
         author_id: input.authorId,
         published_at: new Date().toISOString(),
+        action_at: input.actionAt ? new Date(input.actionAt).toISOString() : null,
       })
       if (error) {
         console.error("[useCreateAnnouncement]", error)
@@ -242,5 +244,97 @@ export function useCreateAnnouncement() {
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: commKeys.announcements() }),
+  })
+}
+
+/* ----------------------------------------- acknowledgements + reminders --- */
+
+export function useUnacknowledged(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["announcements", "unacked", userId ?? "anon"],
+    enabled: !!userId,
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<AnnouncementRow[]> => {
+      const { data: anns, error } = await supabase
+        .from("announcements")
+        .select("*")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(20)
+      if (error) {
+        console.error("[useUnacknowledged]", error)
+        throw error
+      }
+      const { data: acks } = await supabase
+        .from("announcement_acks")
+        .select("announcement_id")
+        .eq("user_id", userId!)
+      const acked = new Set((acks ?? []).map((a) => a.announcement_id))
+      const rows = ((anns ?? []) as Announcement[]).filter((a) => !acked.has(a.id))
+      const authorIds = [...new Set(rows.map((r) => r.author_id).filter(Boolean))] as string[]
+      const nameById = new Map<string, string>()
+      if (authorIds.length) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name, full_name")
+          .in("id", authorIds)
+        for (const p of profiles ?? [])
+          nameById.set(
+            p.id,
+            p.full_name ||
+              [p.first_name, p.last_name].filter(Boolean).join(" ") ||
+              "Team",
+          )
+      }
+      return rows.map((r) => ({
+        ...r,
+        authorName: r.author_id ? nameById.get(r.author_id) ?? "Team" : "Team",
+      }))
+    },
+  })
+}
+
+/** Acknowledge an announcement; if it has an action time, schedule a reminder
+ *  sequence (1 day before, 2 hours before, at the time) for the user. */
+export function useAcknowledge(userId: string | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      announcementId: string
+      title: string
+      actionAt: string | null
+      addReminders: boolean
+    }) => {
+      const { error } = await supabase.from("announcement_acks").insert({
+        announcement_id: input.announcementId,
+        user_id: userId!,
+      })
+      if (error && error.code !== "23505") {
+        console.error("[useAcknowledge]", error)
+        throw error
+      }
+      if (input.addReminders && input.actionAt && userId) {
+        const at = new Date(input.actionAt).getTime()
+        const now = Date.now()
+        const schedule = [
+          { offset: 24 * 60 * 60 * 1000, label: "tomorrow" },
+          { offset: 2 * 60 * 60 * 1000, label: "in 2 hours" },
+          { offset: 0, label: "now" },
+        ]
+        const rows = schedule
+          .map((s) => ({ remind_at: new Date(at - s.offset), label: s.label }))
+          .filter((s) => s.remind_at.getTime() > now)
+          .map((s) => ({
+            user_id: userId,
+            title: `Reminder: ${input.title}`,
+            body: `Action due ${new Date(input.actionAt!).toLocaleString("en-GB")}.`,
+            link: "/platform/announcements",
+            remind_at: s.remind_at.toISOString(),
+          }))
+        if (rows.length) await supabase.from("reminders").insert(rows)
+      }
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["announcements", "unacked", userId ?? "anon"] }),
   })
 }

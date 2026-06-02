@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import BottomTabBar from "@/components/platform/BottomTabBar"
 import React from "react"
 import { NotificationDropdown } from "@/components/notification-dropdown"
+import AnnouncementPopup from "@/components/platform/AnnouncementPopup"
 
 import {
   Breadcrumb,
@@ -147,6 +148,7 @@ export default function AppLayout() {
 
         <Footer />
         <BottomTabBar />
+        <AnnouncementPopup />
       </SidebarInset>
     </SidebarProvider>
   )
