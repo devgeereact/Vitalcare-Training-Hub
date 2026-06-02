@@ -38,6 +38,7 @@ import RichTextEditor from "@/components/courses/RichTextEditor"
 import AiAssistButton from "@/components/ai/AiAssistButton"
 import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
 import MediaUpload from "@/components/courses/MediaUpload"
+import CourseExtrasEditor from "@/components/courses/CourseExtrasEditor"
 import {
   courseFormSchema,
   type CourseFormValues,
@@ -336,6 +337,8 @@ export default function CourseBuilderPage() {
           </CardContent>
         </Card>
       )}
+
+      {isEdit && <CourseExtrasEditor courseId={id!} />}
     </div>
   )
 }

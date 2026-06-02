@@ -259,6 +259,31 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type CourseReview = {
+  id: string
+  course_id: string
+  learner_id: string
+  rating: number
+  comment: string | null
+  created_at: string
+}
+
+export type CourseFaq = {
+  id: string
+  course_id: string
+  question: string
+  answer: string
+  position: number
+  created_at: string
+}
+
+export type CoursePrerequisite = {
+  id: string
+  course_id: string
+  prerequisite_id: string
+  created_at: string
+}
+
 export type Cohort = Timestamps & {
   id: string
   name: string
@@ -494,6 +519,26 @@ export type Database = {
         Row: EmailCampaign
         Insert: Partial<EmailCampaign> & Pick<EmailCampaign, "subject" | "message">
         Update: Partial<EmailCampaign>
+        Relationships: []
+      }
+      course_reviews: {
+        Row: CourseReview
+        Insert: Partial<CourseReview> &
+          Pick<CourseReview, "course_id" | "learner_id" | "rating">
+        Update: Partial<CourseReview>
+        Relationships: []
+      }
+      course_faqs: {
+        Row: CourseFaq
+        Insert: Partial<CourseFaq> & Pick<CourseFaq, "course_id" | "question" | "answer">
+        Update: Partial<CourseFaq>
+        Relationships: []
+      }
+      course_prerequisites: {
+        Row: CoursePrerequisite
+        Insert: Partial<CoursePrerequisite> &
+          Pick<CoursePrerequisite, "course_id" | "prerequisite_id">
+        Update: Partial<CoursePrerequisite>
         Relationships: []
       }
       cohorts: TableShape<Cohort, "name">

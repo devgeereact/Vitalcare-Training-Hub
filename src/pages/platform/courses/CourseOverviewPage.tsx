@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 import {
   useCourse,
   useCurriculum,
@@ -26,16 +27,25 @@ import {
   useEnrolSelf,
 } from "@/lib/queries/courses.queries"
 import CourseDiscussion from "@/components/platform/CourseDiscussion"
+import CourseReviews from "@/components/courses/CourseReviews"
+import CourseFaqs from "@/components/courses/CourseFaqs"
+import { usePrerequisites } from "@/lib/queries/course-extras.queries"
+import { useAuth } from "@/hooks/use-auth"
+import { CheckCircle2, Circle, Lock } from "lucide-react"
 
 export default function CourseOverviewPage() {
   const { id = "" } = useParams()
+  const { user } = useAuth()
   const course = useCourse(id)
   const curriculum = useCurriculum(id)
   const myCourses = useMyCourses()
   const enrol = useEnrolSelf()
+  const prereqs = usePrerequisites(id, user?.id)
 
   const mine = myCourses.data?.find((m) => m.course.id === id)
   const firstLesson = curriculum.data?.flatMap((m) => m.lessons)[0]
+  const unmetPrereqs = (prereqs.data ?? []).filter((p) => !p.completed)
+  const prereqsBlocked = unmetPrereqs.length > 0
 
   if (course.isLoading) {
     return (
@@ -115,7 +125,7 @@ export default function CourseOverviewPage() {
               )
             ) : (
               <Button
-                disabled={enrol.isPending}
+                disabled={enrol.isPending || prereqsBlocked}
                 onClick={() =>
                   enrol
                     .mutateAsync(id)
@@ -123,10 +133,37 @@ export default function CourseOverviewPage() {
                     .catch(() => toast.error("Could not enrol"))
                 }
               >
-                Enrol on this course
+                {prereqsBlocked && <Lock className="mr-2 size-4" />}
+                {prereqsBlocked ? "Complete prerequisites first" : "Enrol on this course"}
               </Button>
             )}
           </div>
+
+          {(prereqs.data?.length ?? 0) > 0 && (
+            <div className="rounded-lg border border-border p-3">
+              <p className="mb-2 text-sm font-medium">Prerequisites</p>
+              <ul className="space-y-1.5">
+                {prereqs.data!.map((p) => (
+                  <li key={p.id} className="flex items-center gap-2 text-sm">
+                    {p.completed ? (
+                      <CheckCircle2 className="size-4 text-success" />
+                    ) : (
+                      <Circle className="size-4 text-muted-foreground" />
+                    )}
+                    <Link
+                      to={`/platform/courses/${p.prerequisiteId}`}
+                      className={cn(
+                        "hover:underline",
+                        p.completed ? "text-muted-foreground line-through" : "text-foreground",
+                      )}
+                    >
+                      {p.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -182,6 +219,8 @@ export default function CourseOverviewPage() {
         </CardContent>
       </Card>
 
+      <CourseFaqs courseId={id} />
+      <CourseReviews courseId={id} />
       <CourseDiscussion courseId={id} />
     </div>
   )
