@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, ShieldPlus, BadgeCheckIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
+import { ChevronsUpDownIcon, BadgeCheckIcon, Settings as SettingsIcon, BellIcon, LogOutIcon } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -119,27 +119,16 @@ const handleSignOut = async () => {
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="my-2"/>
             <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2 h-9">
-                <ShieldPlus className="!size-5" 
-                />
-                Upgrade to Pro
+              <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/profile")}>
+                <BadgeCheckIcon className="!size-5" />
+                Profile
               </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator className="my-2"/>
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2 h-9">
-                <BadgeCheckIcon className="!size-5" 
-                />
-                Account
+              <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/settings")}>
+                <SettingsIcon className="!size-5" />
+                Settings
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 h-9">
-                <CreditCardIcon className="!size-5" 
-                />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 h-9">
-                <BellIcon className="!size-5" 
-                />
+              <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/notifications")}>
+                <BellIcon className="!size-5" />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>

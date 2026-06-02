@@ -388,9 +388,11 @@ export const router = createBrowserRouter (
 
         // 🎓 CERTIFICATES
         {
+          // Learners reach this to view/download their OWN certificates (RLS
+          // scopes the data); staff manage and issue.
           path: "certificates",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+            <RoleGuard roles={["admin", "super_admin", "trainer", "manager", "learner"]}>
               <CertificatesListPage />
             </RoleGuard>
           ),

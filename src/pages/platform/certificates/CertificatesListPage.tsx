@@ -43,6 +43,7 @@ import {
 import { useLearners } from "@/lib/queries/learners.queries"
 import { useCourses } from "@/lib/queries/courses.queries"
 import { downloadCertificatePdf } from "@/lib/certificates/pdf"
+import { useUser } from "@/hooks/use-user"
 
 function ExpiryBadge({ cert }: { cert: CertRow }) {
   if (cert.status === "expired") {
@@ -197,6 +198,8 @@ function IssueDialog() {
 }
 
 export default function CertificatesListPage() {
+  const { isAdmin, isTrainer } = useUser()
+  const isStaff = isAdmin || isTrainer
   const { data, isLoading, isError, refetch } = useCertificates()
   const template = useDefaultTemplate()
   const [signatory, setSignatory] = useState("")
@@ -211,15 +214,19 @@ export default function CertificatesListPage() {
         <div>
           <h1 className="font-display text-3xl text-foreground">Certificates</h1>
           <p className="mt-1 text-muted-foreground">
-            Issued certificates, verifiable at {`${"vitalcare.uk"}/verify`}.
+            {isStaff
+              ? `Issued certificates, verifiable at vitalcare.uk/verify.`
+              : `Your certificates, verifiable at vitalcare.uk/verify.`}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link to="/platform/certificates/templates">Design template</Link>
-          </Button>
-          <IssueDialog />
-        </div>
+        {isStaff && (
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to="/platform/certificates/templates">Design template</Link>
+            </Button>
+            <IssueDialog />
+          </div>
+        )}
       </div>
 
       {expiringCount > 0 ? (
