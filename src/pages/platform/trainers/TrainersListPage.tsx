@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { GraduationCap, AlertCircle, Mail, CalendarDays } from "lucide-react"
 
 import {
@@ -10,9 +11,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTrainers } from "@/lib/queries/trainers.queries"
+import ContactDetailById from "@/components/platform/ContactDetailById"
 
 export default function TrainersListPage() {
   const { data, isLoading, isError, refetch } = useTrainers()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   return (
     <div className="space-y-6">
@@ -62,7 +65,15 @@ export default function TrainersListPage() {
                     {t.name.slice(0, 1).toUpperCase()}
                   </span>
                   <div className="min-w-0">
-                    <CardTitle className="truncate text-base">{t.name}</CardTitle>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(t.id)}
+                      className="block truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded"
+                    >
+                      <CardTitle className="truncate text-base hover:text-brand-navy">
+                        {t.name}
+                      </CardTitle>
+                    </button>
                     <a
                       href={`mailto:${t.email}`}
                       className="flex items-center gap-1 truncate text-xs text-muted-foreground hover:text-foreground"
@@ -94,6 +105,8 @@ export default function TrainersListPage() {
           ))}
         </div>
       )}
+
+      <ContactDetailById userId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   )
 }

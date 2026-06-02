@@ -7,6 +7,25 @@ export const usersKeys = {
   list: () => [...usersKeys.all, "list"] as const,
 }
 
+export function useProfileById(id: string | null) {
+  return useQuery({
+    queryKey: ["users", "detail", id ?? "none"],
+    enabled: !!id,
+    queryFn: async (): Promise<Profile | null> => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", id!)
+        .maybeSingle()
+      if (error) {
+        console.error("[useProfileById]", error)
+        throw error
+      }
+      return (data as Profile) ?? null
+    },
+  })
+}
+
 export function useAllUsers() {
   return useQuery({
     queryKey: usersKeys.list(),

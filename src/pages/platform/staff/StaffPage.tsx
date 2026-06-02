@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Users, AlertCircle, Mail, MessageSquare } from "lucide-react"
 
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useStaff } from "@/lib/queries/org.queries"
+import ContactDetailById from "@/components/platform/ContactDetailById"
 import type { UserRole } from "@/types/database.types"
 
 const ROLE_LABEL: Partial<Record<UserRole, string>> = {
@@ -26,6 +28,7 @@ const ROLE_STYLE: Partial<Record<UserRole, string>> = {
 
 export default function StaffPage() {
   const { data, isLoading, isError, refetch } = useStaff()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   return (
     <div className="space-y-6">
@@ -65,18 +68,21 @@ export default function StaffPage() {
             <ul className="divide-y divide-border">
               {data!.map((s) => (
                 <li key={s.id} className="flex items-center gap-3 px-5 py-3">
-                  <span className="flex size-10 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
-                    {s.name.slice(0, 1).toUpperCase()}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{s.name}</p>
-                    <a
-                      href={`mailto:${s.email}`}
-                      className="flex items-center gap-1 truncate text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      <Mail className="size-3" /> {s.email}
-                    </a>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(s.id)}
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
+                  >
+                    <span className="flex size-10 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
+                      {s.name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium">{s.name}</span>
+                      <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                        <Mail className="size-3" /> {s.email}
+                      </span>
+                    </span>
+                  </button>
                   <Badge variant="secondary" className={ROLE_STYLE[s.role]}>
                     {ROLE_LABEL[s.role] ?? s.role}
                   </Badge>
@@ -91,6 +97,8 @@ export default function StaffPage() {
           )}
         </CardContent>
       </Card>
+
+      <ContactDetailById userId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   )
 }
