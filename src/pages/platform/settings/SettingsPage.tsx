@@ -18,6 +18,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import ProfileDetailsCard from "@/components/platform/ProfileDetailsCard"
+import MailSettingsCard from "@/components/platform/MailSettingsCard"
 
 const VITALCARE_THEMES = [
   { id: "vitalcare-default", label: "Vitalcare", preview: "bg-gradient-to-br from-[#1b2e6b] to-[#d4a843]" },
@@ -158,6 +159,7 @@ export default function SettingsPage() {
       </Card>
 
       <ProfileDetailsCard />
+      <MailSettingsCard />
 
       {/* Account */}
       <Card>

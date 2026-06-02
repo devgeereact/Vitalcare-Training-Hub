@@ -1,15 +1,17 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { formatDistanceToNow, format } from "date-fns"
 import { toast } from "sonner"
-import { Inbox, AlertCircle, RefreshCw, Loader2, Mail, PenSquare } from "lucide-react"
+import { Inbox, AlertCircle, RefreshCw, Loader2, Mail, PenSquare, Send } from "lucide-react"
 
 import {
   Card,
   CardContent,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Dialog,
@@ -17,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase/client"
@@ -26,6 +29,41 @@ export default function InboxPage() {
   const qc = useQueryClient()
   const [selected, setSelected] = useState<MailMessage | null>(null)
   const [syncing, setSyncing] = useState(false)
+  const [compose, setCompose] = useState(false)
+  const [cTo, setCTo] = useState("")
+  const [cSubject, setCSubject] = useState("")
+  const [cBody, setCBody] = useState("")
+  const [sending, setSending] = useState(false)
+
+  async function sendMail() {
+    if (!cTo.trim() || !cSubject.trim() || !cBody.trim()) {
+      toast.error("Fill in recipient, subject and message.")
+      return
+    }
+    setSending(true)
+    try {
+      const { data, error } = await supabase.functions.invoke("user-mail", {
+        body: { action: "send", to: cTo.trim(), subject: cSubject, message: cBody },
+      })
+      if (error || data?.ok === false) {
+        throw new Error(data?.error || "send failed")
+      }
+      toast.success("Email sent")
+      setCompose(false)
+      setCTo("")
+      setCSubject("")
+      setCBody("")
+    } catch (err) {
+      toast.error("Could not send", {
+        description:
+          err instanceof Error && err.message.includes("Connect")
+            ? "Connect your mail account in Settings first."
+            : "Check your mail settings.",
+      })
+    } finally {
+      setSending(false)
+    }
+  }
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["mail", "inbox"],
@@ -83,10 +121,8 @@ export default function InboxPage() {
             )}
             Sync now
           </Button>
-          <Button asChild>
-            <Link to="/platform/email">
-              <PenSquare className="mr-2 size-4" /> Compose
-            </Link>
+          <Button onClick={() => setCompose(true)}>
+            <PenSquare className="mr-2 size-4" /> Compose
           </Button>
         </div>
       </div>
@@ -185,6 +221,50 @@ export default function InboxPage() {
               )}
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Compose (sends from your own account) */}
+      <Dialog open={compose} onOpenChange={setCompose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Compose</DialogTitle>
+            <DialogDescription>Sends from your connected mail account.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="mb-1.5 block text-xs">To</Label>
+              <Input
+                type="email"
+                value={cTo}
+                onChange={(e) => setCTo(e.target.value)}
+                placeholder="name@example.com"
+              />
+            </div>
+            <div>
+              <Label className="mb-1.5 block text-xs">Subject</Label>
+              <Input value={cSubject} onChange={(e) => setCSubject(e.target.value)} />
+            </div>
+            <Textarea
+              rows={8}
+              value={cBody}
+              onChange={(e) => setCBody(e.target.value)}
+              placeholder="Write your message…"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompose(false)}>
+              Cancel
+            </Button>
+            <Button onClick={sendMail} disabled={sending}>
+              {sending ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Send className="mr-2 size-4" />
+              )}
+              Send
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
