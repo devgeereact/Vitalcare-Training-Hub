@@ -7,6 +7,7 @@
 // Secrets: SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (auto)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { getSecret } from "../_shared/secrets.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -100,6 +101,21 @@ Deno.serve(async (req) => {
       return json({ error: "Could not save" }, 500)
     }
     return json({ ok: true })
+  }
+
+  if (action === "drive_auth_url") {
+    const clientId = await getSecret(admin, "GDRIVE_CLIENT_ID")
+    if (!clientId) return json({ error: "Set GDRIVE_CLIENT_ID first" }, 400)
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri:
+        "https://mongirnapzzizmzcrkqp.supabase.co/functions/v1/google-drive-callback",
+      response_type: "code",
+      scope: "https://www.googleapis.com/auth/drive.file",
+      access_type: "offline",
+      prompt: "consent",
+    })
+    return json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params}` })
   }
 
   if (action === "remove") {

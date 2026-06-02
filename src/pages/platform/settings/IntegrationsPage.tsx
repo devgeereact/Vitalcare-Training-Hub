@@ -1,7 +1,16 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Plug, AlertCircle, CheckCircle2, Loader2, Save, ShieldAlert } from "lucide-react"
+import {
+  Plug,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Save,
+  ShieldAlert,
+  HardDrive,
+} from "lucide-react"
 
 import {
   Card,
@@ -80,8 +89,49 @@ function KeyRow({ k, onSaved }: { k: KeyStatus; onSaved: () => void }) {
   )
 }
 
+function ConnectDriveButton() {
+  const [busy, setBusy] = useState(false)
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true)
+        try {
+          const { data, error } = await supabase.functions.invoke("integrations", {
+            body: { action: "drive_auth_url" },
+          })
+          if (error || !data?.url) throw error ?? new Error("No URL")
+          window.location.href = data.url as string
+        } catch {
+          toast.error("Set GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET first")
+          setBusy(false)
+        }
+      }}
+    >
+      {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <HardDrive className="mr-2 size-4" />}
+      Connect Google Drive
+    </Button>
+  )
+}
+
 export default function IntegrationsPage() {
   const qc = useQueryClient()
+  const [params, setParams] = useSearchParams()
+
+  useEffect(() => {
+    const d = params.get("drive")
+    if (!d) return
+    if (d === "connected") toast.success("Google Drive connected")
+    else if (d === "norefresh") toast.error("Reconnect needed — no refresh token returned")
+    else if (d === "noclient") toast.error("Set Drive client ID and secret first")
+    else if (d === "error") toast.error("Google Drive connection failed")
+    params.delete("drive")
+    setParams(params, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["integrations", "list"],
     queryFn: async (): Promise<Integration[]> => {
@@ -144,6 +194,15 @@ export default function IntegrationsPage() {
                 {integ.keys.map((k) => (
                   <KeyRow key={k.name} k={k} onSaved={reload} />
                 ))}
+                {integ.id === "google_drive" && (
+                  <div className="border-t border-border pt-3">
+                    <p className="mb-2 text-xs text-muted-foreground">
+                      After saving the client ID and secret, authorise Drive access
+                      to generate the refresh token.
+                    </p>
+                    <ConnectDriveButton />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
