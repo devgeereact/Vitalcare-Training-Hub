@@ -15,6 +15,7 @@ export const sessionsKeys = {
   attendance: (id: string) => [...sessionsKeys.all, "attendance", id] as const,
   calendar: () => [...sessionsKeys.all, "calendar"] as const,
   log: () => [...sessionsKeys.all, "log"] as const,
+  timetable: () => [...sessionsKeys.all, "timetable"] as const,
 }
 
 // ─── Trainers (for the trainer select) ───────────────────────────────────────
@@ -186,7 +187,7 @@ export async function getTimetable(
 
 export function useTimetable(trainerId: string, fromISO: string, toISO: string) {
   return useQuery({
-    queryKey: [...sessionsKeys.all, "timetable", trainerId, fromISO],
+    queryKey: [...sessionsKeys.timetable(), trainerId, fromISO],
     queryFn: () => getTimetable(trainerId, fromISO, toISO),
     enabled: !!trainerId,
   })
@@ -333,6 +334,7 @@ export function useCreateSession() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: sessionsKeys.list() })
       qc.invalidateQueries({ queryKey: sessionsKeys.calendar() })
+      qc.invalidateQueries({ queryKey: sessionsKeys.timetable() })
     },
   })
 }
@@ -401,6 +403,7 @@ export function useUpdateSession(id: string) {
       qc.invalidateQueries({ queryKey: sessionsKeys.detail(id) })
       qc.invalidateQueries({ queryKey: sessionsKeys.list() })
       qc.invalidateQueries({ queryKey: sessionsKeys.calendar() })
+      qc.invalidateQueries({ queryKey: sessionsKeys.timetable() })
     },
   })
 }
@@ -418,6 +421,7 @@ export function useDeleteSession() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: sessionsKeys.list() })
       qc.invalidateQueries({ queryKey: sessionsKeys.calendar() })
+      qc.invalidateQueries({ queryKey: sessionsKeys.timetable() })
     },
   })
 }

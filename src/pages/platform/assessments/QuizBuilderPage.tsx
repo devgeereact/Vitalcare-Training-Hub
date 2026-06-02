@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 
+import AuthoringHeader from "@/components/authoring/AuthoringHeader"
 import QuestionDialog from "@/components/assessments/QuestionDialog"
 import AiAssistButton from "@/components/ai/AiAssistButton"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
@@ -142,15 +143,20 @@ export default function QuizBuilderPage() {
 
   if (isEdit && assessment.isLoading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-64 w-full" />
+      <div className="space-y-6">
+        <AuthoringHeader />
+        <div className="mx-auto max-w-3xl space-y-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-64 w-full" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
+      <AuthoringHeader />
+      <div className="mx-auto max-w-3xl space-y-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/platform/assessments/builder">
           <ArrowLeft className="mr-1.5 size-4" /> Back to assessments
@@ -412,6 +418,7 @@ export default function QuizBuilderPage() {
           saving={qMut.saveQuestion.isPending}
         />
       )}
+      </div>
     </div>
   )
 }

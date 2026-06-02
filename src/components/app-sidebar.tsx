@@ -63,8 +63,7 @@ const data = {
       items: [
         { title: "Courses", url: "/platform/courses" },
         { title: "Learning Paths", url: "/platform/courses/paths" },
-        { title: "Course Builder", url: "/platform/courses/builder", roles: CONTENT },
-        { title: "Quiz Builder", url: "/platform/assessments/builder", roles: CONTENT },
+        { title: "Authoring", url: "/platform/courses/builder", roles: CONTENT },
         { title: "Assessment Results", url: "/platform/assessments/results", roles: MGMT_T },
         { title: "Resource Library", url: "/platform/library" },
         { title: "Virtual Training", url: "/platform/virtual" },

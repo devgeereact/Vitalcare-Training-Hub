@@ -46,6 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import AuthoringHeader from "@/components/authoring/AuthoringHeader"
 import MediaUpload from "@/components/courses/MediaUpload"
 import { useUser } from "@/hooks/use-user"
 import { useCourses } from "@/lib/queries/courses.queries"
@@ -701,6 +702,14 @@ function ReadLibrary({ audience }: { audience: "learner" | "trainer" }) {
 
 export default function LibraryPage() {
   const { isAdmin, isTrainer } = useUser()
-  if (isAdmin) return <ManageLibrary />
-  return <ReadLibrary audience={isTrainer ? "trainer" : "learner"} />
+  return (
+    <div className="space-y-6">
+      <AuthoringHeader />
+      {isAdmin ? (
+        <ManageLibrary />
+      ) : (
+        <ReadLibrary audience={isTrainer ? "trainer" : "learner"} />
+      )}
+    </div>
+  )
 }

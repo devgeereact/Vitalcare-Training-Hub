@@ -34,6 +34,7 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
+import AuthoringHeader from "@/components/authoring/AuthoringHeader"
 import RichTextEditor from "@/components/courses/RichTextEditor"
 import { markdownToHtml, looksLikeMarkdown } from "@/components/courses/markdown"
 import AiAssistButton from "@/components/ai/AiAssistButton"
@@ -117,26 +118,34 @@ export default function CourseBuilderPage() {
 
   if (isEdit && course.isLoading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-64 w-full" />
+      <div className="space-y-6">
+        <AuthoringHeader />
+        <div className="mx-auto max-w-3xl space-y-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-64 w-full" />
+        </div>
       </div>
     )
   }
   if (isEdit && course.isError) {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-center">
-        <AlertCircle className="size-8 text-destructive" />
-        <p className="text-sm text-muted-foreground">Could not load this course.</p>
-        <Button variant="outline" size="sm" onClick={() => course.refetch()}>
-          Retry
-        </Button>
+      <div className="space-y-6">
+        <AuthoringHeader />
+        <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <AlertCircle className="size-8 text-destructive" />
+          <p className="text-sm text-muted-foreground">Could not load this course.</p>
+          <Button variant="outline" size="sm" onClick={() => course.refetch()}>
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
+      <AuthoringHeader />
+      <div className="mx-auto max-w-3xl space-y-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/platform/courses/manage">
           <ArrowLeft className="mr-1.5 size-4" /> Back to courses
@@ -366,7 +375,8 @@ export default function CourseBuilderPage() {
         </Card>
       )}
 
-      {isEdit && <CourseExtrasEditor courseId={id!} />}
+        {isEdit && <CourseExtrasEditor courseId={id!} />}
+      </div>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
+import { toast } from "sonner"
 import {
   addWeeks,
   endOfWeek,
@@ -20,6 +21,8 @@ import {
   ExternalLink,
   User,
   CalendarOff,
+  Plus,
+  Trash2,
 } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
@@ -43,10 +46,15 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { useUser } from "@/hooks/use-user"
-import { useTrainers, useTimetable } from "@/lib/queries/sessions.queries"
+import {
+  useTrainers,
+  useTimetable,
+  useDeleteSession,
+} from "@/lib/queries/sessions.queries"
 import type { TimetableEntry } from "@/lib/queries/sessions.queries"
 import { useOrgHolidays } from "@/lib/queries/calendar.queries"
 import type { OrgHoliday } from "@/lib/queries/calendar.queries"
+import AssignSessionDialog from "@/components/sessions/AssignSessionDialog"
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -110,13 +118,19 @@ function holidaysOnDay(holidays: OrgHoliday[], day: Date): OrgHoliday[] {
 }
 
 export default function TrainerTimetablePage() {
-  const { profile, isTrainer } = useUser()
+  const { profile, isTrainer, isAdmin, isManager } = useUser()
   const trainers = useTrainers()
   const holidays = useOrgHolidays()
+  const deleteSession = useDeleteSession()
+
+  // Admins, super admins and managers may assign and remove timetable slots.
+  const canManage = isAdmin || isManager
 
   const [trainerId, setTrainerId] = useState<string>("")
   const [weekOffset, setWeekOffset] = useState(0)
   const [selected, setSelected] = useState<TimetableEntry | null>(null)
+  const [assignOpen, setAssignOpen] = useState(false)
+  const [assignDate, setAssignDate] = useState<string | undefined>(undefined)
 
   // Default the select to the current user when they are a trainer,
   // otherwise the first trainer in the list.
@@ -146,6 +160,24 @@ export default function TrainerTimetablePage() {
     }
     return map
   }, [q.data])
+
+  const activeTrainerName =
+    trainers.data?.find((t) => t.id === activeTrainer)?.name ?? ""
+
+  function openAssign(date?: string): void {
+    setAssignDate(date)
+    setAssignOpen(true)
+  }
+
+  async function handleRemove(entry: TimetableEntry): Promise<void> {
+    try {
+      await deleteSession.mutateAsync(entry.id)
+      toast.success("Removed from timetable")
+      setSelected(null)
+    } catch {
+      toast.error("Could not remove the session. Please try again.")
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -182,6 +214,16 @@ export default function TrainerTimetablePage() {
           {weekOffset !== 0 && (
             <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>
               This week
+            </Button>
+          )}
+
+          {canManage && (
+            <Button
+              onClick={() => openAssign(undefined)}
+              disabled={!activeTrainer}
+              className="ml-1"
+            >
+              <Plus className="mr-1.5 size-4" /> Assign session
             </Button>
           )}
         </div>
@@ -244,10 +286,21 @@ export default function TrainerTimetablePage() {
                   </div>
                 ) : slots.length === 0 ? (
                   dayHolidays.length === 0 ? (
-                    <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border py-8 text-center">
-                      <CalendarRange className="size-5 text-muted-foreground/60" />
-                      <span className="text-xs text-muted-foreground">No sessions</span>
-                    </div>
+                    canManage && activeTrainer ? (
+                      <button
+                        type="button"
+                        onClick={() => openAssign(format(thisDate, "yyyy-MM-dd"))}
+                        className="flex w-full flex-col items-center gap-1.5 rounded-md border border-dashed border-border py-8 text-center transition-colors hover:border-brand-gold hover:bg-brand-gold/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843]"
+                      >
+                        <Plus className="size-5 text-muted-foreground/60" />
+                        <span className="text-xs text-muted-foreground">Assign session</span>
+                      </button>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border py-8 text-center">
+                        <CalendarRange className="size-5 text-muted-foreground/60" />
+                        <span className="text-xs text-muted-foreground">No sessions</span>
+                      </div>
+                    )
                   ) : null
                 ) : (
                   <div className="space-y-3">
@@ -259,6 +312,15 @@ export default function TrainerTimetablePage() {
                         onOpen={() => setSelected(e)}
                       />
                     ))}
+                    {canManage && activeTrainer && (
+                      <button
+                        type="button"
+                        onClick={() => openAssign(format(thisDate, "yyyy-MM-dd"))}
+                        className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border py-2 text-xs text-muted-foreground transition-colors hover:border-brand-gold hover:bg-brand-gold/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843]"
+                      >
+                        <Plus className="size-3.5" /> Add
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -325,6 +387,17 @@ export default function TrainerTimetablePage() {
               </div>
 
               <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+                {canManage && (
+                  <Button
+                    variant="outline"
+                    className="text-destructive hover:text-destructive sm:mr-auto"
+                    disabled={deleteSession.isPending}
+                    onClick={() => handleRemove(selected)}
+                  >
+                    <Trash2 className="mr-2 size-4" />
+                    {deleteSession.isPending ? "Removing…" : "Remove from timetable"}
+                  </Button>
+                )}
                 {selected.isVirtual && (selected.meetUrl || selected.zoomUrl) && (
                   <Button asChild variant="outline">
                     <a
@@ -346,6 +419,17 @@ export default function TrainerTimetablePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Admin/manager: assign a session to the selected trainer */}
+      {canManage && activeTrainer && (
+        <AssignSessionDialog
+          open={assignOpen}
+          onOpenChange={setAssignOpen}
+          trainerId={activeTrainer}
+          trainerName={activeTrainerName}
+          defaultDate={assignDate}
+        />
+      )}
     </div>
   )
 }

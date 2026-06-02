@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog"
 import DepartmentMembers from "@/components/platform/DepartmentMembers"
 import DepartmentBoard from "@/components/platform/DepartmentBoard"
+import CompanyClosures from "@/components/organisation/CompanyClosures"
 import { useUser } from "@/hooks/use-user"
 import {
   useDepartments,
@@ -247,6 +248,16 @@ export default function DepartmentsPage() {
           ))}
         </div>
       )}
+
+      <div className="pt-2">
+        <div className="mb-4">
+          <h2 className="font-display text-2xl text-foreground">Company closures</h2>
+          <p className="mt-1 text-muted-foreground">
+            Closures and public holidays for the whole organisation.
+          </p>
+        </div>
+        <CompanyClosures />
+      </div>
     </div>
   )
 }
