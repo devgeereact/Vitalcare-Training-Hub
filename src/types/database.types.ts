@@ -289,6 +289,28 @@ export type AnnouncementAck = {
   acknowledged_at: string
 }
 
+export type InvoiceStatus = "draft" | "sent" | "paid" | "void"
+export interface InvoiceItem {
+  description: string
+  quantity: number
+  unit_pence: number
+}
+export type Invoice = {
+  id: string
+  number: string
+  recipient_id: string | null
+  recipient_name: string | null
+  recipient_email: string | null
+  items: InvoiceItem[]
+  total_pence: number
+  status: InvoiceStatus
+  due_date: string | null
+  notes: string | null
+  issued_by: string | null
+  created_at: string
+  paid_at: string | null
+}
+
 export type MailMessage = {
   id: string
   message_id: string | null
@@ -680,6 +702,12 @@ export type Database = {
         Row: MailMessage
         Insert: Partial<MailMessage>
         Update: Partial<MailMessage>
+        Relationships: []
+      }
+      invoices: {
+        Row: Invoice
+        Insert: Partial<Invoice> & Pick<Invoice, "number">
+        Update: Partial<Invoice>
         Relationships: []
       }
       calendar_events: {

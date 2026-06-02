@@ -144,7 +144,9 @@ const data = {
       items: [
         { title: "Departments", url: "/platform/departments" },
         { title: "Payments", url: "/platform/payments" },
+        { title: "Invoices", url: "/platform/invoices" },
         { title: "Fees & Receipts", url: "/platform/payments/fees" },
+        { title: "File Manager", url: "/platform/files" },
         { title: "Settings", url: "/platform/settings" },
         { title: "Integrations", url: "/platform/settings/integrations" },
         { title: "Audit Log", url: "/platform/audit" },

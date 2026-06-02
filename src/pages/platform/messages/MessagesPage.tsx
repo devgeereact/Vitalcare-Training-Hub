@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { formatDistanceToNow, format } from "date-fns"
 import { toast } from "sonner"
-import { MessageSquare, AlertCircle, Send, ArrowLeft, Video, Loader2, Check, CheckCheck } from "lucide-react"
+import { MessageSquare, AlertCircle, Send, ArrowLeft, Video, Loader2, Check, CheckCheck, Search } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 
 import { Card } from "@/components/ui/card"
@@ -290,7 +290,11 @@ export default function MessagesPage() {
   const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useThreads(user?.id)
   const [active, setActive] = useState<{ id: string; name: string } | null>(null)
+  const [q, setQ] = useState("")
   const [params, setParams] = useSearchParams()
+  const threads = (data ?? []).filter((t) =>
+    t.otherName.toLowerCase().includes(q.toLowerCase()),
+  )
 
   // Open a thread directly from a contact (Message button -> ?to=&name=).
   useEffect(() => {
@@ -321,6 +325,17 @@ export default function MessagesPage() {
               active ? "hidden lg:block" : "block",
             )}
           >
+            <div className="border-b border-border p-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search chats…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
             {isLoading ? (
               <div className="space-y-2 p-4">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -348,7 +363,7 @@ export default function MessagesPage() {
               </div>
             ) : (
               <ul className="divide-y divide-border">
-                {data!.map((t) => (
+                {threads.map((t) => (
                   <li key={t.otherId}>
                     <button
                       type="button"

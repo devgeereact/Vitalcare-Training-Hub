@@ -62,6 +62,8 @@ import InboxPage from "@/pages/platform/email/InboxPage"
 import MailDetailPage from "@/pages/platform/email/MailDetailPage"
 import MySessionsPage from "@/pages/platform/sessions/MySessionsPage"
 import PasswordSettingsPage from "@/pages/platform/account/PasswordSettingsPage"
+import InvoicesPage from "@/pages/platform/invoices/InvoicesPage"
+import FileManagerPage2 from "@/pages/platform/files/FileManagerPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -579,6 +581,15 @@ export const router = createBrowserRouter (
         },
         { path: "profile", element: <ProfilePage /> },
         { path: "account/password", element: <PasswordSettingsPage /> },
+        { path: "invoices", element: <InvoicesPage /> },
+        {
+          path: "files",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
+              <FileManagerPage2 />
+            </RoleGuard>
+          ),
+        },
         {
           path: "cohorts/:id",
           element: (
