@@ -259,6 +259,53 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type Product = Timestamps & {
+  id: string
+  name: string
+  description: string | null
+  price_pence: number
+  course_id: string | null
+  thumbnail_url: string | null
+  is_published: boolean
+  created_by: string | null
+}
+
+export type OrderStatus = "pending" | "paid" | "cancelled" | "refunded"
+export type PaymentMethod = "bank_transfer" | "paypal"
+
+export type Order = {
+  id: string
+  buyer_id: string | null
+  status: OrderStatus
+  total_pence: number
+  payment_method: PaymentMethod
+  coupon_code: string | null
+  reference: string | null
+  created_at: string
+  paid_at: string | null
+  confirmed_by: string | null
+}
+
+export type OrderItem = {
+  id: string
+  order_id: string
+  product_id: string | null
+  quantity: number
+  unit_price_pence: number
+}
+
+export type Coupon = {
+  id: string
+  code: string
+  percent_off: number | null
+  amount_off_pence: number | null
+  expires_at: string | null
+  max_uses: number | null
+  used_count: number
+  is_active: boolean
+  created_at: string
+}
+
 export type LearningPath = Timestamps & {
   id: string
   name: string
@@ -535,6 +582,20 @@ export type Database = {
         Row: EmailCampaign
         Insert: Partial<EmailCampaign> & Pick<EmailCampaign, "subject" | "message">
         Update: Partial<EmailCampaign>
+        Relationships: []
+      }
+      products: TableShape<Product, "name">
+      coupons: TableShape<Coupon, "code">
+      orders: {
+        Row: Order
+        Insert: Partial<Order>
+        Update: Partial<Order>
+        Relationships: []
+      }
+      order_items: {
+        Row: OrderItem
+        Insert: Partial<OrderItem> & Pick<OrderItem, "order_id">
+        Update: Partial<OrderItem>
         Relationships: []
       }
       learning_paths: TableShape<LearningPath, "name">
