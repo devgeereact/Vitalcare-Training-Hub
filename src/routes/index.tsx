@@ -55,6 +55,7 @@ import FeedbackResultsPage from "@/pages/platform/feedback/FeedbackResultsPage"
 import EmailComposerPage from "@/pages/platform/email/EmailComposerPage"
 import CohortDetailPage from "@/pages/platform/cohorts/CohortDetailPage"
 import IntegrationsPage from "@/pages/platform/settings/IntegrationsPage"
+import OneToOnePage from "@/pages/platform/one-to-one/OneToOnePage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -572,6 +573,7 @@ export const router = createBrowserRouter (
 
         // 🎥 VIRTUAL TRAINING
         { path: "virtual", element: <VirtualTrainingPage /> },
+        { path: "one-to-one", element: <OneToOnePage /> },
 
         // 📅 SCHEDULING (extended)
         {

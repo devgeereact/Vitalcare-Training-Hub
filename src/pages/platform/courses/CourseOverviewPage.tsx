@@ -137,6 +137,9 @@ export default function CourseOverviewPage() {
                 {prereqsBlocked ? "Complete prerequisites first" : "Enrol on this course"}
               </Button>
             )}
+            <Button asChild variant="outline">
+              <Link to="/platform/one-to-one">Request 1:1 with a trainer</Link>
+            </Button>
           </div>
 
           {(prereqs.data?.length ?? 0) > 0 && (

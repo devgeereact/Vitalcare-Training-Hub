@@ -56,6 +56,23 @@ export type Organisation = Timestamps & {
   sector: string | null
 }
 
+export type OneToOneStatus = "pending" | "approved" | "declined" | "completed"
+
+export type OneToOneRequest = {
+  id: string
+  learner_id: string
+  course_id: string | null
+  trainer_id: string | null
+  preferred_at: string | null
+  scheduled_at: string | null
+  note: string | null
+  status: OneToOneStatus
+  meet_url: string | null
+  created_at: string
+  decided_by: string | null
+  decided_at: string | null
+}
+
 export type Profile = Timestamps & {
   id: string
   email: string
@@ -615,6 +632,12 @@ export type Database = {
         Row: EmailCampaign
         Insert: Partial<EmailCampaign> & Pick<EmailCampaign, "subject" | "message">
         Update: Partial<EmailCampaign>
+        Relationships: []
+      }
+      one_to_one_requests: {
+        Row: OneToOneRequest
+        Insert: Partial<OneToOneRequest> & Pick<OneToOneRequest, "learner_id">
+        Update: Partial<OneToOneRequest>
         Relationships: []
       }
       announcement_acks: {

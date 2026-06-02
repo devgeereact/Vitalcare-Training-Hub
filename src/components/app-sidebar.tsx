@@ -94,6 +94,7 @@ const data = {
       items: [
         { title: "Learners", url: "/platform/learners" },
         { title: "Trainers", url: "/platform/trainers" },
+        { title: "1:1 Sessions", url: "/platform/one-to-one" },
         { title: "Cohorts & Teams", url: "/platform/cohorts" },
         { title: "Staff", url: "/platform/staff" },
       ],
