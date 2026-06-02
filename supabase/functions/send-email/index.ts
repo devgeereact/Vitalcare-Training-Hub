@@ -8,6 +8,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getSecret } from "../_shared/secrets.ts"
+import { sendViaSmtp } from "../_shared/smtp.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,7 +36,6 @@ Deno.serve(async (req) => {
   const apiKey = await getSecret(admin, "RESEND_API_KEY")
   const from =
     (await getSecret(admin, "RESEND_FROM")) ?? "Vitalcare Training Hub <info@vitalcare.uk>"
-  if (!apiKey) return json({ error: "Email service not configured" }, 500)
 
   const authHeader = req.headers.get("Authorization") ?? ""
   const token = authHeader.replace("Bearer ", "")
@@ -87,7 +87,20 @@ Deno.serve(async (req) => {
       <p style="font-size:12px;color:#64748b">Vitalcare Training Hub · CSTF-aligned, CPD-accredited</p>
     </div>`
 
-  // Resend caps `to` at 50 per call; chunk for larger audiences.
+  // Prefer the organisation's own SMTP when configured.
+  const smtp = await sendViaSmtp(admin, { to: emails, subject, html })
+  if (smtp.configured) {
+    return json({
+      ok: smtp.sent > 0,
+      sent: smtp.sent,
+      total: emails.length,
+      via: "smtp",
+      error: smtp.error ?? null,
+    })
+  }
+
+  // Fall back to Resend.
+  if (!apiKey) return json({ error: "Email service not configured" }, 500)
   const chunks: string[][] = []
   for (let i = 0; i < emails.length; i += 50) chunks.push(emails.slice(i, i + 50))
 
@@ -107,5 +120,5 @@ Deno.serve(async (req) => {
     }
   }
 
-  return json({ ok: sent > 0, sent, total: emails.length, error: lastError })
+  return json({ ok: sent > 0, sent, total: emails.length, via: "resend", error: lastError })
 })

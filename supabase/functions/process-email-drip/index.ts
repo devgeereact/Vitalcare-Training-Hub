@@ -7,6 +7,7 @@
 //          SUPABASE_SERVICE_ROLE_KEY (auto)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { sendViaSmtp } from "../_shared/smtp.ts"
 
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), {
@@ -68,15 +69,20 @@ Deno.serve(async (req) => {
       </div>`
 
     let sent = 0
-    for (let i = 0; i < emails.length; i += 50) {
-      const chunk = emails.slice(i, i + 50)
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to: chunk, subject: c.subject, html }),
-      })
-      if (res.ok) sent += chunk.length
-      else console.error("[process-email-drip]", res.status, await res.text())
+    const smtp = await sendViaSmtp(admin, { to: emails, subject: c.subject, html })
+    if (smtp.configured) {
+      sent = smtp.sent
+    } else if (apiKey) {
+      for (let i = 0; i < emails.length; i += 50) {
+        const chunk = emails.slice(i, i + 50)
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ from, to: chunk, subject: c.subject, html }),
+        })
+        if (res.ok) sent += chunk.length
+        else console.error("[process-email-drip]", res.status, await res.text())
+      }
     }
 
     await admin

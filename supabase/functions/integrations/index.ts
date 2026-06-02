@@ -23,6 +23,11 @@ const json = (b: unknown, status = 200) =>
 // Catalogue of integrations and the secret names each one needs.
 const CATALOGUE: { id: string; label: string; keys: string[] }[] = [
   { id: "resend", label: "Resend (email)", keys: ["RESEND_API_KEY", "RESEND_FROM"] },
+  {
+    id: "smtp",
+    label: "SMTP (send via your own mail server)",
+    keys: ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_FROM"],
+  },
   { id: "google_oauth", label: "Google sign-in", keys: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"] },
   { id: "google_meet", label: "Google Meet & Calendar", keys: ["GCAL_CALENDAR_ID"] },
   { id: "zoom", label: "Zoom (backup video)", keys: ["ZOOM_ACCOUNT_ID", "ZOOM_CLIENT_ID", "ZOOM_CLIENT_SECRET"] },
