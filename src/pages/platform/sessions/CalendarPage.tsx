@@ -31,6 +31,13 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -40,7 +47,8 @@ import {
 } from "@/components/ui/dialog"
 import { useAuth } from "@/hooks/use-auth"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
-import { useCalendarSessions, useCreateSession } from "@/lib/queries/sessions.queries"
+import { useCalendarSessions, useCreateSession, useTrainers } from "@/lib/queries/sessions.queries"
+import { useCourses } from "@/lib/queries/courses.queries"
 import {
   useCalendarEvents,
   useCalendarEventMutations,
@@ -82,6 +90,8 @@ export default function CalendarPage() {
   const customEvents = useCalendarEvents()
   const mut = useCalendarEventMutations()
   const createSession = useCreateSession()
+  const courseOptions = useCourses()
+  const trainerOptions = useTrainers()
 
   const holidays = useQuery({
     queryKey: ["holidays", "GB"],
@@ -107,6 +117,11 @@ export default function CalendarPage() {
   // training session inline (no redirect to the sessions page).
   const [fKind, setFKind] = useState<"reminder" | "session">("reminder")
   const [fVirtual, setFVirtual] = useState(false)
+  const [fCourse, setFCourse] = useState("")
+  const [fTrainer, setFTrainer] = useState("")
+  const [fVenue, setFVenue] = useState("")
+  const [fCapacity, setFCapacity] = useState("")
+  const [fPublic, setFPublic] = useState(false)
 
   const events: EventInput[] = useMemo(() => {
     const out: EventInput[] = []
@@ -209,6 +224,11 @@ export default function CalendarPage() {
     setFColor(COLORS.custom)
     setFKind("reminder")
     setFVirtual(false)
+    setFCourse("")
+    setFTrainer("")
+    setFVenue("")
+    setFCapacity("")
+    setFPublic(false)
     setEditing(true)
   }
 
@@ -233,13 +253,14 @@ export default function CalendarPage() {
         .mutateAsync({
           title: fTitle,
           description: fDesc,
-          course_id: "",
-          trainer_id: "",
+          course_id: fCourse,
+          trainer_id: fTrainer,
           starts_at: fStart,
           ends_at: fEnd || fStart,
-          venue: "",
+          venue: fVenue,
+          capacity: fCapacity ? Number(fCapacity) : undefined,
           is_virtual: fVirtual,
-          is_public: false,
+          is_public: fPublic,
           meeting_provider: "google_meet",
         })
         .then(() => {
@@ -279,16 +300,8 @@ export default function CalendarPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => openNew()}>
+          <Button onClick={() => openNew()}>
             <Plus className="mr-2 size-4" /> New event
-          </Button>
-          <Button
-            onClick={() => {
-              openNew()
-              setFKind("session")
-            }}
-          >
-            <Plus className="mr-2 size-4" /> New session
           </Button>
         </div>
       </div>
@@ -548,9 +561,71 @@ export default function CalendarPage() {
               </div>
             </div>
             {!editId && fKind === "session" && (
-              <div className="flex items-center gap-2">
-                <Switch checked={fVirtual} onCheckedChange={setFVirtual} />
-                <Label className="text-sm">Virtual session</Label>
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label className="mb-1.5 block text-xs">Course</Label>
+                    <Select value={fCourse} onValueChange={setFCourse}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Optional" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(courseOptions.data ?? []).map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="mb-1.5 block text-xs">Trainer</Label>
+                    <Select value={fTrainer} onValueChange={setFTrainer}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Optional" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(trainerOptions.data ?? []).map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label className="mb-1.5 block text-xs">
+                      {fVirtual ? "Joining note" : "Venue"}
+                    </Label>
+                    <Input
+                      placeholder={fVirtual ? "e.g. Google Meet" : "e.g. Training Room 1"}
+                      value={fVenue}
+                      onChange={(e) => setFVenue(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1.5 block text-xs">Capacity</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      placeholder="Optional"
+                      value={fCapacity}
+                      onChange={(e) => setFCapacity(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={fVirtual} onCheckedChange={setFVirtual} />
+                    <Label className="text-sm">Virtual session</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={fPublic} onCheckedChange={setFPublic} />
+                    <Label className="text-sm">Public (open enrolment)</Label>
+                  </div>
+                </div>
               </div>
             )}
             {(editId || fKind === "reminder") && (
