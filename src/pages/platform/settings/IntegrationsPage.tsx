@@ -52,39 +52,37 @@ function KeyRow({ k, onSaved }: { k: KeyStatus; onSaved: () => void }) {
   })
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex min-w-0 flex-1 items-center gap-2">
+    <div className="rounded-lg border border-border p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <code className="truncate rounded bg-muted px-2 py-1 text-xs">{k.name}</code>
         {k.configured ? (
-          <Badge variant="secondary" className="gap-1 text-success">
+          <Badge variant="secondary" className="shrink-0 gap-1 text-success">
             <CheckCircle2 className="size-3" /> Configured
           </Badge>
         ) : (
-          <Badge variant="secondary" className="text-muted-foreground">
+          <Badge variant="secondary" className="shrink-0 text-muted-foreground">
             Not set
           </Badge>
         )}
       </div>
-      <Input
-        type="password"
-        autoComplete="off"
-        placeholder={k.configured ? "Replace value…" : "Paste value…"}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        className="max-w-xs"
-      />
-      <Button
-        size="sm"
-        disabled={!value.trim() || save.isPending}
-        onClick={() => save.mutate()}
-      >
-        {save.isPending ? (
-          <Loader2 className="mr-1.5 size-4 animate-spin" />
-        ) : (
-          <Save className="mr-1.5 size-4" />
-        )}
-        Save
-      </Button>
+      <div className="flex gap-2">
+        <Input
+          type="password"
+          autoComplete="off"
+          placeholder={k.configured ? "Enter a new value to replace…" : "Paste value…"}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="flex-1"
+        />
+        <Button size="sm" disabled={!value.trim() || save.isPending} onClick={() => save.mutate()}>
+          {save.isPending ? (
+            <Loader2 className="mr-1.5 size-4 animate-spin" />
+          ) : (
+            <Save className="mr-1.5 size-4" />
+          )}
+          Save
+        </Button>
+      </div>
     </div>
   )
 }
@@ -183,11 +181,22 @@ export default function IntegrationsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {data!.map((integ) => (
+          {data!.map((integ) => {
+            const set = integ.keys.filter((k) => k.configured).length
+            const allSet = set === integ.keys.length
+            return (
             <Card key={integ.id}>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Plug className="size-4 text-brand-navy" /> {integ.label}
+                <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-lg">
+                  <span className="flex items-center gap-2">
+                    <Plug className="size-4 text-brand-navy" /> {integ.label}
+                  </span>
+                  <Badge
+                    variant="secondary"
+                    className={allSet ? "text-success" : "text-muted-foreground"}
+                  >
+                    {set}/{integ.keys.length} set
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -205,7 +214,8 @@ export default function IntegrationsPage() {
                 )}
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
