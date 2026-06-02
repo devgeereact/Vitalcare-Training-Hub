@@ -7,6 +7,7 @@
 // Secrets: RESEND_API_KEY, RESEND_FROM (defaults to info@vitalcare.uk)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { getSecret } from "../_shared/secrets.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,13 +30,15 @@ Deno.serve(async (req) => {
 
   const url = Deno.env.get("SUPABASE_URL")!
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  const apiKey = Deno.env.get("RESEND_API_KEY")
-  const from = Deno.env.get("RESEND_FROM") ?? "Vitalcare Training Hub <info@vitalcare.uk>"
+  const admin = createClient(url, serviceKey)
+
+  const apiKey = await getSecret(admin, "RESEND_API_KEY")
+  const from =
+    (await getSecret(admin, "RESEND_FROM")) ?? "Vitalcare Training Hub <info@vitalcare.uk>"
   if (!apiKey) return json({ error: "Email service not configured" }, 500)
 
   const authHeader = req.headers.get("Authorization") ?? ""
   const token = authHeader.replace("Bearer ", "")
-  const admin = createClient(url, serviceKey)
 
   const { data: userData, error: userErr } = await admin.auth.getUser(token)
   if (userErr || !userData.user) return json({ error: "Unauthorised" }, 401)

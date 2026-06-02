@@ -251,3 +251,28 @@ our Vite + React 19 + TS + Tailwind + shadcn + TanStack + TipTap + Zustand).
 - **Fees & Receipts** (under Payments)
 
 Unbuilt routes render the branded `ModuleComingSoon` notice until their phase.
+
+---
+
+## Storage backend (revisit)
+- Current: Supabase Storage (`course-media` bucket, public).
+- **Option to add: Google Drive** as a storage backend (per-org Drive via OAuth)
+  — keep for later; needs Drive API OAuth + upload/serve adapter.
+
+## Parked — heavy, revisit later (do NOT auto-build)
+| Feature | Why parked |
+|---------|-----------|
+| HLS adaptive video streaming | Needs transcoding infrastructure (ffmpeg pipeline / paid service) |
+| H5P interactive runtime | Needs H5P library + content server |
+| SCORM 1.2/2004 + xAPI (Tin Can) runtime/LRS | Needs SCORM player + external LRS; cross-origin content hosting |
+| Multi-language content | Large content-model + i18n work |
+| Branching / adaptive scenarios | Large authoring + runtime model |
+| Course versioning & drafts (full) | Moderate-large; publish/draft toggle exists |
+
+## Integrations (self-serve API keys)
+- Super-admin **Integrations** page: set/clear API keys + secrets for linked
+  services (Resend, Google OAuth, Google Meet/Calendar, Zoom, OpenWeather,
+  Gemini, OpenRouter).
+- Stored in locked `integration_settings` table (no client access); written via
+  the `integrations` Edge Function (super-admin only); read only by Edge
+  Functions via service role. UI shows configured/not, never echoes secrets.

@@ -54,6 +54,7 @@ import FeedbackPage from "@/pages/platform/feedback/FeedbackPage"
 import FeedbackResultsPage from "@/pages/platform/feedback/FeedbackResultsPage"
 import EmailComposerPage from "@/pages/platform/email/EmailComposerPage"
 import CohortDetailPage from "@/pages/platform/cohorts/CohortDetailPage"
+import IntegrationsPage from "@/pages/platform/settings/IntegrationsPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -447,6 +448,14 @@ export const router = createBrowserRouter (
 
         // ⚙️ SETTINGS (any authenticated user)
         { path: "settings", element: <SettingsPage /> },
+        {
+          path: "settings/integrations",
+          element: (
+            <RoleGuard roles={["super_admin"]}>
+              <IntegrationsPage />
+            </RoleGuard>
+          ),
+        },
         {path: "dashboard/crm", element: <CrmDashboard /> },
         {path: "dashboard/eCommerce", element: <EcommerceDashboard /> },
         {path: "dashboard/landing-page", element: <LandingPage /> },
