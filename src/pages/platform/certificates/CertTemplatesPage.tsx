@@ -142,7 +142,7 @@ export default function CertTemplatesPage() {
           <CardHeader>
             <CardTitle>Sections</CardTitle>
             <CardDescription>
-              Placeholders for learner name, course and CPD hours are filled in
+              Placeholders for learner name, course and issue date are filled in
               automatically when a certificate is issued.
             </CardDescription>
           </CardHeader>
@@ -205,7 +205,7 @@ export default function CertTemplatesPage() {
 
                 <Section
                   title="Accreditation line"
-                  description="Shown beneath the CPD hours and issue date."
+                  description="Shown beneath the issue date."
                 >
                   <Input
                     value={tpl.accreditationLine}
@@ -311,7 +311,6 @@ export default function CertTemplatesPage() {
                   downloadCertificatePdf({
                     learnerName: "Jane Okafor",
                     courseTitle: "Moving and Handling",
-                    cpdHours: 3,
                     issuedAt: new Date().toISOString(),
                     verificationUuid: "00000000-0000-0000-0000-000000000000",
                     titleText: tpl.titleText,

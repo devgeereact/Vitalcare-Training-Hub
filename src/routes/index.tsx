@@ -369,7 +369,7 @@ export const router = createBrowserRouter (
         {
           path: "ai",
           element: (
-            <RoleGuard roles={["super_admin", "admin"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <AiAssistantPage />
             </RoleGuard>
           ),
@@ -433,7 +433,7 @@ export const router = createBrowserRouter (
         {
           path: "settings/integrations",
           element: (
-            <RoleGuard roles={["super_admin", "admin"]}>
+            <RoleGuard roles={["super_admin"]}>
               <IntegrationsPage />
             </RoleGuard>
           ),

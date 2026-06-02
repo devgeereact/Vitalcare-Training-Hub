@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
-import { ArrowUpDown, Eye, Pencil } from "lucide-react"
+import { ArrowUpDown, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { LearnerRow } from "@/lib/queries/learners.queries"
 
@@ -63,11 +63,6 @@ export const learnerColumns: ColumnDef<LearnerRow>[] = [
         <Button asChild variant="ghost" size="icon" className="size-8" aria-label="View learner">
           <Link to={`/platform/learners/${row.original.id}`}>
             <Eye className="size-4" />
-          </Link>
-        </Button>
-        <Button asChild variant="ghost" size="icon" className="size-8" aria-label="Edit learner">
-          <Link to={`/platform/learners/${row.original.id}/edit`}>
-            <Pencil className="size-4" />
           </Link>
         </Button>
       </div>

@@ -8,6 +8,8 @@ import {
   Download,
   Trash2,
   Check,
+  Eye,
+  Printer,
 } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
@@ -37,7 +39,9 @@ import { useUser } from "@/hooks/use-user"
 import { useAllUsers } from "@/lib/queries/users.queries"
 import { usePayroll, usePayrollMutations, gbp } from "@/lib/queries/payroll.queries"
 import { downloadPayslipPdf } from "@/lib/payroll/payslip"
-import type { PayrollStatus } from "@/types/database.types"
+import { PayslipView } from "@/components/payroll/PayslipView"
+import "@/lib/invoices/print.css"
+import type { Payroll, PayrollStatus } from "@/types/database.types"
 
 const STATUS_STYLE: Record<PayrollStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -58,6 +62,7 @@ export default function PayrollPage() {
   const users = useAllUsers()
 
   const [open, setOpen] = useState(false)
+  const [viewing, setViewing] = useState<Payroll | null>(null)
   const [staffId, setStaffId] = useState("")
   const [period, setPeriod] = useState("")
   const [periodStart, setPeriodStart] = useState("")
@@ -309,6 +314,15 @@ export default function PayrollPage() {
                             variant="ghost"
                             size="icon"
                             className="size-8"
+                            aria-label="Preview payslip"
+                            onClick={() => setViewing(p)}
+                          >
+                            <Eye className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
                             aria-label="Download payslip"
                             onClick={() => downloadPayslipPdf(p)}
                           >
@@ -357,6 +371,25 @@ export default function PayrollPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto print:max-h-none print:overflow-visible">
+          <DialogHeader className="print:hidden">
+            <DialogTitle>
+              Payslip {viewing ? `· ${viewing.period}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          {viewing && <PayslipView payslip={viewing} />}
+          <DialogFooter className="print:hidden">
+            <Button variant="outline" onClick={() => viewing && downloadPayslipPdf(viewing)}>
+              <Download className="mr-2 size-4" /> Download PDF
+            </Button>
+            <Button onClick={() => window.print()}>
+              <Printer className="mr-2 size-4" /> Print
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

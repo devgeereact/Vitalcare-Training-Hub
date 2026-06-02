@@ -135,7 +135,7 @@ const data = {
       title: "AI Assistant",
       url: "/platform/ai",
       icon: Sparkles,
-      roles: ADMINS,
+      roles: STAFF,
     },
     {
       title: "Organisation",
@@ -153,13 +153,8 @@ const data = {
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/platform/settings",
       icon: Settings,
-      items: [
-        { title: "General", url: "/platform/settings" },
-        { title: "Integrations", url: "/platform/settings/integrations", roles: ADMINS },
-        { title: "Password", url: "/platform/account/password" },
-      ],
     },
     {
       title: "Profile",

@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { format } from "date-fns"
 import { toast } from "sonner"
-import { Mail, MessageSquare, Trash2, Loader2, ShieldAlert, GraduationCap } from "lucide-react"
+import { Mail, MessageSquare, Trash2, Loader2, ShieldAlert, GraduationCap, CalendarDays } from "lucide-react"
 
 import {
   Dialog,
@@ -48,10 +49,17 @@ export default function ContactDetailDialog({
   user,
   open,
   onOpenChange,
+  manageable = false,
 }: {
   user: Profile | null
   open: boolean
   onOpenChange: (v: boolean) => void
+  /**
+   * When true, surfaces role, course and removal controls (super-admins only).
+   * Defaults to false so the dialog is a read-only contact card. Editing users
+   * happens only on the All accounts page.
+   */
+  manageable?: boolean
 }) {
   const { isSuperAdmin } = useUser()
   const { setRole, remove, assignCourse } = useUserMutations()
@@ -98,6 +106,15 @@ export default function ContactDetailDialog({
               <p className="text-xs text-muted-foreground">Emergency phone</p>
               <p className="font-medium">{user.emergency_contact_phone || "—"}</p>
             </div>
+            {user.created_at && (
+              <div>
+                <p className="text-xs text-muted-foreground">Joined</p>
+                <p className="flex items-center gap-1.5 font-medium">
+                  <CalendarDays className="size-3.5 text-muted-foreground" />
+                  {format(new Date(user.created_at), "d MMM yyyy")}
+                </p>
+              </div>
+            )}
           </div>
           {user.about && (
             <div>
@@ -120,8 +137,8 @@ export default function ContactDetailDialog({
             </Button>
           </div>
 
-          {/* Super-admin management */}
-          {isSuperAdmin && (
+          {/* Management — All accounts only, super-admins */}
+          {manageable && isSuperAdmin && (
             <div className="space-y-3 rounded-lg border border-border p-3">
               <p className="flex items-center gap-1.5 text-xs font-medium text-brand-navy">
                 <ShieldAlert className="size-3.5" /> User management

@@ -181,6 +181,7 @@ export default function UserManagementPage() {
         user={selected}
         open={!!selected}
         onOpenChange={(o) => !o && setSelected(null)}
+        manageable
       />
     </div>
   )

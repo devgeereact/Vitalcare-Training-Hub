@@ -1,88 +1,150 @@
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
-import { COMPANY, BRAND } from "@/lib/constants"
+import { COMPANY, LEADERSHIP, BRAND } from "@/lib/constants"
 import type { Payroll } from "@/types/database.types"
 
-/** jsPDF helvetica lacks the £ glyph, so use a "GBP " prefix. */
+/**
+ * GBP for the PDF, matching the on-screen preview exactly (£1,250.00). jsPDF's
+ * standard helvetica maps the pound sign via WinAnsi encoding, so £ renders.
+ */
 function gbpPdf(pence: number): string {
-  const amount = new Intl.NumberFormat("en-GB", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
   }).format(pence / 100)
-  return `GBP ${amount}`
+}
+
+function ukDate(value: string): string {
+  return new Date(value).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+}
+
+function periodRange(p: Payroll): string {
+  if (p.period_start && p.period_end) {
+    return `${ukDate(p.period_start)} to ${ukDate(p.period_end)}`
+  }
+  return p.period
 }
 
 export function downloadPayslipPdf(p: Payroll): void {
   const doc = new jsPDF({ unit: "mm", format: "a4" })
   const pageW = doc.internal.pageSize.getWidth()
+  const navy = BRAND.navy
+  const gold = BRAND.gold
+  const muted = "#64748b"
+  const ink = "#0f172a"
 
-  // Header band
-  doc.setFillColor(BRAND.navy)
-  doc.rect(0, 0, pageW, 28, "F")
+  // Employer letterhead band
+  doc.setFillColor(navy)
+  doc.rect(0, 0, pageW, 34, "F")
   doc.setTextColor("#ffffff")
   doc.setFont("helvetica", "bold")
-  doc.setFontSize(18)
-  doc.text("Payslip", 14, 14)
+  doc.setFontSize(15)
+  doc.text(COMPANY.name, 14, 15)
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(8)
+  doc.text(
+    `${COMPANY.address.line1}, ${COMPANY.address.city} ${COMPANY.address.postcode}`,
+    14,
+    22,
+  )
+  doc.text(`Company No. ${COMPANY.companyNumber} (${COMPANY.jurisdiction})`, 14, 27)
+
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(24)
+  doc.text("PAYSLIP", pageW - 14, 16, { align: "right" })
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
+  doc.text(p.period, pageW - 14, 23, { align: "right" })
+
+  // Employee block
+  doc.setTextColor(ink)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(8)
+  doc.text("EMPLOYEE", 14, 46)
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
-  doc.text(COMPANY.legalName, 14, 21)
+  doc.text(p.staff_name, 14, 52)
+  if (p.staff_email) {
+    doc.setTextColor(muted)
+    doc.setFontSize(9)
+    doc.text(p.staff_email, 14, 57)
+  }
 
-  // Employer / employee
-  doc.setTextColor("#0f172a")
-  doc.setFontSize(9)
-  let y = 40
+  // Pay-period block
+  doc.setTextColor(ink)
   doc.setFont("helvetica", "bold")
-  doc.text("Employer", 14, y)
-  doc.text("Employee", pageW / 2, y)
+  doc.setFontSize(8)
+  doc.text("PAY DETAILS", pageW - 14, 46, { align: "right" })
   doc.setFont("helvetica", "normal")
-  y += 5
-  doc.text(COMPANY.legalName, 14, y)
-  doc.text(p.staff_name, pageW / 2, y)
-  y += 5
-  doc.text(`${COMPANY.address.line1}, ${COMPANY.address.city}`, 14, y)
-  if (p.staff_email) doc.text(p.staff_email, pageW / 2, y)
-  y += 5
-  doc.text(`${COMPANY.address.postcode}`, 14, y)
-  doc.text(`Pay period: ${p.period}`, pageW / 2, y)
-  y += 5
-  doc.text(`Company No. ${COMPANY.companyNumber}`, 14, y)
-  doc.text(`Status: ${p.status}`, pageW / 2, y)
+  doc.setTextColor(muted)
+  doc.setFontSize(9)
+  doc.text(`Period: ${periodRange(p)}`, pageW - 14, 52, { align: "right" })
+  const payDate = p.paid_at ? ukDate(p.paid_at) : p.status === "paid" ? "—" : "Pending"
+  doc.text(`Pay date: ${payDate}`, pageW - 14, 57, { align: "right" })
+  doc.text(`Status: ${p.status.toUpperCase()}`, pageW - 14, 62, { align: "right" })
 
   // Earnings / deductions table
   autoTable(doc, {
-    startY: y + 8,
+    startY: 70,
     head: [["Description", "Amount"]],
     body: [
       ["Gross pay", gbpPdf(p.gross_pence)],
-      ["Deductions", `- ${gbpPdf(p.deductions_pence)}`],
+      ["Deductions", `${p.deductions_pence > 0 ? "- " : ""}${gbpPdf(p.deductions_pence)}`],
     ],
     foot: [["Net pay", gbpPdf(p.net_pence)]],
-    headStyles: { fillColor: BRAND.navy, textColor: "#ffffff" },
-    footStyles: { fillColor: "#f1f5f9", textColor: "#0f172a", fontStyle: "bold" },
     theme: "grid",
+    headStyles: { fillColor: navy, textColor: "#ffffff", halign: "left" },
+    footStyles: { fillColor: "#f1f5f9", textColor: navy, fontStyle: "bold" },
+    columnStyles: { 1: { halign: "right" } },
     styles: { fontSize: 10, cellPadding: 3 },
   })
 
-  // Notes
-  // @ts-expect-error lastAutoTable is added by the autotable plugin
-  const endY: number = doc.lastAutoTable?.finalY ?? y + 30
+  // @ts-expect-error lastAutoTable is added by the jspdf-autotable plugin
+  const endY: number = doc.lastAutoTable?.finalY ?? 110
+  let y = endY + 10
+
   if (p.notes) {
-    doc.setFontSize(9)
     doc.setFont("helvetica", "bold")
-    doc.text("Notes", 14, endY + 10)
+    doc.setFontSize(9)
+    doc.setTextColor(ink)
+    doc.text("Notes", 14, y)
     doc.setFont("helvetica", "normal")
-    doc.text(doc.splitTextToSize(p.notes, pageW - 28), 14, endY + 15)
+    doc.setTextColor(muted)
+    doc.setFontSize(9)
+    doc.text(doc.splitTextToSize(p.notes, pageW - 28), 14, y + 5)
+    y += 16
   }
 
-  // Footer
+  // Computer-generated note
   doc.setFontSize(8)
-  doc.setTextColor("#64748b")
+  doc.setTextColor(muted)
   doc.text(
-    `${COMPANY.legalName} · ${COMPANY.website} · ${COMPANY.email} · ${COMPANY.phone}`,
+    doc.splitTextToSize(
+      `This is a computer-generated payslip and does not require a signature. Please retain it for your records. Authorised by ${LEADERSHIP.ceo.name}, ${LEADERSHIP.ceo.role}.`,
+      pageW - 28,
+    ),
+    14,
+    y,
+  )
+
+  // Footer
+  doc.setDrawColor(gold)
+  doc.setLineWidth(0.6)
+  doc.line(14, 280, pageW - 14, 280)
+  doc.setFontSize(8)
+  doc.setTextColor("#94a3b8")
+  doc.text(
+    `${COMPANY.legalName} · Company No. ${COMPANY.companyNumber} (${COMPANY.jurisdiction}) · ${COMPANY.website} · ${COMPANY.email} · ${COMPANY.phone}`,
     pageW / 2,
-    doc.internal.pageSize.getHeight() - 10,
+    286,
     { align: "center" },
   )
 
-  doc.save(`payslip-${p.staff_name.replace(/\s+/g, "-").toLowerCase()}-${p.period.replace(/\s+/g, "-")}.pdf`)
+  doc.save(
+    `payslip-${p.staff_name.replace(/\s+/g, "-").toLowerCase()}-${p.period.replace(/\s+/g, "-")}.pdf`,
+  )
 }

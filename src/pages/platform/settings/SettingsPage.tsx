@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react"
-import { Link, useSearchParams } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
-import {
-  Bell,
-  CheckCircle2,
-  ChevronRight,
-  KeyRound,
-  UserRound,
-  Video,
-} from "lucide-react"
+import { Bell, CheckCircle2, Video } from "lucide-react"
 
 import { useUIThemeStore } from "@/store/ui-theme.store"
 import { useUser } from "@/hooks/use-user"
@@ -26,7 +19,8 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import MailSettingsCard from "@/components/platform/MailSettingsCard"
-import SettingsShell from "@/components/settings/SettingsShell"
+import AccountSettingsCard from "@/components/settings/AccountSettingsCard"
+import PasswordCard from "@/components/settings/PasswordCard"
 
 const VITALCARE_THEMES = [
   {
@@ -69,9 +63,9 @@ function readPref(key: string): boolean {
   return localStorage.getItem(key) !== "off"
 }
 
-export default function SettingsPage() {
+export default function SettingsPage(): React.ReactElement {
   const { theme, setTheme } = useUIThemeStore()
-  const { profile, isAdmin } = useUser()
+  const { isSuperAdmin } = useUser()
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()
 
@@ -101,7 +95,7 @@ export default function SettingsPage() {
         .maybeSingle()
       return data
     },
-    enabled: isAdmin,
+    enabled: isSuperAdmin,
   })
 
   useEffect(() => {
@@ -136,61 +130,25 @@ export default function SettingsPage() {
     window.location.href = url
   }
 
-  const name =
-    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ||
-    profile?.full_name ||
-    "Your profile"
-
   return (
-    <SettingsShell>
-      {/* Account shortcuts */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Account</CardTitle>
-          <CardDescription>
-            Your profile and sign-in password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Link
-            to="/platform/profile"
-            className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-brand-gold/60 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
-              <UserRound className="size-5" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">{name}</span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {profile?.email ?? "View and edit your profile"}
-              </span>
-            </span>
-            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-          </Link>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <header>
+        <h1 className="font-display text-3xl text-foreground">Settings</h1>
+        <p className="mt-1 text-muted-foreground">
+          Manage your account, how the platform looks and what you hear about.
+        </p>
+      </header>
 
-          <Link
-            to="/platform/account/password"
-            className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-brand-gold/60 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
-              <KeyRound className="size-5" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">Password</span>
-              <span className="block text-xs text-muted-foreground">
-                Change your sign-in password
-              </span>
-            </span>
-            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-          </Link>
-        </CardContent>
-      </Card>
+      {/* Account / profile editing */}
+      <AccountSettingsCard />
 
       {/* Appearance */}
       <Card>
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
-          <CardDescription>Choose a theme. Saved on this device.</CardDescription>
+          <CardDescription>
+            Choose a theme. Saved on this device.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -261,8 +219,8 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Integrations (admins) */}
-      {isAdmin && (
+      {/* Integrations (super admins only) */}
+      {isSuperAdmin && (
         <Card>
           <CardHeader>
             <CardTitle>Integrations</CardTitle>
@@ -277,14 +235,18 @@ export default function SettingsPage() {
                   <Video className="size-5" />
                 </span>
                 <div>
-                  <p className="text-sm font-medium">Google Calendar and Meet</p>
+                  <p className="text-sm font-medium">
+                    Google Calendar and Meet
+                  </p>
                   {google.data?.connected_email ? (
                     <p className="flex items-center gap-1 text-xs text-success">
                       <CheckCircle2 className="size-3.5" /> Connected as{" "}
                       {google.data.connected_email}
                     </p>
                   ) : (
-                    <p className="text-xs text-muted-foreground">Not connected</p>
+                    <p className="text-xs text-muted-foreground">
+                      Not connected
+                    </p>
                   )}
                 </div>
               </div>
@@ -303,8 +265,11 @@ export default function SettingsPage() {
         </Card>
       )}
 
+      {/* Password */}
+      <PasswordCard />
+
       <MailSettingsCard />
-    </SettingsShell>
+    </div>
   )
 }
 

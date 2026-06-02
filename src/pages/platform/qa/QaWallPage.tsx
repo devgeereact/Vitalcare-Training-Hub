@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
@@ -38,10 +38,11 @@ import { useAuth } from "@/hooks/use-auth"
 import { useThreads, useCreateThread, type ThreadRow } from "@/lib/queries/forums.queries"
 import { useCourses } from "@/lib/queries/courses.queries"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
+import CommsShell from "@/components/communication/CommsShell"
 
 const BASE = "/platform/qa"
 
-export default function QaWallPage() {
+export default function QaWallPage(): ReactNode {
   const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useThreads("qa")
   const courses = useCourses()
@@ -74,7 +75,7 @@ export default function QaWallPage() {
     })
   }, [data, courseName])
 
-  function submit() {
+  function submit(): void {
     if (!title.trim() || !user?.id) return
     if (!courseId) {
       toast.error("Choose the course your question is about.")
@@ -92,81 +93,77 @@ export default function QaWallPage() {
       .catch(() => toast.error("Could not post. Please try again."))
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl text-foreground">Q&amp;A</h1>
-          <p className="mt-1 text-muted-foreground">
-            Ask a question about a course. Trainers answer, and answers are marked for
-            everyone to see.
-          </p>
+  const action = (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="mr-2 size-4" /> Ask a question
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Ask a question</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="mb-1.5 block text-xs">Course</Label>
+            <Select value={courseId} onValueChange={setCourseId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a course" />
+              </SelectTrigger>
+              <SelectContent>
+                {(courses.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Input
+            placeholder="Your question"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <Textarea
+            placeholder="Add some detail…"
+            rows={4}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+          />
+          <div className="flex justify-end">
+            <AiFieldsButton
+              subject="a clear question for a healthcare training Q&A"
+              context={title ? `Working title: ${title}` : undefined}
+              fields={[
+                { key: "title", label: "Question", format: "text" },
+                { key: "body", label: "Detail", format: "text" },
+              ]}
+              onApply={(v) => {
+                if (v.title) setTitle(v.title)
+                if (v.body) setBody(v.body)
+              }}
+            />
+          </div>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 size-4" /> Ask a question
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Ask a question</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label className="mb-1.5 block text-xs">Course</Label>
-                <Select value={courseId} onValueChange={setCourseId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(courses.data ?? []).map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Input
-                placeholder="Your question"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <Textarea
-                placeholder="Add some detail…"
-                rows={4}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-              />
-              <div className="flex justify-end">
-                <AiFieldsButton
-                  subject="a clear question for a healthcare training Q&A"
-                  context={title ? `Working title: ${title}` : undefined}
-                  fields={[
-                    { key: "title", label: "Question", format: "text" },
-                    { key: "body", label: "Detail", format: "text" },
-                  ]}
-                  onApply={(v) => {
-                    if (v.title) setTitle(v.title)
-                    if (v.body) setBody(v.body)
-                  }}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={submit} disabled={!title.trim() || !courseId || create.isPending}>
-                {create.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-                Post question
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={submit} disabled={!title.trim() || !courseId || create.isPending}>
+            {create.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+            Post question
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 
+  return (
+    <CommsShell
+      subtitle="Ask a question about a course. Trainers answer, and answers are marked for everyone to see."
+      action={action}
+    >
       {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -246,6 +243,6 @@ export default function QaWallPage() {
           ))}
         </div>
       )}
-    </div>
+    </CommsShell>
   )
 }

@@ -2,7 +2,6 @@ import { useParams, Link } from "react-router-dom"
 import { format } from "date-fns"
 import {
   ArrowLeft,
-  Pencil,
   Mail,
   Phone,
   CalendarDays,
@@ -415,15 +414,10 @@ export default function LearnerDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link to="/platform/learners">
             <ArrowLeft className="mr-1.5 size-4" /> Back to learners
-          </Link>
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <Link to={`/platform/learners/${id}/edit`}>
-            <Pencil className="mr-1.5 size-4" /> Edit
           </Link>
         </Button>
       </div>

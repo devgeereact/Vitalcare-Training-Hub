@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { Megaphone, AlertCircle, Plus, Loader2 } from "lucide-react"
@@ -27,8 +27,9 @@ import {
   useCreateAnnouncement,
 } from "@/lib/queries/communication.queries"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
+import CommsShell from "@/components/communication/CommsShell"
 
-export default function AnnouncementsPage() {
+export default function AnnouncementsPage(): ReactNode {
   const { profile, isAdmin } = useUser()
   const { data, isLoading, isError, refetch } = useAnnouncements()
   const create = useCreateAnnouncement()
@@ -37,7 +38,7 @@ export default function AnnouncementsPage() {
   const [body, setBody] = useState("")
   const [actionAt, setActionAt] = useState("")
 
-  function submit() {
+  function submit(): void {
     if (!title.trim() || !body.trim() || !profile?.id) return
     create
       .mutateAsync({ title, body, authorId: profile.id, actionAt: actionAt || null })
@@ -51,86 +52,79 @@ export default function AnnouncementsPage() {
       .catch(() => toast.error("Could not publish. Please try again."))
   }
 
-  return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl text-foreground">Announcements</h1>
-          <p className="mt-1 text-muted-foreground">
-            Organisation-wide updates for your learners and trainers.
-          </p>
+  const action = isAdmin ? (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="mr-2 size-4" /> New announcement
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New announcement</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Input
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div>
+            <Textarea
+              placeholder="Write your announcement…"
+              rows={6}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+            />
+            <div className="mt-2">
+              <AiFieldsButton
+                subject="an organisation announcement for a healthcare training platform"
+                context={title ? `Working title: ${title}` : undefined}
+                fields={[
+                  { key: "title", label: "Title", format: "text" },
+                  { key: "body", label: "Body", format: "text" },
+                ]}
+                onApply={(v) => {
+                  if (v.title) setTitle(v.title)
+                  if (v.body) setBody(v.body)
+                }}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs text-muted-foreground">
+              Action date &amp; time (optional: sets reminders for readers)
+            </label>
+            <Input
+              type="datetime-local"
+              value={actionAt}
+              onChange={(e) => setActionAt(e.target.value)}
+            />
+          </div>
         </div>
-        {isAdmin && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 size-4" /> New announcement
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>New announcement</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Input
-                    placeholder="Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Textarea
-                    placeholder="Write your announcement…"
-                    rows={6}
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                  />
-                  <div className="mt-2">
-                    <AiFieldsButton
-                      subject="an organisation announcement for a healthcare training platform"
-                      context={title ? `Working title: ${title}` : undefined}
-                      fields={[
-                        { key: "title", label: "Title", format: "text" },
-                        { key: "body", label: "Body", format: "text" },
-                      ]}
-                      onApply={(v) => {
-                        if (v.title) setTitle(v.title)
-                        if (v.body) setBody(v.body)
-                      }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs text-muted-foreground">
-                    Action date &amp; time (optional — sets reminders for readers)
-                  </label>
-                  <Input
-                    type="datetime-local"
-                    value={actionAt}
-                    onChange={(e) => setActionAt(e.target.value)}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={submit}
-                  disabled={!title.trim() || !body.trim() || create.isPending}
-                >
-                  {create.isPending && (
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                  )}
-                  Publish
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={submit}
+            disabled={!title.trim() || !body.trim() || create.isPending}
+          >
+            {create.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+            Publish
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  ) : null
 
+  return (
+    <CommsShell
+      subtitle="Organisation-wide updates for your learners and trainers."
+      action={action}
+    >
       {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -184,6 +178,6 @@ export default function AnnouncementsPage() {
           ))}
         </div>
       )}
-    </div>
+    </CommsShell>
   )
 }

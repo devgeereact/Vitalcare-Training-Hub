@@ -1,8 +1,6 @@
 "use client"
 
 import { Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
-import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -10,30 +8,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { useUIThemeStore } from "@/store/ui-theme.store"   // ✅ ADD THIS
+import { useUIThemeStore } from "@/store/ui-theme.store"
 
+const LIGHT_THEME = "vitalcare-default"
+const DARK_THEME = "dark-clinical"
+
+/**
+ * Light/dark toggle that stays on-brand: it switches between the Vitalcare
+ * light theme and the Dark Clinical theme via the UI theme store (never the
+ * bland base theme), so the app always returns to Vitalcare colours.
+ */
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
-  const { setTheme: setCustomTheme } = useUIThemeStore()   // ✅ ADD THIS
-
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    // Mount guard to avoid theme hydration mismatch (template pattern).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon"
-       className="rounded-full opacity-0">
-        <Sun />
-      </Button>
-    )
-  }
-
-  const isDark = theme === "dark"
+  const { theme, setTheme } = useUIThemeStore()
+  const isDark = theme === DARK_THEME
 
   return (
     <TooltipProvider>
@@ -42,11 +29,8 @@ export function ThemeToggle() {
           <Button
             variant="ghost"
             size="icon"
-            className="relative rounded-full [&_svg]:size-5 h-10 w-10 p-0"
-            onClick={() => {
-              setCustomTheme("")              // ✅ REMOVE custom theme
-              setTheme(isDark ? "light" : "dark") // ✅ APPLY system theme
-            }}
+            className="relative rounded-full [&_svg]:size-5 h-10 w-10 p-0 focus-visible:ring-2 focus-visible:ring-brand-gold"
+            onClick={() => setTheme(isDark ? LIGHT_THEME : DARK_THEME)}
             aria-label="Toggle theme"
           >
             <Sun

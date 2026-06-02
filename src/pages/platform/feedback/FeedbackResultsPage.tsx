@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import {
@@ -25,6 +26,7 @@ import {
   type FeedbackRow,
   type FeedbackSource,
 } from "@/lib/queries/feedback.queries"
+import CommsShell from "@/components/communication/CommsShell"
 
 const SOURCE_META: Record<FeedbackSource, { label: string; icon: typeof Globe; cls: string }> = {
   website: { label: "Website", icon: Globe, cls: "bg-primary/10 text-primary" },
@@ -36,7 +38,7 @@ const SOURCE_META: Record<FeedbackSource, { label: string; icon: typeof Globe; c
   },
 }
 
-function Stars({ value }: { value: number }) {
+function Stars({ value }: { value: number }): ReactNode {
   return (
     <span className="flex gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
@@ -58,7 +60,7 @@ function FeedbackCard({
 }: {
   row: FeedbackRow
   children?: React.ReactNode
-}) {
+}): ReactNode {
   const meta = SOURCE_META[row.source] ?? SOURCE_META.course
   const Icon = meta.icon
   return (
@@ -90,12 +92,12 @@ function FeedbackCard({
   )
 }
 
-export default function FeedbackResultsPage() {
+export default function FeedbackResultsPage(): ReactNode {
   const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useFeedbackResults()
   const moderate = useModerateFeedback(user?.id)
 
-  function decide(id: string, decision: "approved" | "rejected") {
+  function decide(id: string, decision: "approved" | "rejected"): void {
     moderate
       .mutateAsync({ id, decision })
       .then(() => toast.success(decision === "approved" ? "Published" : "Rejected"))
@@ -103,15 +105,7 @@ export default function FeedbackResultsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-foreground">Feedback &amp; NPS</h1>
-        <p className="mt-1 text-muted-foreground">
-          Approve submissions to publish them. Scores are calculated from published
-          feedback only.
-        </p>
-      </div>
-
+    <CommsShell subtitle="Approve submissions to publish them. Scores are calculated from published feedback only.">
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -234,6 +228,6 @@ export default function FeedbackResultsPage() {
           </section>
         </>
       )}
-    </div>
+    </CommsShell>
   )
 }

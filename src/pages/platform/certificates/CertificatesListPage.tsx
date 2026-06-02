@@ -322,7 +322,6 @@ export default function CertificatesListPage() {
                             downloadCertificatePdf({
                               learnerName: c.learnerName,
                               courseTitle: c.courseTitle,
-                              cpdHours: c.cpdHours,
                               issuedAt: c.issuedAt,
                               expiresAt: c.expiresAt,
                               verificationUuid: c.verificationUuid,
