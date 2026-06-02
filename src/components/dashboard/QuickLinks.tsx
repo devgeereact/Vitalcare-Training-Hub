@@ -14,6 +14,9 @@ import {
   Award,
   FolderOpen,
   CalendarRange,
+  MessageSquare,
+  Mail,
+  Sparkles,
 } from "lucide-react"
 
 import {
@@ -31,6 +34,9 @@ export interface QuickLinkItem {
 }
 
 const ADMIN_LINKS: readonly QuickLinkItem[] = [
+  { label: "New chat", to: "/platform/messages", icon: MessageSquare },
+  { label: "Compose mail", to: "/platform/email", icon: Mail },
+  { label: "AI assistant", to: "/platform/ai", icon: Sparkles },
   { label: "Learners", to: "/platform/learners", icon: Users },
   { label: "Courses", to: "/platform/courses", icon: BookOpen },
   { label: "Sessions", to: "/platform/sessions", icon: CalendarDays },
@@ -40,6 +46,9 @@ const ADMIN_LINKS: readonly QuickLinkItem[] = [
 ]
 
 const TRAINER_LINKS: readonly QuickLinkItem[] = [
+  { label: "New chat", to: "/platform/messages", icon: MessageSquare },
+  { label: "Compose mail", to: "/platform/email", icon: Mail },
+  { label: "AI assistant", to: "/platform/ai", icon: Sparkles },
   { label: "My sessions", to: "/platform/my-sessions", icon: CalendarDays },
   { label: "Timetable", to: "/platform/timetable", icon: CalendarClock },
   { label: "Course builder", to: "/platform/courses/builder", icon: Wrench },
@@ -47,6 +56,8 @@ const TRAINER_LINKS: readonly QuickLinkItem[] = [
 ]
 
 const LEARNER_LINKS: readonly QuickLinkItem[] = [
+  { label: "New chat", to: "/platform/messages", icon: MessageSquare },
+  { label: "AI assistant", to: "/platform/ai", icon: Sparkles },
   { label: "My courses", to: "/platform/courses", icon: GraduationCap },
   { label: "Calendar", to: "/platform/calendar", icon: CalendarRange },
   { label: "Certificates", to: "/platform/certificates", icon: Award },

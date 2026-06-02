@@ -62,9 +62,9 @@ export function QuickCheckIn({ session, loading = false }: Props): JSX.Element {
       ? `${window.location.origin}/platform/sessions/${session.id}/checkin`
       : ""
 
-  // Shared card face (navy gradient) used as the dialog trigger or a plain link.
-  const face = (
-    <span className="flex w-full items-center gap-4 p-5 text-left transition-opacity hover:opacity-95">
+  // Header row shared by both states.
+  const header = (
+    <span className="flex w-full items-center gap-4">
       <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-gold text-brand-navy">
         <QrCode className="size-6" />
       </span>
@@ -86,8 +86,8 @@ export function QuickCheckIn({ session, loading = false }: Props): JSX.Element {
     return (
       <Card className={cardClass}>
         <CardContent className="p-0">
-          <Link to="/platform/sessions" className={`flex ${focus}`}>
-            {face}
+          <Link to="/platform/sessions" className={`flex p-5 ${focus}`}>
+            {header}
           </Link>
         </CardContent>
       </Card>
@@ -98,15 +98,23 @@ export function QuickCheckIn({ session, loading = false }: Props): JSX.Element {
     <>
       <Card className={cardClass}>
         <CardContent className="p-0">
+          {/* Whole card is the trigger: opens the check-in dialog. */}
           <button
             type="button"
             onClick={() => {
               setDone(false)
               setOpen(true)
             }}
-            className={`flex w-full ${focus}`}
+            className={`flex w-full flex-col gap-4 p-5 text-left transition-opacity hover:opacity-95 ${focus}`}
           >
-            {face}
+            {header}
+            {/* Scannable barcode: check in, or open Vitalcare on a phone. */}
+            <span className="mx-auto rounded-xl bg-white p-3 shadow-sm">
+              <QRCodeSVG value={checkInUrl} size={140} fgColor="#1b2e6b" />
+            </span>
+            <span className="text-center text-xs text-white/70">
+              Scan to check in, or open Vitalcare on your phone
+            </span>
           </button>
         </CardContent>
       </Card>
