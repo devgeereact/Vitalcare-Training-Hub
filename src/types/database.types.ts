@@ -259,6 +259,20 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type CalendarEvent = {
+  id: string
+  title: string
+  description: string | null
+  starts_at: string
+  ends_at: string
+  all_day: boolean
+  color: string
+  link: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type Product = Timestamps & {
   id: string
   name: string
@@ -582,6 +596,13 @@ export type Database = {
         Row: EmailCampaign
         Insert: Partial<EmailCampaign> & Pick<EmailCampaign, "subject" | "message">
         Update: Partial<EmailCampaign>
+        Relationships: []
+      }
+      calendar_events: {
+        Row: CalendarEvent
+        Insert: Partial<CalendarEvent> &
+          Pick<CalendarEvent, "title" | "starts_at" | "ends_at">
+        Update: Partial<CalendarEvent>
         Relationships: []
       }
       products: TableShape<Product, "name">

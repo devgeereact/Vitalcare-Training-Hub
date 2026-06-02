@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 
@@ -27,12 +28,25 @@ type MenuItem = {
 
 export function NavMain({ items }: { items: MenuItem[] }) {
   const location = useLocation()
+  // Only one top-level group open at a time -> cleaner navigation.
+  const [openGroup, setOpenGroup] = useState<string | null>(null)
 
   const isActiveRoute = (url: string) => {
     if (!url || url === "#") return false
     const u = url.startsWith("/") ? url : `/${url}`
     return location.pathname === u || location.pathname.startsWith(`${u}/`)
   }
+
+  // Auto-open the group that owns the active route; collapse the rest.
+  useEffect(() => {
+    const active = items.find((it) =>
+      it.items?.some(
+        (s) => isActiveRoute(s.url) || s.items?.some((c) => isActiveRoute(c.url)),
+      ),
+    )
+    if (active) setOpenGroup(active.title)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname])
 
   const renderMenuItems = (menuItems: MenuItem[]) => {
     return menuItems.map((item) => {
@@ -76,7 +90,8 @@ export function NavMain({ items }: { items: MenuItem[] }) {
         <Collapsible
   key={item.title}
   asChild
-  defaultOpen={isParentActive}
+  open={openGroup === item.title}
+  onOpenChange={(o) => setOpenGroup(o ? item.title : null)}
   className="group/collapsible"
 >
           <SidebarMenuItem>

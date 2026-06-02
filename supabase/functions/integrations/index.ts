@@ -28,6 +28,16 @@ const CATALOGUE: { id: string; label: string; keys: string[] }[] = [
   { id: "openweather", label: "OpenWeather", keys: ["OPENWEATHER_API_KEY"] },
   { id: "gemini", label: "Gemini AI (primary)", keys: ["GEMINI_API_KEY"] },
   { id: "openrouter", label: "OpenRouter (AI fallback)", keys: ["OPENROUTER_API_KEY"] },
+  {
+    id: "google_drive",
+    label: "Google Drive (file storage)",
+    keys: [
+      "GDRIVE_CLIENT_ID",
+      "GDRIVE_CLIENT_SECRET",
+      "GDRIVE_REFRESH_TOKEN",
+      "GDRIVE_FOLDER_ID",
+    ],
+  },
 ]
 const ALLOWED = new Set(CATALOGUE.flatMap((c) => c.keys))
 
