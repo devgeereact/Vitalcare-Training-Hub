@@ -60,6 +60,7 @@ import UserManagementPage from "@/pages/platform/people/UserManagementPage"
 import ProfilePage from "@/pages/platform/profile/ProfilePage"
 import InboxPage from "@/pages/platform/email/InboxPage"
 import MailDetailPage from "@/pages/platform/email/MailDetailPage"
+import MySessionsPage from "@/pages/platform/sessions/MySessionsPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -327,6 +328,7 @@ export const router = createBrowserRouter (
 
         // 📅 SESSIONS & ATTENDANCE
         { path: "calendar", element: <PlatformCalendarPage /> },
+        { path: "my-sessions", element: <MySessionsPage /> },
         { path: "sessions/:id/checkin", element: <CheckInPage /> },
         {
           path: "sessions",

@@ -72,6 +72,7 @@ const data = {
       icon: CalendarDays,
       items: [
         { title: "Calendar", url: "/platform/calendar" },
+        { title: "My Sessions", url: "/platform/my-sessions" },
         { title: "Sessions", url: "/platform/sessions" },
         { title: "Attendance Log", url: "/platform/attendance" },
         { title: "Holidays", url: "/platform/holidays" },
