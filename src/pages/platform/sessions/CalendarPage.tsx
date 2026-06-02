@@ -47,6 +47,7 @@ import {
   useOrgHolidays,
 } from "@/lib/queries/calendar.queries"
 import { getUpcomingHolidays } from "@/lib/integrations/holidays"
+import { useOneToOnes } from "@/lib/queries/one-to-one.queries"
 
 const COLORS = {
   physical: "#1b2e6b",
@@ -54,17 +55,19 @@ const COLORS = {
   holiday: "#64748b",
   closure: "#7c3aed",
   custom: "#16a34a",
+  o2o: "#0891b2",
 }
 const EVENT_COLOR_CHOICES = ["#16a34a", "#1b2e6b", "#d4a843", "#dc2626", "#7c3aed", "#0891b2"]
 
 interface Selected {
-  kind: "session" | "holiday" | "custom"
+  kind: "session" | "holiday" | "custom" | "o2o"
   id: string
   title: string
   start: string
   end?: string
   description?: string
   color: string
+  meetUrl?: string
 }
 
 function toLocalInput(d: Date) {
@@ -85,6 +88,9 @@ export default function CalendarPage() {
     retry: false,
   })
   const orgHolidays = useOrgHolidays()
+  // The current user's own 1:1s (as learner or assigned trainer). Approved +
+  // scheduled ones surface on the calendar with their meeting link.
+  const oneToOnes = useOneToOnes(user?.id, false)
 
   const [selected, setSelected] = useState<Selected | null>(null)
   const [editing, setEditing] = useState(false)
@@ -147,8 +153,32 @@ export default function CalendarPage() {
         extendedProps: { kind: "holiday", description: h.notes ?? undefined },
       })
     }
+    for (const r of oneToOnes.data ?? []) {
+      // Only approved + scheduled 1:1s belong on the calendar.
+      if (r.status !== "approved" || !r.scheduled_at) continue
+      const start = new Date(r.scheduled_at)
+      const end = new Date(start.getTime() + 30 * 60000)
+      const counterpart =
+        user?.id === r.learner_id ? r.trainerName : r.learnerName
+      out.push({
+        id: `o2o:${r.id}`,
+        title: `1:1 · ${r.courseTitle ?? counterpart ?? "Session"}`,
+        start: r.scheduled_at,
+        end: end.toISOString(),
+        backgroundColor: COLORS.o2o,
+        borderColor: COLORS.o2o,
+        extendedProps: {
+          kind: "o2o",
+          rawId: r.id,
+          description: [counterpart ? `With ${counterpart}` : null, r.note]
+            .filter(Boolean)
+            .join(" — ") || undefined,
+          meetUrl: r.meet_url ?? undefined,
+        },
+      })
+    }
     return out
-  }, [sessions.data, customEvents.data, holidays.data, orgHolidays.data])
+  }, [sessions.data, customEvents.data, holidays.data, orgHolidays.data, oneToOnes.data, user?.id])
 
   const upcoming = useMemo(() => {
     // eslint-disable-next-line react-hooks/purity -- time-based filter is intentional
@@ -234,6 +264,7 @@ export default function CalendarPage() {
           ["Virtual session", COLORS.virtual],
           ["Holiday", COLORS.holiday],
           ["Closure", COLORS.closure],
+          ["1:1 session", COLORS.o2o],
           ["My event", COLORS.custom],
         ].map(([label, color]) => (
           <span key={label} className="flex items-center gap-1.5">
@@ -279,6 +310,7 @@ export default function CalendarPage() {
                       end: info.event.end?.toISOString(),
                       description: info.event.extendedProps.description as string | undefined,
                       color: info.event.backgroundColor || COLORS.custom,
+                      meetUrl: info.event.extendedProps.meetUrl as string | undefined,
                     })
                   }}
                   dateClick={(info) => openNew(info.dateStr)}
@@ -311,6 +343,7 @@ export default function CalendarPage() {
                       end: e.end as string | undefined,
                       description: e.extendedProps?.description as string | undefined,
                       color: (e.backgroundColor as string) || COLORS.custom,
+                      meetUrl: e.extendedProps?.meetUrl as string | undefined,
                     })
                   }
                   className="flex w-full items-start gap-2 rounded-lg p-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
@@ -367,6 +400,22 @@ export default function CalendarPage() {
                       <ExternalLink className="mr-2 size-4" /> Open session
                     </Link>
                   </Button>
+                )}
+                {selected.kind === "o2o" && (
+                  <>
+                    <Button asChild variant="outline">
+                      <Link to="/platform/one-to-one">
+                        <ExternalLink className="mr-2 size-4" /> View 1:1
+                      </Link>
+                    </Button>
+                    {selected.meetUrl && (
+                      <Button asChild>
+                        <a href={selected.meetUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 size-4" /> Join meeting
+                        </a>
+                      </Button>
+                    )}
+                  </>
                 )}
                 {selected.kind === "custom" && (
                   <>

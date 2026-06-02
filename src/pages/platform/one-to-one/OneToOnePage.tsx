@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Video,
 } from "lucide-react"
 
 import {
@@ -299,6 +300,13 @@ export default function OneToOnePage() {
                     </span>
                   ) : null}
                 </p>
+                {r.status === "approved" && r.meet_url && (
+                  <Button asChild size="sm">
+                    <a href={r.meet_url} target="_blank" rel="noopener noreferrer">
+                      <Video className="mr-1.5 size-4" /> Join meeting
+                    </a>
+                  </Button>
+                )}
                 {isAdmin && r.status === "pending" && (
                   <div className="flex gap-2 pt-1">
                     <ApproveDialog row={r} deciderId={profile?.id} />

@@ -194,7 +194,10 @@ export function useDecideOneToOne(deciderId: string | undefined) {
         throw new Error("Assign a trainer and time to approve.")
       }
       const startIso = new Date(input.scheduledAt).toISOString()
-      const endIso = new Date(new Date(input.scheduledAt).getTime() + 30 * 60000).toISOString()
+
+      // A ready-to-use meeting link (Jitsi needs no API/account). Deterministic
+      // per request so both parties land in the same room.
+      const meetUrl = `https://meet.jit.si/vitalcare-1to1-${input.id}`
 
       const { data: row, error } = await supabase
         .from("one_to_one_requests")
@@ -202,6 +205,7 @@ export function useDecideOneToOne(deciderId: string | undefined) {
           status: "approved",
           trainer_id: input.trainerId,
           scheduled_at: startIso,
+          meet_url: meetUrl,
           decided_by: deciderId,
           decided_at: new Date().toISOString(),
         })
@@ -210,26 +214,15 @@ export function useDecideOneToOne(deciderId: string | undefined) {
         .single()
       if (error) throw error
 
-      // Calendar events for trainer + learner.
-      await supabase.from("calendar_events").insert(
-        [input.trainerId, row.learner_id].map((uid) => ({
-          title: `1:1 — ${input.title}`,
-          description: "One-to-one tutoring session.",
-          starts_at: startIso,
-          ends_at: endIso,
-          all_day: false,
-          color: "#7c3aed",
-          created_by: uid,
-          link: "/platform/one-to-one",
-        })),
-      )
-      // Notifications (fire push) for trainer + learner.
+      // The approved 1:1 surfaces on each party's calendar live (read from
+      // one_to_one_requests), so no static calendar_events row is needed.
+      // Notify trainer + learner, with the meeting link in the notification.
       await supabase.from("notifications").insert(
         [input.trainerId, row.learner_id].map((uid) => ({
           user_id: uid,
           type: "session" as const,
           title: "1:1 session scheduled",
-          body: `${input.title} — ${new Date(startIso).toLocaleString("en-GB")}`,
+          body: `${input.title} · ${new Date(startIso).toLocaleString("en-GB")}`,
           link: "/platform/one-to-one",
         })),
       )
