@@ -53,12 +53,13 @@ function safeName(name) {
     .slice(0, 60)
 }
 
-async function run() {
+// Sync one mailbox into mail_messages tagged with ownerId (null = org inbox).
+async function syncMailbox({ host, port, user, pass, ownerId }) {
   const client = new ImapFlow({
-    host: IMAP_HOST,
-    port: Number(IMAP_PORT),
+    host,
+    port: Number(port) || 993,
     secure: true,
-    auth: { user: IMAP_USER, pass: IMAP_PASS },
+    auth: { user, pass },
     logger: false,
   })
   await client.connect()
@@ -70,7 +71,7 @@ async function run() {
       const start = Math.max(1, total - 29)
       for await (const msg of client.fetch(`${start}:*`, { uid: true, source: true })) {
         const parsed = await simpleParser(msg.source)
-        const messageId = parsed.messageId || `uid-org-${msg.uid}`
+        const messageId = parsed.messageId || `uid-${ownerId ?? "org"}-${msg.uid}`
 
         // Upload attachments.
         const attachments = []
@@ -100,7 +101,7 @@ async function run() {
           {
             message_id: messageId,
             uid: msg.uid,
-            owner_id: null,
+            owner_id: ownerId,
             from_name: parsed.from?.value?.[0]?.name || null,
             from_addr: parsed.from?.value?.[0]?.address || null,
             subject: parsed.subject || "(no subject)",
@@ -121,7 +122,47 @@ async function run() {
     lock.release()
   }
   await client.logout()
-  console.log(`Synced ${stored} message(s)`)
+  return stored
+}
+
+async function run() {
+  // Org inbox.
+  let total = 0
+  try {
+    total += await syncMailbox({
+      host: IMAP_HOST,
+      port: IMAP_PORT,
+      user: IMAP_USER,
+      pass: IMAP_PASS,
+      ownerId: null,
+    })
+    console.log("Org inbox synced")
+  } catch (e) {
+    console.error("Org inbox failed:", e.message)
+  }
+
+  // Each connected employee mailbox.
+  const { data: accounts } = await admin
+    .from("user_mail_accounts")
+    .select("user_id, email, smtp_host, smtp_pass, imap_host, imap_port")
+    .eq("active", true)
+  for (const a of accounts || []) {
+    const host = a.imap_host || a.smtp_host
+    if (!host) continue
+    try {
+      total += await syncMailbox({
+        host,
+        port: a.imap_port,
+        user: a.email,
+        pass: a.smtp_pass,
+        ownerId: a.user_id,
+      })
+      console.log(`Synced ${a.email}`)
+    } catch (e) {
+      console.error(`Failed ${a.email}:`, e.message)
+    }
+  }
+  console.log(`Total synced: ${total} message(s)`)
 }
 
 run().catch((e) => {
