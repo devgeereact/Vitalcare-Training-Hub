@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Sparkles, Loader2, Copy, Check, CornerDownLeft } from "lucide-react"
+import { Sparkles, Loader2, Copy, Check, CornerDownLeft, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -84,8 +84,14 @@ export default function AiAssistButton({
           placeholder={`What should it cover?`}
         />
         <Button size="sm" onClick={generate} disabled={loading} className="w-full">
-          {loading ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <Sparkles className="mr-1.5 size-4" />}
-          {loading ? "Generating…" : "Generate"}
+          {loading ? (
+            <Loader2 className="mr-1.5 size-4 animate-spin" />
+          ) : result ? (
+            <RefreshCw className="mr-1.5 size-4" />
+          ) : (
+            <Sparkles className="mr-1.5 size-4" />
+          )}
+          {loading ? "Generating…" : result ? "Regenerate" : "Generate"}
         </Button>
 
         {result && (

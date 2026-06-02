@@ -14,16 +14,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Link as RLink } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Clock, Award, ShieldCheck as ShieldIcon, PlayCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMyCourses, useEnrolSelf } from "@/lib/queries/courses.queries"
+import type { Course } from "@/types/database.types"
+
+interface CardData {
+  course: Course
+  enrolled: boolean
+  progressPct: number
+}
 
 export default function MyCoursesPage() {
   const { data, isLoading, isError, refetch } = useMyCourses()
   const enrol = useEnrolSelf()
   const [view, setView] = useState<"grid" | "list">("grid")
+  const [selected, setSelected] = useState<CardData | null>(null)
 
   return (
     <div className="space-y-6">
@@ -115,11 +133,18 @@ export default function MyCoursesPage() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button asChild variant="outline" size="sm">
-                    <Link to={`/platform/courses/${course.id}`}>
-                      {enrolled ? "Continue" : "View"}
-                    </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelected({ course, enrolled, progressPct })}
+                  >
+                    View
                   </Button>
+                  {enrolled && (
+                    <Button asChild size="sm">
+                      <Link to={`/platform/courses/${course.id}`}>Continue</Link>
+                    </Button>
+                  )}
                   {!enrolled && (
                     <Button
                       size="sm"
@@ -181,8 +206,13 @@ export default function MyCoursesPage() {
                 )}
 
                 <div className="mt-4 flex gap-2">
-                  <Button asChild variant="outline" size="sm" className="flex-1">
-                    <Link to={`/platform/courses/${course.id}`}>View</Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setSelected({ course, enrolled, progressPct })}
+                  >
+                    View
                   </Button>
                   {enrolled ? (
                     <Button asChild size="sm" className="flex-1">
@@ -209,6 +239,91 @@ export default function MyCoursesPage() {
           ))}
         </div>
       )}
+
+      {/* Course detail popup */}
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          {selected && (
+            <>
+              {selected.course.thumbnail_url && (
+                <img
+                  src={selected.course.thumbnail_url}
+                  alt={selected.course.title}
+                  className="-mx-6 -mt-6 mb-2 aspect-[21/9] w-[calc(100%+3rem)] object-cover"
+                />
+              )}
+              <DialogHeader>
+                <DialogTitle className="font-display text-2xl">
+                  {selected.course.title}
+                </DialogTitle>
+                {selected.course.summary && (
+                  <DialogDescription>{selected.course.summary}</DialogDescription>
+                )}
+              </DialogHeader>
+
+              <div className="flex flex-wrap gap-2">
+                {selected.course.is_cstf_aligned && (
+                  <Badge variant="outline" className="gap-1 text-success">
+                    <ShieldIcon className="size-3" /> CSTF aligned
+                  </Badge>
+                )}
+                <Badge variant="outline" className="gap-1">
+                  <Award className="size-3" /> {selected.course.cpd_hours} CPD hours
+                </Badge>
+                <Badge variant="outline" className="gap-1">
+                  <Clock className="size-3" /> {selected.course.duration_mins} mins
+                </Badge>
+              </div>
+
+              {selected.course.description && (
+                <div
+                  className="prose prose-sm mt-1 max-w-none text-sm text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: selected.course.description }}
+                />
+              )}
+
+              {selected.enrolled && (
+                <div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${selected.progressPct}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {selected.progressPct}% complete
+                  </p>
+                </div>
+              )}
+
+              <DialogFooter>
+                {selected.enrolled ? (
+                  <Button asChild>
+                    <RLink to={`/platform/courses/${selected.course.id}`}>
+                      <PlayCircle className="mr-2 size-4" /> Continue learning
+                    </RLink>
+                  </Button>
+                ) : (
+                  <Button
+                    disabled={enrol.isPending}
+                    onClick={() =>
+                      enrol
+                        .mutateAsync(selected.course.id)
+                        .then(() => {
+                          toast.success("Enrolled")
+                          setSelected(null)
+                        })
+                        .catch(() => toast.error("Could not enrol"))
+                    }
+                  >
+                    Enrol on this course
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

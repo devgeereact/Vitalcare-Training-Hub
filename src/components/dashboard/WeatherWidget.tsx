@@ -12,8 +12,9 @@ export default function WeatherWidget() {
   const { data } = useQuery({
     queryKey: ["weather", "London,GB"],
     queryFn: () => getWeather("London,GB"),
-    staleTime: 10 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     retry: false,
   })

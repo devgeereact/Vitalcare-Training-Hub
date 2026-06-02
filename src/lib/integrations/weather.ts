@@ -12,7 +12,7 @@ export interface Weather {
 }
 
 const CACHE_KEY = "vitalcare-weather"
-const TTL_MS = 30 * 60 * 1000
+const TTL_MS = 5 * 60 * 1000
 
 export async function getWeather(city = "London,GB"): Promise<Weather | null> {
   try {
