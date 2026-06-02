@@ -33,15 +33,22 @@ Deno.serve(async (req) => {
   if (!vapidJwk) return json({ error: "Push not configured" }, 500)
 
   const admin = createClient(url, serviceKey)
-  const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "")
-  const { data: u, error: uErr } = await admin.auth.getUser(token)
-  if (uErr || !u.user) return json({ error: "Unauthorised" }, 401)
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", u.user.id)
-    .single()
-  if (!profile || !STAFF.includes(profile.role)) return json({ error: "Forbidden" }, 403)
+
+  // Two callers: a staff user (JWT) from the UI, or the DB trigger / cron using
+  // the shared CRON_SECRET header for server-to-server fan-out.
+  const cronSecret = Deno.env.get("CRON_SECRET")
+  const viaCron = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret
+  if (!viaCron) {
+    const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "")
+    const { data: u, error: uErr } = await admin.auth.getUser(token)
+    if (uErr || !u.user) return json({ error: "Unauthorised" }, 401)
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("id", u.user.id)
+      .single()
+    if (!profile || !STAFF.includes(profile.role)) return json({ error: "Forbidden" }, 403)
+  }
 
   let body: Record<string, unknown>
   try {
