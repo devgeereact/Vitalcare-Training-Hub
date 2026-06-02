@@ -8,8 +8,12 @@
 
 import { ImapFlow } from "imapflow"
 import { simpleParser } from "mailparser"
+import WebSocket from "ws"
 import { createClient } from "@supabase/supabase-js"
 import { randomUUID } from "node:crypto"
+
+// supabase-js eagerly inits realtime which needs a global WebSocket.
+if (!globalThis.WebSocket) globalThis.WebSocket = WebSocket
 
 const {
   IMAP_HOST,
