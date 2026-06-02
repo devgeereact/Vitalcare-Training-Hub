@@ -10,6 +10,7 @@ import {
   Sparkles,
   Building2,
   ShoppingCart,
+  UserCircle,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -147,6 +148,17 @@ const data = {
         { title: "Settings", url: "/platform/settings" },
         { title: "Integrations", url: "/platform/settings/integrations" },
         { title: "Audit Log", url: "/platform/audit" },
+      ],
+    },
+    {
+      title: "Account",
+      url: "#",
+      icon: UserCircle,
+      items: [
+        { title: "My Profile", url: "/platform/profile" },
+        { title: "Edit Profile", url: "/platform/settings" },
+        { title: "Password", url: "/platform/account/password" },
+        { title: "Notifications", url: "/platform/notifications" },
       ],
     },
   ],
