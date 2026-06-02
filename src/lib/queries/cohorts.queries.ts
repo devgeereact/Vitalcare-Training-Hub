@@ -137,6 +137,23 @@ export function useCreateCohort() {
   })
 }
 
+export function useDeleteCohort() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (cohortId: string) => {
+      const { error } = await supabase
+        .from("cohorts")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", cohortId)
+      if (error) {
+        console.error("[useDeleteCohort]", error)
+        throw error
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: cohortKeys.list() }),
+  })
+}
+
 export function useCohortMemberMutations(cohortId: string) {
   const qc = useQueryClient()
   const invalidate = () => {

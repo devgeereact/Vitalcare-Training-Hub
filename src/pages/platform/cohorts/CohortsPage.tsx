@@ -1,7 +1,14 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
-import { UsersRound, AlertCircle, Plus, Loader2, ChevronRight } from "lucide-react"
+import {
+  UsersRound,
+  AlertCircle,
+  Plus,
+  Loader2,
+  ChevronRight,
+  Trash2,
+} from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,15 +25,29 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { useUser } from "@/hooks/use-user"
-import { useCohorts, useCreateCohort } from "@/lib/queries/cohorts.queries"
+import {
+  useCohorts,
+  useCreateCohort,
+  useDeleteCohort,
+} from "@/lib/queries/cohorts.queries"
 
 export default function CohortsPage() {
-  const { profile } = useUser()
+  const { profile, isSuperAdmin } = useUser()
   const { data, isLoading, isError, refetch } = useCohorts()
   const create = useCreateCohort()
+  const del = useDeleteCohort()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [desc, setDesc] = useState("")
+
+  function handleDelete(id: string, cohortName: string) {
+    if (!confirm(`Delete the cohort "${cohortName}"? Members are removed too.`))
+      return
+    del
+      .mutateAsync(id)
+      .then(() => toast.success("Cohort deleted"))
+      .catch(() => toast.error("Could not delete. Please try again."))
+  }
 
   function submit() {
     if (!name.trim() || !profile?.id) return
@@ -56,11 +77,13 @@ export default function CohortsPage() {
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 size-4" /> New cohort
-            </Button>
-          </DialogTrigger>
+          {isSuperAdmin && (
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 size-4" /> New cohort
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent>
             <DialogHeader>
               <DialogTitle>New cohort</DialogTitle>
@@ -116,15 +139,20 @@ export default function CohortsPage() {
               <UsersRound className="size-6" />
             </div>
             <p className="text-sm text-muted-foreground">
-              No cohorts yet. Create your first one above.
+              {isSuperAdmin
+                ? "No cohorts yet. Create your first one above."
+                : "No cohorts yet."}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data!.map((c) => (
-            <Link key={c.id} to={`/platform/cohorts/${c.id}`}>
-              <Card className="h-full transition-colors hover:border-brand-navy/40">
+            <Card
+              key={c.id}
+              className="relative h-full transition-colors hover:border-brand-navy/40"
+            >
+              <Link to={`/platform/cohorts/${c.id}`}>
                 <CardContent className="flex items-start gap-3 p-5">
                   <span className="flex size-10 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
                     <UsersRound className="size-5" />
@@ -142,8 +170,20 @@ export default function CohortsPage() {
                   </div>
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </CardContent>
-              </Card>
-            </Link>
+              </Link>
+              {isSuperAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2 size-8 text-muted-foreground hover:text-destructive"
+                  disabled={del.isPending}
+                  onClick={() => handleDelete(c.id, c.name)}
+                  aria-label={`Delete ${c.name}`}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
+            </Card>
           ))}
         </div>
       )}

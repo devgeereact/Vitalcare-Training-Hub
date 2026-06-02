@@ -1,8 +1,16 @@
-import { useEffect } from "react"
-import { useSearchParams } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, useSearchParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { CheckCircle2, Video } from "lucide-react"
+import {
+  Bell,
+  CheckCircle2,
+  ChevronRight,
+  KeyRound,
+  Plug,
+  UserRound,
+  Video,
+} from "lucide-react"
 
 import { useUIThemeStore } from "@/store/ui-theme.store"
 import { useUser } from "@/hooks/use-user"
@@ -15,15 +23,27 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import ProfileDetailsCard from "@/components/platform/ProfileDetailsCard"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import MailSettingsCard from "@/components/platform/MailSettingsCard"
 
 const VITALCARE_THEMES = [
-  { id: "vitalcare-default", label: "Vitalcare", preview: "bg-gradient-to-br from-[#1b2e6b] to-[#d4a843]" },
-  { id: "dark-clinical", label: "Dark Clinical", preview: "bg-gradient-to-br from-slate-900 to-slate-700" },
-  { id: "navy-minimal", label: "Navy Minimal", preview: "bg-gradient-to-br from-[#1b2e6b] to-[#142054]" },
+  {
+    id: "vitalcare-default",
+    label: "Vitalcare",
+    preview: "bg-gradient-to-br from-[#1b2e6b] to-[#d4a843]",
+  },
+  {
+    id: "dark-clinical",
+    label: "Dark Clinical",
+    preview: "bg-gradient-to-br from-slate-900 to-slate-700",
+  },
+  {
+    id: "navy-minimal",
+    label: "Navy Minimal",
+    preview: "bg-gradient-to-br from-[#1b2e6b] to-[#142054]",
+  },
 ]
 
 // Dedicated OAuth client for Calendar/Meet (separate from the sign-in client).
@@ -36,11 +56,39 @@ const OAUTH_SCOPES = [
   "https://www.googleapis.com/auth/userinfo.email",
 ].join(" ")
 
+// Device-level notification preferences. Stored locally until a server-side
+// preferences table exists.
+const NOTIF_KEYS = {
+  sessionReminders: "vc-notif-session-reminders",
+  certificateAlerts: "vc-notif-certificate-alerts",
+  announcements: "vc-notif-announcements",
+} as const
+
+function readPref(key: string): boolean {
+  // Default on: opting out is the deliberate action.
+  return localStorage.getItem(key) !== "off"
+}
+
 export default function SettingsPage() {
   const { theme, setTheme } = useUIThemeStore()
-  const { profile, role, isAdmin } = useUser()
+  const { profile, isAdmin } = useUser()
   const { user } = useAuth()
   const [params, setParams] = useSearchParams()
+
+  const [sessionReminders, setSessionReminders] = useState(() =>
+    readPref(NOTIF_KEYS.sessionReminders),
+  )
+  const [certificateAlerts, setCertificateAlerts] = useState(() =>
+    readPref(NOTIF_KEYS.certificateAlerts),
+  )
+  const [announcements, setAnnouncements] = useState(() =>
+    readPref(NOTIF_KEYS.announcements),
+  )
+
+  function setPref(key: string, value: boolean, apply: (v: boolean) => void) {
+    localStorage.setItem(key, value ? "on" : "off")
+    apply(value)
+  }
 
   const google = useQuery({
     queryKey: ["google-oauth-status"],
@@ -59,9 +107,14 @@ export default function SettingsPage() {
   useEffect(() => {
     const g = params.get("google")
     if (!g) return
-    if (g === "connected") toast.success("Google connected", { description: "Calendar + Meet are linked." })
+    if (g === "connected")
+      toast.success("Google connected", {
+        description: "Calendar and Meet are linked.",
+      })
     else if (g === "norefresh")
-      toast.error("Reconnect needed", { description: "Google did not return a refresh token. Try again." })
+      toast.error("Reconnect needed", {
+        description: "Google did not return a refresh token. Try again.",
+      })
     else if (g === "error") toast.error("Google connection failed")
     params.delete("google")
     setParams(params, { replace: true })
@@ -83,6 +136,11 @@ export default function SettingsPage() {
     window.location.href = url
   }
 
+  const name =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ||
+    profile?.full_name ||
+    "Your profile"
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
@@ -91,6 +149,140 @@ export default function SettingsPage() {
           Manage your account, integrations and how the platform looks.
         </p>
       </div>
+
+      {/* Account shortcuts */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Account</CardTitle>
+          <CardDescription>Your profile, password and links.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Link
+            to="/platform/profile"
+            className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-brand-gold/60 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
+          >
+            <span className="flex size-10 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
+              <UserRound className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">{name}</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {profile?.email ?? "View and edit your profile"}
+              </span>
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </Link>
+
+          <Link
+            to="/platform/account/password"
+            className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-brand-gold/60 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
+          >
+            <span className="flex size-10 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
+              <KeyRound className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Password</span>
+              <span className="block text-xs text-muted-foreground">
+                Change your sign-in password
+              </span>
+            </span>
+            <ChevronRight className="size-4 text-muted-foreground" />
+          </Link>
+
+          {isAdmin && (
+            <Link
+              to="/platform/settings/integrations"
+              className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-brand-gold/60 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
+            >
+              <span className="flex size-10 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
+                <Plug className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium">Integrations</span>
+                <span className="block text-xs text-muted-foreground">
+                  Manage connected services
+                </span>
+              </span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Appearance */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>Choose a theme. Saved on this device.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {VITALCARE_THEMES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTheme(t.id)}
+                aria-pressed={theme === t.id}
+                className={`relative h-24 cursor-pointer overflow-hidden rounded-lg transition hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2 ${
+                  theme === t.id
+                    ? "scale-[1.03] ring-2 ring-[#d4a843]"
+                    : "ring-1 ring-border"
+                } ${t.preview}`}
+              >
+                <span className="absolute bottom-1.5 left-2 rounded bg-black/40 px-2 py-0.5 text-[11px] font-medium text-white">
+                  {t.label}
+                </span>
+                {theme === t.id && (
+                  <span className="absolute right-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-white text-brand-navy">
+                    <CheckCircle2 className="size-4" />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notification preferences */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="size-5 text-brand-navy" /> Notifications
+          </CardTitle>
+          <CardDescription>
+            Choose what you hear about. Saved on this device.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          <NotifRow
+            id="notif-sessions"
+            title="Session reminders"
+            description="Get a nudge before sessions you are booked onto."
+            checked={sessionReminders}
+            onChange={(v) =>
+              setPref(NOTIF_KEYS.sessionReminders, v, setSessionReminders)
+            }
+          />
+          <NotifRow
+            id="notif-certs"
+            title="Certificate alerts"
+            description="Tell me when a certificate is issued or due to expire."
+            checked={certificateAlerts}
+            onChange={(v) =>
+              setPref(NOTIF_KEYS.certificateAlerts, v, setCertificateAlerts)
+            }
+          />
+          <NotifRow
+            id="notif-announcements"
+            title="Announcements"
+            description="Show pop-up announcements from your organisation."
+            checked={announcements}
+            onChange={(v) =>
+              setPref(NOTIF_KEYS.announcements, v, setAnnouncements)
+            }
+          />
+        </CardContent>
+      </Card>
 
       {/* Integrations (admins) */}
       {isAdmin && (
@@ -108,85 +300,55 @@ export default function SettingsPage() {
                   <Video className="size-5" />
                 </span>
                 <div>
-                  <p className="text-sm font-medium">Google Calendar &amp; Meet</p>
+                  <p className="text-sm font-medium">Google Calendar and Meet</p>
                   {google.data?.connected_email ? (
                     <p className="flex items-center gap-1 text-xs text-success">
-                      <CheckCircle2 className="size-3.5" /> Connected as {google.data.connected_email}
+                      <CheckCircle2 className="size-3.5" /> Connected as{" "}
+                      {google.data.connected_email}
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground">Not connected</p>
                   )}
                 </div>
               </div>
-              <Button variant={google.data ? "outline" : "default"} onClick={connectGoogle}>
+              <Button
+                variant={google.data ? "outline" : "default"}
+                onClick={connectGoogle}
+              >
                 {google.data ? "Reconnect" : "Connect Google"}
               </Button>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Sessions sync to your Google Calendar; virtual sessions get a Google
-              Meet link (Zoom is the automatic backup).
+              Sessions sync to your Google Calendar; virtual sessions get a
+              Google Meet link (Zoom is the automatic backup).
             </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Appearance */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>Choose a theme. Saved on this device.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {VITALCARE_THEMES.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTheme(t.id)}
-                aria-pressed={theme === t.id}
-                className={`relative h-24 rounded-lg cursor-pointer overflow-hidden transition hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2 ${
-                  theme === t.id ? "ring-2 ring-[#d4a843] scale-[1.03]" : "ring-1 ring-border"
-                } ${t.preview}`}
-              >
-                <span className="absolute bottom-1.5 left-2 rounded bg-black/40 px-2 py-0.5 text-[11px] font-medium text-white">
-                  {t.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <ProfileDetailsCard />
       <MailSettingsCard />
+    </div>
+  )
+}
 
-      {/* Account */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Account</CardTitle>
-          <CardDescription>Your profile details.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <Label className="text-muted-foreground">Name</Label>
-            <p className="mt-1 text-sm font-medium">
-              {profile?.full_name ||
-                [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ||
-                "—"}
-            </p>
-          </div>
-          <div>
-            <Label className="text-muted-foreground">Email</Label>
-            <p className="mt-1 text-sm font-medium">{profile?.email ?? "—"}</p>
-          </div>
-          <div>
-            <Label className="text-muted-foreground">Role</Label>
-            <p className="mt-1 text-sm font-medium capitalize">
-              {role?.replace("_", " ") ?? "—"}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+interface NotifRowProps {
+  id: string
+  title: string
+  description: string
+  checked: boolean
+  onChange: (value: boolean) => void
+}
+
+function NotifRow({ id, title, description, checked, onChange }: NotifRowProps) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg p-2">
+      <div className="min-w-0">
+        <Label htmlFor={id} className="text-sm font-medium">
+          {title}
+        </Label>
+        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Switch id={id} checked={checked} onCheckedChange={onChange} />
     </div>
   )
 }

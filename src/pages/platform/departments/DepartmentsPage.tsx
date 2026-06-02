@@ -1,11 +1,26 @@
 import { useState } from "react"
 import { toast } from "sonner"
-import { Building2, AlertCircle, Plus, Loader2 } from "lucide-react"
+import {
+  Building2,
+  AlertCircle,
+  Plus,
+  Loader2,
+  ChevronRight,
+  ChevronLeft,
+  Trash2,
+} from "lucide-react"
 
-import { Card, CardContent } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -16,16 +31,25 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import DepartmentMembers from "@/components/platform/DepartmentMembers"
+import DepartmentBoard from "@/components/platform/DepartmentBoard"
 import { useUser } from "@/hooks/use-user"
-import { useDepartments, useCreateDepartment } from "@/lib/queries/org.queries"
+import {
+  useDepartments,
+  useCreateDepartment,
+  useDeleteDepartment,
+  type DepartmentRow,
+} from "@/lib/queries/org.queries"
 
 export default function DepartmentsPage() {
-  const { profile } = useUser()
+  const { profile, isSuperAdmin } = useUser()
   const { data, isLoading, isError, refetch } = useDepartments()
   const create = useCreateDepartment()
+  const del = useDeleteDepartment()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
+  const [active, setActive] = useState<DepartmentRow | null>(null)
 
   function submit() {
     if (!name.trim() || !profile?.organisation_id) {
@@ -44,21 +68,64 @@ export default function DepartmentsPage() {
       .catch(() => toast.error("Could not add department. Please try again."))
   }
 
+  function handleDelete(dept: DepartmentRow) {
+    if (!confirm(`Delete the department "${dept.name}"? Tasks are removed too.`))
+      return
+    del
+      .mutateAsync(dept.id)
+      .then(() => {
+        toast.success("Department deleted")
+        if (active?.id === dept.id) setActive(null)
+      })
+      .catch(() => toast.error("Could not delete. Please try again."))
+  }
+
+  /* ------------------------------------------------ detail (one dept) ----- */
+  if (active) {
+    return (
+      <div className="space-y-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2"
+          onClick={() => setActive(null)}
+        >
+          <ChevronLeft className="mr-1.5 size-4" /> Back to departments
+        </Button>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display text-2xl">{active.name}</CardTitle>
+            {active.description && (
+              <CardDescription>{active.description}</CardDescription>
+            )}
+          </CardHeader>
+        </Card>
+
+        <DepartmentMembers departmentId={active.id} canManage={isSuperAdmin} />
+        <DepartmentBoard departmentId={active.id} createdBy={profile?.id ?? null} />
+      </div>
+    )
+  }
+
+  /* ------------------------------------------------------ list view ------- */
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl text-foreground">Departments</h1>
           <p className="mt-1 text-muted-foreground">
-            Organise learners and staff into teams within your organisation.
+            Collaboration spaces. Assign people and work on shared tasks.
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 size-4" /> Add department
-            </Button>
-          </DialogTrigger>
+          {isSuperAdmin && (
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 size-4" /> Add department
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add department</DialogTitle>
@@ -128,27 +195,54 @@ export default function DepartmentsPage() {
               <Building2 className="size-6" />
             </div>
             <p className="text-sm text-muted-foreground">
-              No departments yet. Add your first one above.
+              {isSuperAdmin
+                ? "No departments yet. Add your first one above."
+                : "No departments yet."}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data!.map((d) => (
-            <Card key={d.id}>
-              <CardContent className="flex items-start gap-3 p-5">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
-                  <Building2 className="size-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="font-medium">{d.name}</p>
-                  {d.description && (
-                    <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                      {d.description}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
+            <Card
+              key={d.id}
+              className="relative h-full transition-colors hover:border-brand-navy/40"
+            >
+              <button
+                type="button"
+                onClick={() => setActive(d)}
+                className="w-full rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
+              >
+                <CardContent className="flex items-start gap-3 p-5">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
+                    <Building2 className="size-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{d.name}</p>
+                    {d.description && (
+                      <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                        {d.description}
+                      </p>
+                    )}
+                    <Badge variant="secondary" className="mt-2">
+                      {d.memberCount} member{d.memberCount === 1 ? "" : "s"}
+                    </Badge>
+                  </div>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                </CardContent>
+              </button>
+              {isSuperAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2 size-8 text-muted-foreground hover:text-destructive"
+                  disabled={del.isPending}
+                  onClick={() => handleDelete(d)}
+                  aria-label={`Delete ${d.name}`}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
             </Card>
           ))}
         </div>

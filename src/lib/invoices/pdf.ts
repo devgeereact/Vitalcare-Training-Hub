@@ -4,16 +4,14 @@ import { COMPANY, BRAND } from "@/lib/constants"
 import type { Invoice } from "@/types/database.types"
 
 /**
- * GBP for the PDF. jsPDF's built-in helvetica font does not carry the £ glyph,
- * so it renders as a tofu box. We use a "GBP " prefix instead to keep amounts
- * legible and unambiguous.
+ * GBP for the PDF, matching the on-screen preview exactly (£1,250.00). jsPDF's
+ * standard helvetica maps the pound sign via WinAnsi encoding, so £ renders.
  */
 function gbpPdf(pence: number): string {
-  const amount = new Intl.NumberFormat("en-GB", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
   }).format(pence / 100)
-  return `GBP ${amount}`
 }
 
 export function downloadInvoicePdf(inv: Invoice) {
