@@ -8,6 +8,7 @@ import {
   Send,
   CheckCircle2,
   Loader2,
+  ThumbsUp,
 } from "lucide-react"
 
 import {
@@ -20,17 +21,30 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
 import { useUser } from "@/hooks/use-user"
-import { useThreadDetail, useReply } from "@/lib/queries/forums.queries"
+import {
+  useThreadDetail,
+  useReply,
+  useTogglePostLike,
+} from "@/lib/queries/forums.queries"
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return "?"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[1][0]).toUpperCase()
+}
 
 export default function ThreadPage() {
   const { id = "" } = useParams()
   const { user } = useAuth()
   const { isAdmin, isTrainer } = useUser()
-  const { data, isLoading, isError, refetch } = useThreadDetail(id)
+  const { data, isLoading, isError, refetch } = useThreadDetail(id, user?.id)
   const reply = useReply(id)
+  const toggleLike = useTogglePostLike(id)
   const [body, setBody] = useState("")
 
   const isQa = data?.thread.kind === "qa"
@@ -46,6 +60,11 @@ export default function ThreadPage() {
         toast.success(asAnswer ? "Answer posted" : "Reply posted")
       })
       .catch(() => toast.error("Could not post. Please try again."))
+  }
+
+  function like(postId: string, liked: boolean) {
+    if (!user?.id) return
+    toggleLike.mutate({ postId, userId: user.id, liked })
   }
 
   if (isLoading) {
@@ -90,7 +109,7 @@ export default function ThreadPage() {
                     <CheckCircle2 className="size-3" /> Answered
                   </>
                 ) : (
-                  "Open"
+                  "Awaiting answer"
                 )}
               </Badge>
             )}
@@ -106,23 +125,47 @@ export default function ThreadPage() {
                   key={p.id}
                   className={cn(
                     "rounded-lg border p-3",
-                    p.is_answer
-                      ? "border-success/40 bg-success/5"
-                      : "border-border",
+                    p.is_answer ? "border-success/40 bg-success/5" : "border-border",
                   )}
                 >
-                  <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium">{p.authorName}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(p.created_at), "d MMM yyyy, HH:mm")}
-                    </span>
+                  <div className="mb-2 flex items-center gap-2.5">
+                    <Avatar className="size-8 shrink-0">
+                      {p.authorAvatar && <AvatarImage src={p.authorAvatar} alt={p.authorName} />}
+                      <AvatarFallback className="bg-brand-navy/10 text-[11px] font-semibold text-brand-navy">
+                        {initials(p.authorName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{p.authorName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(p.created_at), "d MMM yyyy, HH:mm")}
+                      </p>
+                    </div>
+                    {p.is_answer && (
+                      <Badge variant="secondary" className="gap-1 text-success">
+                        <CheckCircle2 className="size-3" /> Answer
+                      </Badge>
+                    )}
                   </div>
-                  {p.is_answer && (
-                    <Badge variant="secondary" className="mb-1.5 gap-1 text-success">
-                      <CheckCircle2 className="size-3" /> Answer
-                    </Badge>
-                  )}
                   <p className="whitespace-pre-wrap text-sm">{p.body}</p>
+                  <div className="mt-2.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => like(p.id, p.likedByMe)}
+                      disabled={!user?.id || toggleLike.isPending}
+                      className={cn(
+                        "h-7 gap-1.5 px-2 text-xs focus-visible:ring-2 focus-visible:ring-brand-gold",
+                        p.likedByMe ? "text-brand-navy" : "text-muted-foreground",
+                      )}
+                    >
+                      <ThumbsUp
+                        className={cn("size-3.5", p.likedByMe && "fill-brand-navy")}
+                      />
+                      {p.likeCount > 0 ? p.likeCount : "Like"}
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -130,7 +173,7 @@ export default function ThreadPage() {
 
           <div className="space-y-2 border-t border-border pt-4">
             <Textarea
-              placeholder="Write a reply…"
+              placeholder={isQa ? "Add a comment or an answer…" : "Write a reply…"}
               rows={3}
               value={body}
               onChange={(e) => setBody(e.target.value)}
@@ -151,7 +194,7 @@ export default function ThreadPage() {
                 ) : (
                   <Send className="mr-1.5 size-4" />
                 )}
-                Reply
+                {isQa ? "Comment" : "Reply"}
               </Button>
             </div>
           </div>

@@ -4,7 +4,11 @@ import { supabase } from "@/lib/supabase/client"
 export const certsKeys = {
   all: ["certificates"] as const,
   list: () => [...certsKeys.all, "list"] as const,
+  template: () => [...certsKeys.all, "template"] as const,
 }
+
+/** Certificate lifecycle status, derived from expires_at. */
+export type CertStatus = "active" | "expiring" | "expired" | "no_expiry"
 
 export interface CertRow {
   id: string
@@ -15,6 +19,22 @@ export interface CertRow {
   issuedAt: string
   expiresAt: string | null
   verificationUuid: string
+  status: CertStatus
+  daysToExpiry: number | null
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** Classify a certificate from its expiry date. Within 30 days is "expiring". */
+export function certStatus(expiresAt: string | null): {
+  status: CertStatus
+  daysToExpiry: number | null
+} {
+  if (!expiresAt) return { status: "no_expiry", daysToExpiry: null }
+  const days = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / DAY_MS)
+  if (days < 0) return { status: "expired", daysToExpiry: days }
+  if (days <= 30) return { status: "expiring", daysToExpiry: days }
+  return { status: "active", daysToExpiry: days }
 }
 
 export async function getCertificates(): Promise<CertRow[]> {
@@ -46,16 +66,21 @@ export async function getCertificates(): Promise<CertRow[]> {
   )
   const titleById = new Map((courses.data ?? []).map((c) => [c.id, c.title]))
 
-  return data.map((d) => ({
-    id: d.id,
-    learnerId: d.learner_id,
-    learnerName: nameById.get(d.learner_id) ?? "Unknown",
-    courseTitle: d.course_id ? titleById.get(d.course_id) ?? "—" : "Standalone",
-    cpdHours: d.cpd_hours,
-    issuedAt: d.issued_at,
-    expiresAt: d.expires_at,
-    verificationUuid: d.verification_uuid,
-  }))
+  return data.map((d) => {
+    const { status, daysToExpiry } = certStatus(d.expires_at)
+    return {
+      id: d.id,
+      learnerId: d.learner_id,
+      learnerName: nameById.get(d.learner_id) ?? "Unknown",
+      courseTitle: d.course_id ? titleById.get(d.course_id) ?? "—" : "Standalone",
+      cpdHours: d.cpd_hours,
+      issuedAt: d.issued_at,
+      expiresAt: d.expires_at,
+      verificationUuid: d.verification_uuid,
+      status,
+      daysToExpiry,
+    }
+  })
 }
 
 export function useCertificates() {
@@ -142,5 +167,165 @@ export function useIssueCertificate() {
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: certsKeys.list() }),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Certificate template designer
+// ---------------------------------------------------------------------------
+
+/** The designable sections of a certificate. */
+export interface CertTemplate {
+  id: string | null
+  name: string
+  titleText: string
+  introText: string
+  completionText: string
+  accreditationLine: string
+  signatoryName: string
+  signatoryRole: string
+  signatureImageUrl: string | null
+  footerText: string
+}
+
+/** Sensible defaults that carry the Clinical Director sign-off. */
+export const DEFAULT_TEMPLATE: CertTemplate = {
+  id: null,
+  name: "Standard certificate",
+  titleText: "Certificate of Completion",
+  introText: "This is to certify that",
+  completionText: "has successfully completed",
+  accreditationLine: "CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify",
+  signatoryName: "Harni Muharami RN MSc",
+  signatoryRole: "Clinical Director",
+  signatureImageUrl: null,
+  footerText: "Vitalcare Training Hub Ltd · Company No. 15718997",
+}
+
+interface TemplateRow {
+  id: string
+  name: string
+  title_text: string
+  intro_text: string
+  completion_text: string
+  accreditation_line: string
+  signatory_name: string
+  signatory_role: string
+  signature_image_url: string | null
+  footer_text: string
+}
+
+function rowToTemplate(r: TemplateRow): CertTemplate {
+  return {
+    id: r.id,
+    name: r.name,
+    titleText: r.title_text,
+    introText: r.intro_text,
+    completionText: r.completion_text,
+    accreditationLine: r.accreditation_line,
+    signatoryName: r.signatory_name,
+    signatoryRole: r.signatory_role,
+    signatureImageUrl: r.signature_image_url,
+    footerText: r.footer_text,
+  }
+}
+
+const TEMPLATE_COLS =
+  "id, name, title_text, intro_text, completion_text, accreditation_line, signatory_name, signatory_role, signature_image_url, footer_text"
+
+/**
+ * Section columns are added by migration 033 but are not in the committed
+ * generated database types. This minimal builder lets us read and write them
+ * without `any`. The runtime client is untouched; only its static type narrows.
+ */
+interface TemplateBuilder {
+  select: (cols: string) => {
+    is: (col: string, val: null) => {
+      eq: (col: string, val: boolean) => {
+        limit: (n: number) => {
+          maybeSingle: () => Promise<{ data: TemplateRow | null; error: unknown }>
+        }
+      }
+    }
+  }
+  insert: (row: Record<string, unknown>) => Promise<{ error: unknown }>
+  update: (row: Record<string, unknown>) => {
+    eq: (col: string, val: string) => Promise<{ error: unknown }>
+  }
+}
+
+function templateTable(): TemplateBuilder {
+  return supabase.from("certificate_templates") as unknown as TemplateBuilder
+}
+
+/** Load the default template, or defaults if none has been saved yet. */
+export async function getDefaultTemplate(): Promise<CertTemplate> {
+  const { data, error } = await templateTable()
+    .select(TEMPLATE_COLS)
+    .is("deleted_at", null)
+    .eq("is_default", true)
+    .limit(1)
+    .maybeSingle()
+  if (error) {
+    console.error("[getDefaultTemplate]", error)
+    throw error
+  }
+  return data ? rowToTemplate(data) : DEFAULT_TEMPLATE
+}
+
+export function useDefaultTemplate() {
+  return useQuery({ queryKey: certsKeys.template(), queryFn: getDefaultTemplate })
+}
+
+/** Upload a signature image to the public certificate-signatures bucket. */
+export async function uploadSignatureImage(file: File): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "png"
+  const path = `signatures/${crypto.randomUUID()}.${ext}`
+  const { error } = await supabase.storage
+    .from("certificate-signatures")
+    .upload(path, file, { upsert: true, contentType: file.type })
+  if (error) {
+    console.error("[uploadSignatureImage]", error)
+    throw error
+  }
+  const { data } = supabase.storage.from("certificate-signatures").getPublicUrl(path)
+  return data.publicUrl
+}
+
+/** Insert or update the default certificate template. */
+export function useSaveTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (t: CertTemplate) => {
+      const payload = {
+        name: t.name.trim() || "Standard certificate",
+        title_text: t.titleText,
+        intro_text: t.introText,
+        completion_text: t.completionText,
+        accreditation_line: t.accreditationLine,
+        signatory_name: t.signatoryName,
+        signatory_role: t.signatoryRole,
+        signature_image_url: t.signatureImageUrl,
+        footer_text: t.footerText,
+        is_default: true,
+        canvas: {},
+        width: 297,
+        height: 210,
+      }
+      if (t.id) {
+        const { error } = await templateTable().update(payload).eq("id", t.id)
+        if (error) {
+          console.error("[useSaveTemplate:update]", error)
+          throw error
+        }
+      } else {
+        const { error } = await templateTable().insert(payload)
+        if (error) {
+          console.error("[useSaveTemplate:insert]", error)
+          throw error
+        }
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: certsKeys.template() }),
   })
 }

@@ -2,7 +2,20 @@ import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { formatDistanceToNow, format } from "date-fns"
 import { toast } from "sonner"
-import { MessageSquare, AlertCircle, Send, ArrowLeft, Video, Loader2, Check, CheckCheck, Search } from "lucide-react"
+import {
+  MessageSquare,
+  AlertCircle,
+  Send,
+  ArrowLeft,
+  Video,
+  Loader2,
+  Check,
+  CheckCheck,
+  Search,
+  Paperclip,
+  X,
+  FileText,
+} from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 
 import { Card } from "@/components/ui/card"
@@ -29,6 +42,20 @@ import {
   useSendMessage,
   useMarkThreadRead,
 } from "@/lib/queries/communication.queries"
+import EmojiPicker from "@/components/communication/EmojiPicker"
+import AiReplyButton from "@/components/communication/AiReplyButton"
+
+const CHAT_BUCKET = "course-media"
+
+interface PendingAttachment {
+  url: string
+  name: string
+  type: string
+}
+
+function isImage(type: string | null): boolean {
+  return !!type && type.startsWith("image/")
+}
 
 function ThreadView({
   userId,
@@ -46,7 +73,41 @@ function ThreadView({
   const markRead = useMarkThreadRead(userId)
   const qc = useQueryClient()
   const [draft, setDraft] = useState("")
+  const [attachment, setAttachment] = useState<PendingAttachment | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
+
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large", { description: "Maximum size is 10 MB." })
+      return
+    }
+    setUploading(true)
+    try {
+      const path = `chat/${userId}/${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`
+      const { error } = await supabase.storage
+        .from(CHAT_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (error) throw error
+      const { data: pub } = supabase.storage.from(CHAT_BUCKET).getPublicUrl(path)
+      setAttachment({ url: pub.publicUrl, name: file.name, type: file.type })
+    } catch (err) {
+      console.error("[chat upload]", err)
+      toast.error("Upload failed. Please try again.")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function insertEmoji(emoji: string) {
+    setDraft((d) => d + emoji)
+    inputRef.current?.focus()
+  }
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -91,11 +152,21 @@ function ThreadView({
 
   function submit() {
     const body = draft.trim()
-    if (!body) return
+    if (!body && !attachment) return
+    const pending = attachment
     setDraft("")
+    setAttachment(null)
     send
-      .mutateAsync({ recipientId: otherId, body })
-      .catch(() => toast.error("Could not send. Please try again."))
+      .mutateAsync({
+        recipientId: otherId,
+        body,
+        attachment: pending ?? undefined,
+      })
+      .catch(() => {
+        toast.error("Could not send. Please try again.")
+        setDraft(body)
+        setAttachment(pending)
+      })
   }
 
   return (
@@ -143,7 +214,34 @@ function ThreadView({
                       : "rounded-bl-sm bg-muted text-foreground",
                   )}
                 >
-                  <p className="whitespace-pre-wrap">{m.body}</p>
+                  {m.attachment_url && (
+                    <div className="mb-1.5">
+                      {isImage(m.attachment_type) ? (
+                        <a href={m.attachment_url} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={m.attachment_url}
+                            alt={m.attachment_name ?? "attachment"}
+                            className="max-h-48 rounded-lg object-cover"
+                            loading="lazy"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          href={m.attachment_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs underline-offset-2 hover:underline",
+                            mine ? "bg-white/15" : "bg-background",
+                          )}
+                        >
+                          <FileText className="size-4 shrink-0" />
+                          <span className="truncate">{m.attachment_name ?? "Attachment"}</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  {m.body && <p className="whitespace-pre-wrap">{m.body}</p>}
                   <p
                     className={cn(
                       "mt-1 flex items-center justify-end gap-1 text-[10px]",
@@ -166,21 +264,78 @@ function ThreadView({
         <div ref={endRef} />
       </div>
 
-      <div className="flex items-center gap-2 border-t border-border p-3">
-        <Input
-          placeholder="Write a message…"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault()
-              submit()
-            }
-          }}
-        />
-        <Button size="icon" onClick={submit} disabled={!draft.trim() || send.isPending}>
-          <Send className="size-4" />
-        </Button>
+      <div className="border-t border-border p-3">
+        {attachment && (
+          <div className="mb-2 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs">
+            {isImage(attachment.type) ? (
+              <img
+                src={attachment.url}
+                alt={attachment.name}
+                className="size-8 rounded object-cover"
+              />
+            ) : (
+              <FileText className="size-4 text-muted-foreground" />
+            )}
+            <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
+            <button
+              type="button"
+              onClick={() => setAttachment(null)}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Remove attachment"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        )}
+        <div className="flex items-center gap-1.5">
+          <input
+            ref={fileRef}
+            type="file"
+            className="hidden"
+            onChange={onPickFile}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title="Attach a file"
+            className="shrink-0 text-muted-foreground focus-visible:ring-2 focus-visible:ring-brand-gold"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <Paperclip className="size-5" />
+            )}
+          </Button>
+          <EmojiPicker onSelect={insertEmoji} />
+          <AiReplyButton
+            history={(data ?? []).map((m) => ({ mine: m.sender_id === userId, body: m.body }))}
+            otherName={otherName}
+            onDraft={(text) => setDraft(text)}
+          />
+          <Input
+            ref={inputRef}
+            placeholder="Write a message…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                submit()
+              }
+            }}
+          />
+          <Button
+            size="icon"
+            onClick={submit}
+            disabled={(!draft.trim() && !attachment) || send.isPending || uploading}
+            className="shrink-0"
+          >
+            <Send className="size-4" />
+          </Button>
+        </div>
       </div>
     </div>
   )

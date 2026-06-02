@@ -1,3 +1,4 @@
+import type { JSX } from "react"
 import {
   Users,
   BookOpen,
@@ -16,39 +17,13 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { GradientStatCard } from "@/components/dashboard/GradientStatCard"
 import {
   useAnalyticsSummary,
   useEnrolmentTrend,
 } from "@/lib/queries/analytics.queries"
 
-function Stat({
-  icon: Icon,
-  label,
-  value,
-  sub,
-}: {
-  icon: typeof Users
-  label: string
-  value: string | number
-  sub?: string
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-center gap-4 p-5">
-        <span className="flex size-11 items-center justify-center rounded-xl bg-brand-navy/10 text-brand-navy">
-          <Icon className="size-5" />
-        </span>
-        <div>
-          <p className="font-display text-2xl text-foreground">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
-          {sub && <p className="text-xs text-success">{sub}</p>}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-export default function AnalyticsPage() {
+export default function AnalyticsPage(): JSX.Element {
   const summary = useAnalyticsSummary()
   const trend = useEnrolmentTrend()
   const maxTrend = Math.max(1, ...(trend.data ?? []).map((p) => p.enrolments))
@@ -63,9 +38,9 @@ export default function AnalyticsPage() {
       </div>
 
       {summary.isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
           ))}
         </div>
       ) : summary.isError ? (
@@ -81,31 +56,45 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat icon={Users} label="Learners" value={summary.data!.learners} />
-          <Stat
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <GradientStatCard
+            icon={Users}
+            label="Learners"
+            value={summary.data!.learners}
+            tone="navy"
+          />
+          <GradientStatCard
             icon={BookOpen}
             label="Courses"
             value={summary.data!.courses}
-            sub={`${summary.data!.publishedCourses} published`}
+            hint={`${summary.data!.publishedCourses} published`}
+            tone="gold"
           />
-          <Stat
+          <GradientStatCard
             icon={GraduationCap}
             label="Enrolments"
             value={summary.data!.enrolments}
+            tone="slate"
           />
-          <Stat
+          <GradientStatCard
             icon={TrendingUp}
             label="Completion rate"
             value={`${summary.data!.completionRate}%`}
-            sub={`${summary.data!.completions} completed`}
+            hint={`${summary.data!.completions} completed`}
+            tone="emerald"
           />
-          <Stat icon={Award} label="Certificates" value={summary.data!.certificates} />
-          <Stat
+          <GradientStatCard
+            icon={Award}
+            label="Certificates"
+            value={summary.data!.certificates}
+            tone="navy"
+          />
+          <GradientStatCard
             icon={CalendarDays}
             label="Sessions"
             value={summary.data!.sessions}
-            sub={`${summary.data!.upcomingSessions} upcoming`}
+            hint={`${summary.data!.upcomingSessions} upcoming`}
+            tone="gold"
           />
         </div>
       )}

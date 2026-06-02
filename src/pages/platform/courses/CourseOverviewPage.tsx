@@ -31,6 +31,7 @@ import {
   useCategoryNameMap,
 } from "@/lib/queries/courses.queries"
 import CourseDiscussion from "@/components/platform/CourseDiscussion"
+import RequestOneToOne from "@/components/platform/RequestOneToOne"
 import CourseReviews from "@/components/courses/CourseReviews"
 import CourseFaqs from "@/components/courses/CourseFaqs"
 import { driveImageUrl } from "@/lib/drive-image"
@@ -193,9 +194,7 @@ export default function CourseOverviewPage() {
                     : "Enrol on this course"}
                 </Button>
               )}
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/platform/one-to-one">Request 1:1 with a trainer</Link>
-              </Button>
+              <RequestOneToOne courseId={id} courseTitle={c.title} />
             </div>
           </CardContent>
         </Card>

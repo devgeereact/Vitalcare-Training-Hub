@@ -2,11 +2,12 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { Award, AlertCircle, Download, Plus, BadgeCheck } from "lucide-react"
+import { Award, AlertCircle, Download, Plus, BadgeCheck, Clock } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -33,10 +34,43 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useCertificates, useIssueCertificate } from "@/lib/queries/certificates.queries"
+import {
+  useCertificates,
+  useIssueCertificate,
+  useDefaultTemplate,
+  type CertRow,
+} from "@/lib/queries/certificates.queries"
 import { useLearners } from "@/lib/queries/learners.queries"
 import { useCourses } from "@/lib/queries/courses.queries"
 import { downloadCertificatePdf } from "@/lib/certificates/pdf"
+
+function ExpiryBadge({ cert }: { cert: CertRow }) {
+  if (cert.status === "expired") {
+    return (
+      <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive">
+        Expired
+      </Badge>
+    )
+  }
+  if (cert.status === "expiring") {
+    return (
+      <Badge variant="outline" className="border-warning/50 bg-warning/10 text-warning">
+        <Clock className="mr-1 size-3" />
+        {cert.daysToExpiry === 0
+          ? "Expires today"
+          : `${cert.daysToExpiry}d left`}
+      </Badge>
+    )
+  }
+  if (cert.status === "active") {
+    return (
+      <Badge variant="outline" className="border-success/40 bg-success/10 text-success">
+        In date
+      </Badge>
+    )
+  }
+  return <span className="text-xs text-muted-foreground">No expiry</span>
+}
 
 function IssueDialog() {
   const [open, setOpen] = useState(false)
@@ -139,8 +173,12 @@ function IssueDialog() {
 
 export default function CertificatesListPage() {
   const { data, isLoading, isError, refetch } = useCertificates()
+  const template = useDefaultTemplate()
   const [signatory, setSignatory] = useState("")
   const [signatoryRole, setSignatoryRole] = useState("")
+
+  const expiringCount =
+    data?.filter((c) => c.status === "expiring" || c.status === "expired").length ?? 0
 
   return (
     <div className="space-y-6">
@@ -153,11 +191,21 @@ export default function CertificatesListPage() {
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
-            <Link to="/platform/certificates/templates">Template</Link>
+            <Link to="/platform/certificates/templates">Design template</Link>
           </Button>
           <IssueDialog />
         </div>
       </div>
+
+      {expiringCount > 0 ? (
+        <div className="flex items-center gap-3 rounded-lg border border-warning/40 bg-warning/[0.06] px-4 py-3 text-sm">
+          <Clock className="size-5 shrink-0 text-warning" />
+          <p className="text-foreground">
+            {expiringCount} certificate{expiringCount === 1 ? "" : "s"} expiring within
+            30 days or already expired. Owners are alerted automatically.
+          </p>
+        </div>
+      ) : null}
 
       {/* Signatory applied to downloaded certificates */}
       <Card>
@@ -217,6 +265,7 @@ export default function CertificatesListPage() {
                   <TableHead>Course</TableHead>
                   <TableHead>CPD</TableHead>
                   <TableHead>Issued</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -227,6 +276,9 @@ export default function CertificatesListPage() {
                     <TableCell className="text-muted-foreground">{c.courseTitle}</TableCell>
                     <TableCell>{c.cpdHours}h</TableCell>
                     <TableCell>{format(new Date(c.issuedAt), "d MMM yyyy")}</TableCell>
+                    <TableCell>
+                      <ExpiryBadge cert={c} />
+                    </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
                         <Button
@@ -241,8 +293,15 @@ export default function CertificatesListPage() {
                               cpdHours: c.cpdHours,
                               issuedAt: c.issuedAt,
                               verificationUuid: c.verificationUuid,
-                              signatoryName: signatory || undefined,
-                              signatoryRole: signatoryRole || undefined,
+                              titleText: template.data?.titleText,
+                              introText: template.data?.introText,
+                              completionText: template.data?.completionText,
+                              accreditationLine: template.data?.accreditationLine,
+                              footerText: template.data?.footerText,
+                              signatoryName:
+                                signatory || template.data?.signatoryName || undefined,
+                              signatoryRole:
+                                signatoryRole || template.data?.signatoryRole || undefined,
                             })
                           }
                         >

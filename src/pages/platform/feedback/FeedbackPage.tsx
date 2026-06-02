@@ -10,14 +10,31 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
-import { useSubmitFeedback } from "@/lib/queries/feedback.queries"
+import { useSubmitFeedback, type FeedbackSource } from "@/lib/queries/feedback.queries"
+
+const SOURCES: { value: FeedbackSource; label: string }[] = [
+  { value: "course", label: "About a course" },
+  { value: "website", label: "About the website" },
+  { value: "recommendation", label: "A recommendation" },
+]
 
 export default function FeedbackPage() {
   const { user } = useAuth()
   const submit = useSubmitFeedback(user?.id)
+  const [source, setSource] = useState<FeedbackSource>("course")
+  const [name, setName] = useState("")
   const [nps, setNps] = useState<number | null>(null)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState("")
@@ -29,7 +46,7 @@ export default function FeedbackPage() {
       return
     }
     submit
-      .mutateAsync({ nps, rating, comment })
+      .mutateAsync({ nps, rating, comment, source, authorName: name })
       .then(() => setDone(true))
       .catch(() => toast.error("Could not submit. Please try again."))
   }
@@ -41,8 +58,9 @@ export default function FeedbackPage() {
           <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
             <CheckCircle2 className="size-10 text-success" />
             <p className="font-display text-xl text-foreground">Thank you</p>
-            <p className="text-sm text-muted-foreground">
-              Your feedback helps us improve the training we deliver.
+            <p className="max-w-sm text-sm text-muted-foreground">
+              Your feedback has been received. An administrator reviews each submission
+              before it is published, so it helps us improve the training we deliver.
             </p>
           </CardContent>
         </Card>
@@ -55,9 +73,42 @@ export default function FeedbackPage() {
       <div>
         <h1 className="font-display text-3xl text-foreground">Share your feedback</h1>
         <p className="mt-1 text-muted-foreground">
-          Two quick questions and any comments you would like to add.
+          A few quick questions and any comments you would like to add.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>About your feedback</CardTitle>
+          <CardDescription>Tell us what this relates to.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label className="mb-1.5 block">Type</Label>
+            <Select value={source} onValueChange={(v) => setSource(v as FeedbackSource)}>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SOURCES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="mb-1.5 block">Your name (optional)</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="How should we credit this feedback?"
+              className="max-w-sm"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -104,9 +155,7 @@ export default function FeedbackPage() {
                   <Star
                     className={cn(
                       "size-8",
-                      v <= rating
-                        ? "fill-brand-gold text-brand-gold"
-                        : "text-muted-foreground",
+                      v <= rating ? "fill-brand-gold text-brand-gold" : "text-muted-foreground",
                     )}
                   />
                 </button>

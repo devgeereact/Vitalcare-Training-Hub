@@ -1,5 +1,6 @@
 import { format } from "date-fns"
-import { ClipboardList, AlertCircle } from "lucide-react"
+import { ClipboardList, AlertCircle, Download } from "lucide-react"
+import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -12,6 +13,35 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useAttendanceLog } from "@/lib/queries/sessions.queries"
+import type { AttendanceLogRow } from "@/lib/queries/sessions.queries"
+
+/** Quote a CSV cell, escaping any embedded quotes per RFC 4180. */
+function csvCell(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`
+}
+
+function exportAttendanceCsv(rows: AttendanceLogRow[]): void {
+  const header = ["Learner", "Session", "Status", "Marked at"]
+  const lines = rows.map((r) =>
+    [
+      csvCell(r.learnerName),
+      csvCell(r.sessionTitle),
+      csvCell(r.status),
+      csvCell(r.markedAt ? format(new Date(r.markedAt), "yyyy-MM-dd HH:mm") : ""),
+    ].join(","),
+  )
+  const csv = [header.map(csvCell).join(","), ...lines].join("\r\n")
+  // Prepend BOM so Excel reads UTF-8 correctly.
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `attendance-log-${format(new Date(), "yyyy-MM-dd")}.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
 
 const STATUS_CLS: Record<string, string> = {
   present: "bg-success/15 text-success",
@@ -25,11 +55,28 @@ export default function AttendanceLogPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-foreground">Attendance log</h1>
-        <p className="mt-1 text-muted-foreground">
-          Every attendance record across all sessions.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl text-foreground">Attendance log</h1>
+          <p className="mt-1 text-muted-foreground">
+            Every attendance record across all sessions.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          disabled={(data?.length ?? 0) === 0}
+          onClick={() => {
+            if (!data || data.length === 0) return
+            try {
+              exportAttendanceCsv(data)
+              toast.success(`Exported ${data.length} record${data.length === 1 ? "" : "s"}`)
+            } catch {
+              toast.error("Could not export the log. Please try again.")
+            }
+          }}
+        >
+          <Download className="mr-2 size-4" /> Export CSV
+        </Button>
       </div>
 
       <Card>

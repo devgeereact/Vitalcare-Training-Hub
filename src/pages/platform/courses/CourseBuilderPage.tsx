@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import RichTextEditor from "@/components/courses/RichTextEditor"
+import { markdownToHtml, looksLikeMarkdown } from "@/components/courses/markdown"
 import AiAssistButton from "@/components/ai/AiAssistButton"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
@@ -161,12 +162,14 @@ export default function CourseBuilderPage() {
                   fields={[
                     { key: "title", label: "Title", format: "text" },
                     { key: "summary", label: "Summary", format: "text" },
-                    { key: "description", label: "Description", format: "html" },
+                    // Keep as raw text so we can parse Markdown (headings,
+                    // lists, bold) into formatted editor blocks ourselves.
+                    { key: "description", label: "Description", format: "text" },
                   ]}
                   onApply={(v) => {
                     if (v.title) form.setValue("title", v.title.slice(0, 120))
                     if (v.summary) form.setValue("summary", v.summary.slice(0, 300))
-                    if (v.description) form.setValue("description", v.description)
+                    if (v.description) form.setValue("description", markdownToHtml(v.description))
                   }}
                 />
               </div>
@@ -227,10 +230,12 @@ export default function CourseBuilderPage() {
                         context={`Course title: ${form.getValues("title")}\nSummary: ${form.getValues("summary")}`}
                         onInsert={(text) =>
                           field.onChange(
-                            text
-                              .split(/\n{2,}/)
-                              .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
-                              .join(""),
+                            looksLikeMarkdown(text)
+                              ? markdownToHtml(text)
+                              : text
+                                  .split(/\n{2,}/)
+                                  .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+                                  .join(""),
                           )
                         }
                       />

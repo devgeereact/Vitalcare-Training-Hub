@@ -44,6 +44,7 @@ import { useCalendarSessions } from "@/lib/queries/sessions.queries"
 import {
   useCalendarEvents,
   useCalendarEventMutations,
+  useOrgHolidays,
 } from "@/lib/queries/calendar.queries"
 import { getUpcomingHolidays } from "@/lib/integrations/holidays"
 
@@ -51,6 +52,7 @@ const COLORS = {
   physical: "#1b2e6b",
   virtual: "#d4a843",
   holiday: "#64748b",
+  closure: "#7c3aed",
   custom: "#16a34a",
 }
 const EVENT_COLOR_CHOICES = ["#16a34a", "#1b2e6b", "#d4a843", "#dc2626", "#7c3aed", "#0891b2"]
@@ -82,6 +84,7 @@ export default function CalendarPage() {
     staleTime: 24 * 60 * 60 * 1000,
     retry: false,
   })
+  const orgHolidays = useOrgHolidays()
 
   const [selected, setSelected] = useState<Selected | null>(null)
   const [editing, setEditing] = useState(false)
@@ -129,8 +132,23 @@ export default function CalendarPage() {
         extendedProps: { kind: "holiday" },
       })
     }
+    for (const h of orgHolidays.data ?? []) {
+      // FullCalendar treats all-day end dates as exclusive, so add a day.
+      const endExclusive = new Date(`${h.endsOn}T00:00:00`)
+      endExclusive.setDate(endExclusive.getDate() + 1)
+      out.push({
+        id: `orgholiday:${h.id}`,
+        title: h.name,
+        start: h.startsOn,
+        end: endExclusive.toISOString().slice(0, 10),
+        allDay: true,
+        backgroundColor: COLORS.closure,
+        borderColor: COLORS.closure,
+        extendedProps: { kind: "holiday", description: h.notes ?? undefined },
+      })
+    }
     return out
-  }, [sessions.data, customEvents.data, holidays.data])
+  }, [sessions.data, customEvents.data, holidays.data, orgHolidays.data])
 
   const upcoming = useMemo(() => {
     // eslint-disable-next-line react-hooks/purity -- time-based filter is intentional
@@ -215,6 +233,7 @@ export default function CalendarPage() {
           ["In-person session", COLORS.physical],
           ["Virtual session", COLORS.virtual],
           ["Holiday", COLORS.holiday],
+          ["Closure", COLORS.closure],
           ["My event", COLORS.custom],
         ].map(([label, color]) => (
           <span key={label} className="flex items-center gap-1.5">

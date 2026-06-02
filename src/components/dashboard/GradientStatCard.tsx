@@ -12,9 +12,10 @@ const TONE: Record<StatTone, { card: string; icon: string; label: string }> = {
     label: "text-white/70",
   },
   gold: {
-    card: "bg-gradient-to-br from-[#d4a843] to-[#c0962f] text-[#1b2e6b]",
-    icon: "bg-[#1b2e6b]/15 text-[#1b2e6b]",
-    label: "text-[#1b2e6b]/70",
+    // Deepened gold so white value, label and icon stay legible (WCAG AA).
+    card: "bg-gradient-to-br from-[#c0962f] to-[#a87d1f] text-white",
+    icon: "bg-white/20 text-white",
+    label: "text-white/80",
   },
   emerald: {
     card: "bg-gradient-to-br from-emerald-600 to-emerald-700 text-white",

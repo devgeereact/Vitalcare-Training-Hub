@@ -9,6 +9,12 @@ export interface CertificatePdfData {
   verificationUuid: string
   signatoryName?: string
   signatoryRole?: string
+  /** Optional template-driven section copy. Falls back to defaults. */
+  titleText?: string
+  introText?: string
+  completionText?: string
+  accreditationLine?: string
+  footerText?: string
 }
 
 function fmt(iso: string) {
@@ -39,12 +45,16 @@ export function downloadCertificatePdf(data: CertificatePdfData) {
   doc.setTextColor(navy)
   doc.setFont("times", "normal")
   doc.setFontSize(30)
-  doc.text("Certificate of Completion", W / 2, 42, { align: "center" })
+  doc.text(data.titleText?.trim() || "Certificate of Completion", W / 2, 42, {
+    align: "center",
+  })
 
   doc.setFont("helvetica", "normal")
   doc.setFontSize(12)
   doc.setTextColor(90)
-  doc.text("This is to certify that", W / 2, 60, { align: "center" })
+  doc.text(data.introText?.trim() || "This is to certify that", W / 2, 60, {
+    align: "center",
+  })
 
   // Learner name
   doc.setFont("times", "bold")
@@ -60,7 +70,9 @@ export function downloadCertificatePdf(data: CertificatePdfData) {
   doc.setFont("helvetica", "normal")
   doc.setFontSize(12)
   doc.setTextColor(90)
-  doc.text("has successfully completed", W / 2, 98, { align: "center" })
+  doc.text(data.completionText?.trim() || "has successfully completed", W / 2, 98, {
+    align: "center",
+  })
 
   doc.setFont("times", "bold")
   doc.setFontSize(20)
@@ -71,10 +83,15 @@ export function downloadCertificatePdf(data: CertificatePdfData) {
   doc.setFont("helvetica", "normal")
   doc.setFontSize(11)
   doc.setTextColor(90)
+  doc.text(`${data.cpdHours} CPD hours  ·  Issued ${fmt(data.issuedAt)}`, W / 2, 126, {
+    align: "center",
+  })
+  doc.setFontSize(9)
   doc.text(
-    `${data.cpdHours} CPD hours  ·  Issued ${fmt(data.issuedAt)}  ·  CSTF-aligned, CPD-accredited`,
+    data.accreditationLine?.trim() ||
+      "CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify",
     W / 2,
-    126,
+    132,
     { align: "center" },
   )
 
@@ -106,7 +123,8 @@ export function downloadCertificatePdf(data: CertificatePdfData) {
   doc.setFontSize(8)
   doc.setTextColor(140)
   doc.text(
-    `${COMPANY.legalName} · Company No. ${COMPANY.companyNumber}`,
+    data.footerText?.trim() ||
+      `${COMPANY.legalName} · Company No. ${COMPANY.companyNumber}`,
     W / 2,
     192,
     { align: "center" },

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useRef, useState, type ChangeEvent } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { QRCodeSVG } from "qrcode.react"
 import { format } from "date-fns"
@@ -16,6 +16,8 @@ import {
   Radio,
   PlayCircle,
   Loader2,
+  Upload,
+  HardDrive,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { supabase } from "@/lib/supabase/client"
@@ -44,6 +46,7 @@ import {
   useRosterMutations,
   useDeleteSession,
   useSetSessionRecording,
+  useUploadRecordingToDrive,
 } from "@/lib/queries/sessions.queries"
 import { useLearners } from "@/lib/queries/learners.queries"
 import type { AttendanceStatus } from "@/types/database.types"
@@ -64,9 +67,27 @@ export default function SessionDetailPage() {
   const mut = useRosterMutations(id)
   const del = useDeleteSession()
   const setRec = useSetSessionRecording(id)
+  const driveUpload = useUploadRecordingToDrive(id)
   const recordingRef = useRef("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [addLearner, setAddLearner] = useState("")
   const [zoomSyncing, setZoomSyncing] = useState(false)
+
+  function onPickRecordingFile(ev: ChangeEvent<HTMLInputElement>) {
+    const file = ev.target.files?.[0]
+    ev.target.value = "" // allow re-selecting the same file
+    if (!file) return
+    driveUpload
+      .mutateAsync(file)
+      .then(() => toast.success("Recording uploaded to Drive and linked"))
+      .catch((err: unknown) =>
+        toast.error(
+          err instanceof Error && err.message
+            ? err.message
+            : "Could not upload to Drive",
+        ),
+      )
+  }
 
   const bookedIds = new Set((roster.data ?? []).map((r) => r.learnerId))
   const available = (learners.data ?? []).filter((l) => !bookedIds.has(l.id))
@@ -221,27 +242,57 @@ export default function SessionDetailPage() {
             </div>
           )}
 
-          {/* Recording: staff paste the link so absentees can replay. */}
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <Input
-              placeholder="Recording link (Zoom/Drive/YouTube)…"
-              defaultValue={s.recording_url ?? ""}
-              onChange={(e) => (recordingRef.current = e.target.value)}
-              className="max-w-xs"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={setRec.isPending}
-              onClick={() =>
-                setRec
-                  .mutateAsync(recordingRef.current)
-                  .then(() => toast.success("Recording saved"))
-                  .catch(() => toast.error("Could not save"))
-              }
-            >
-              Save recording
-            </Button>
+          {/* Recording: staff paste a link or upload straight to Google Drive
+              so absentees can replay. */}
+          <div className="space-y-2 pt-2">
+            <p className="text-xs font-medium text-muted-foreground">Session recording</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                placeholder="Recording link (Zoom/Drive/YouTube)…"
+                defaultValue={s.recording_url ?? ""}
+                onChange={(e) => (recordingRef.current = e.target.value)}
+                className="max-w-xs"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={setRec.isPending}
+                onClick={() =>
+                  setRec
+                    .mutateAsync(recordingRef.current)
+                    .then(() => toast.success("Recording saved"))
+                    .catch(() => toast.error("Could not save"))
+                }
+              >
+                Save link
+              </Button>
+              <span className="text-xs text-muted-foreground">or</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*,audio/*,.mp4,.mov,.m4a,.mp3,.webm"
+                className="hidden"
+                onChange={onPickRecordingFile}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={driveUpload.isPending}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {driveUpload.isPending ? (
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                ) : (
+                  <HardDrive className="mr-1.5 size-4" />
+                )}
+                Save to Google Drive
+              </Button>
+            </div>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Upload className="size-3.5" />
+              Uploading saves the file to the connected Drive folder and links it here. If
+              Drive is not connected, paste a share link instead.
+            </p>
           </div>
         </CardContent>
       </Card>

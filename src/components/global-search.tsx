@@ -20,7 +20,8 @@ import {
   BarChart3,
   BriefcaseBusiness,
   User,
-  CreditCard,
+  CalendarDays,
+  Award,
   Settings,
   ChevronRight,
 } from "lucide-react"
@@ -79,10 +80,10 @@ export function GlobalSearch() {
             </div>
           </CommandEmpty>
 
-          {/* Dashboard */}
-          <CommandGroup heading="Dashboard">
+          {/* Overview */}
+          <CommandGroup heading="Overview">
             <CommandItem
-              onSelect={() => runCommand(() => navigate("/"))}
+              onSelect={() => runCommand(() => navigate("/platform/dashboard"))}
               className="group cursor-pointer"
             >
               <LayoutDashboard className="mr-3 h-4 w-4 text-sky-500" />
@@ -91,20 +92,43 @@ export function GlobalSearch() {
             </CommandItem>
 
             <CommandItem
-              onSelect={() => runCommand(() => navigate("/analytics"))}
+              onSelect={() => runCommand(() => navigate("/platform/analytics"))}
               className="group cursor-pointer"
             >
               <BarChart3 className="mr-3 h-4 w-4 text-violet-500" />
               <span>Analytics</span>
               <ChevronRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
             </CommandItem>
+          </CommandGroup>
 
+          <CommandSeparator />
+
+          {/* Learning */}
+          <CommandGroup heading="Learning">
             <CommandItem
-              onSelect={() => runCommand(() => navigate("/crm"))}
+              onSelect={() => runCommand(() => navigate("/platform/courses"))}
               className="group cursor-pointer"
             >
               <BriefcaseBusiness className="mr-3 h-4 w-4 text-emerald-500" />
-              <span>CRM</span>
+              <span>Courses</span>
+              <ChevronRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
+            </CommandItem>
+
+            <CommandItem
+              onSelect={() => runCommand(() => navigate("/platform/sessions"))}
+              className="group cursor-pointer"
+            >
+              <CalendarDays className="mr-3 h-4 w-4 text-teal-500" />
+              <span>Sessions</span>
+              <ChevronRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
+            </CommandItem>
+
+            <CommandItem
+              onSelect={() => runCommand(() => navigate("/platform/certificates"))}
+              className="group cursor-pointer"
+            >
+              <Award className="mr-3 h-4 w-4 text-amber-500" />
+              <span>Certificates</span>
               <ChevronRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
             </CommandItem>
           </CommandGroup>
@@ -114,7 +138,7 @@ export function GlobalSearch() {
           {/* Account */}
           <CommandGroup heading="Account">
             <CommandItem
-              onSelect={() => runCommand(() => navigate("/profile"))}
+              onSelect={() => runCommand(() => navigate("/platform/profile"))}
               className="group cursor-pointer"
             >
               <User className="mr-3 h-4 w-4 text-orange-500" />
@@ -123,16 +147,7 @@ export function GlobalSearch() {
             </CommandItem>
 
             <CommandItem
-              onSelect={() => runCommand(() => navigate("/billing"))}
-              className="group cursor-pointer"
-            >
-              <CreditCard className="mr-3 h-4 w-4 text-pink-500" />
-              <span>Billing</span>
-              <ChevronRight className="ml-auto h-4 w-4 opacity-0 transition-opacity group-data-[selected=true]:opacity-100" />
-            </CommandItem>
-
-            <CommandItem
-              onSelect={() => runCommand(() => navigate("/settings"))}
+              onSelect={() => runCommand(() => navigate("/platform/settings"))}
               className="group cursor-pointer"
             >
               <Settings className="mr-3 h-4 w-4 text-gray-500" />

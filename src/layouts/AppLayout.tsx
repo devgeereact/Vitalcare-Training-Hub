@@ -39,7 +39,17 @@ const CRUMB_LABELS: Record<string, string> = {
   manage: "All Courses",
 }
 
+// UUID or long opaque id segment (e.g. a session/course detail route).
+function isIdSegment(seg: string) {
+  return (
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg) ||
+    /^\d+$/.test(seg) ||
+    (seg.length >= 16 && !seg.includes("-"))
+  )
+}
+
 function toLabel(seg: string) {
+  if (isIdSegment(seg)) return "Detail"
   return (
     CRUMB_LABELS[seg] ??
     seg.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
@@ -57,6 +67,10 @@ function HeaderBreadcrumb() {
           const href = "/" + segments.slice(0, i + 1).join("/")
           const isLast = i === segments.length - 1
           const target = seg === "platform" ? "/platform/dashboard" : href
+          // An id segment is never a navigable crumb on its own.
+          if (isIdSegment(seg) && !isLast) {
+            return null
+          }
           return (
             <React.Fragment key={href}>
               <BreadcrumbItem>

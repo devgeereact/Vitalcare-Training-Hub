@@ -131,7 +131,7 @@ export function useThread(userId: string | undefined, otherId: string) {
   return useQuery({
     queryKey: commKeys.thread(userId ?? "anon", otherId),
     enabled: !!userId && !!otherId,
-    queryFn: async (): Promise<Message[]> => {
+    queryFn: async (): Promise<ChatMessageRow[]> => {
       const { data, error } = await supabase
         .from("messages")
         .select("*")
@@ -144,7 +144,7 @@ export function useThread(userId: string | undefined, otherId: string) {
         console.error("[useThread]", error)
         throw error
       }
-      return (data ?? []) as Message[]
+      return (data ?? []) as unknown as ChatMessageRow[]
     },
   })
 }
@@ -173,17 +173,40 @@ export function useMarkThreadRead(userId: string | undefined) {
   })
 }
 
+/** Chat message row including the 037 attachment columns (not yet in the
+ *  generated Database type, so surfaced here). */
+export interface ChatMessageRow extends Message {
+  attachment_url: string | null
+  attachment_name: string | null
+  attachment_type: string | null
+}
+
+export interface SendMessageInput {
+  recipientId: string
+  body: string
+  attachment?: { url: string; name: string; type: string }
+}
+
 export function useSendMessage(userId: string | undefined) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { recipientId: string; body: string }) => {
+    mutationFn: async (input: SendMessageInput) => {
       const body = input.body.trim()
-      if (!body) throw new Error("Message is empty")
-      const { error } = await supabase.from("messages").insert({
+      if (!body && !input.attachment) throw new Error("Message is empty")
+      // The attachment columns post-date database.types.ts; cast the payload.
+      const payload: Record<string, unknown> = {
         sender_id: userId!,
         recipient_id: input.recipientId,
-        body,
-      })
+        body: body || (input.attachment ? `📎 ${input.attachment.name}` : ""),
+      }
+      if (input.attachment) {
+        payload.attachment_url = input.attachment.url
+        payload.attachment_name = input.attachment.name
+        payload.attachment_type = input.attachment.type
+      }
+      const { error } = await supabase
+        .from("messages")
+        .insert(payload as never)
       if (error) {
         console.error("[useSendMessage]", error)
         throw error
@@ -361,4 +384,43 @@ export function useAcknowledge(userId: string | undefined) {
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["announcements", "unacked", userId ?? "anon"] }),
   })
+}
+
+/* ----------------------------------------------------- notify all users --- */
+
+/** Insert a notification row for every active profile. Used when an admin
+ *  posts a forum topic or an announcement, so the whole hub is informed.
+ *  Excludes the author and soft-deleted profiles. Returns the number queued. */
+export async function notifyAllUsers(input: {
+  title: string
+  body: string
+  link: string
+  exceptUserId?: string
+  type?: Notification["type"]
+}): Promise<number> {
+  const { data: profiles, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .is("deleted_at", null)
+  if (error) {
+    console.error("[notifyAllUsers]", error)
+    throw error
+  }
+  const rows = (profiles ?? [])
+    .map((p) => p.id)
+    .filter((id) => id !== input.exceptUserId)
+    .map((id) => ({
+      user_id: id,
+      type: input.type ?? "info",
+      title: input.title,
+      body: input.body,
+      link: input.link,
+    }))
+  if (!rows.length) return 0
+  const { error: insErr } = await supabase.from("notifications").insert(rows)
+  if (insErr) {
+    console.error("[notifyAllUsers:insert]", insErr)
+    throw insErr
+  }
+  return rows.length
 }

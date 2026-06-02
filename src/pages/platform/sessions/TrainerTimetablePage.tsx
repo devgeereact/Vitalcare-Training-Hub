@@ -16,10 +16,15 @@ import {
   MapPin,
   Clock,
   Video,
+  Users,
+  ExternalLink,
+  User,
+  CalendarOff,
 } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Select,
@@ -28,10 +33,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { useUser } from "@/hooks/use-user"
 import { useTrainers, useTimetable } from "@/lib/queries/sessions.queries"
 import type { TimetableEntry } from "@/lib/queries/sessions.queries"
+import { useOrgHolidays } from "@/lib/queries/calendar.queries"
+import type { OrgHoliday } from "@/lib/queries/calendar.queries"
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -45,12 +60,21 @@ const TONES = [
   "border-l-teal-400 bg-teal-50",
 ]
 
-function SlotCard({ e, tone }: { e: TimetableEntry; tone: string }) {
+function SlotCard({
+  e,
+  tone,
+  onOpen,
+}: {
+  e: TimetableEntry
+  tone: string
+  onOpen: () => void
+}) {
   return (
-    <Link
-      to={`/platform/sessions/${e.id}`}
+    <button
+      type="button"
+      onClick={onOpen}
       className={cn(
-        "block rounded-md border border-border border-l-4 p-3 text-sm transition-shadow hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843]",
+        "block w-full rounded-md border border-border border-l-4 p-3 text-left text-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843]",
         tone,
       )}
     >
@@ -75,16 +99,24 @@ function SlotCard({ e, tone }: { e: TimetableEntry; tone: string }) {
           {format(new Date(e.startsAt), "HH:mm")} – {format(new Date(e.endsAt), "HH:mm")}
         </p>
       </div>
-    </Link>
+    </button>
   )
+}
+
+/** Holidays that overlap a given day, used to mark the day column. */
+function holidaysOnDay(holidays: OrgHoliday[], day: Date): OrgHoliday[] {
+  const dayStr = format(day, "yyyy-MM-dd")
+  return holidays.filter((h) => dayStr >= h.startsOn && dayStr <= h.endsOn)
 }
 
 export default function TrainerTimetablePage() {
   const { profile, isTrainer } = useUser()
   const trainers = useTrainers()
+  const holidays = useOrgHolidays()
 
   const [trainerId, setTrainerId] = useState<string>("")
   const [weekOffset, setWeekOffset] = useState(0)
+  const [selected, setSelected] = useState<TimetableEntry | null>(null)
 
   // Default the select to the current user when they are a trainer,
   // otherwise the first trainer in the list.
@@ -120,7 +152,7 @@ export default function TrainerTimetablePage() {
       <div>
         <h1 className="font-display text-3xl text-foreground">Trainer timetable</h1>
         <p className="mt-1 text-muted-foreground">
-          Weekly schedule of sessions, by trainer.
+          Weekly schedule of sessions, by trainer. Tap a session for the full details.
         </p>
       </div>
 
@@ -167,14 +199,21 @@ export default function TrainerTimetablePage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="grid grid-cols-1 gap-4 rounded-xl border border-border bg-muted/30 p-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           {DAYS.map((day, idx) => {
             const thisDate = new Date(weekStart)
             thisDate.setDate(weekStart.getDate() + idx)
             const today = isSameDay(thisDate, new Date())
             const slots = byDay[idx] ?? []
+            const dayHolidays = holidaysOnDay(holidays.data ?? [], thisDate)
             return (
-              <div key={day} className="space-y-3">
+              <div
+                key={day}
+                className={cn(
+                  "space-y-3 rounded-lg p-2",
+                  today ? "bg-brand-gold/10 ring-1 ring-brand-gold/40" : "bg-background",
+                )}
+              >
                 <div
                   className={cn(
                     "flex items-baseline justify-between border-b pb-2",
@@ -187,20 +226,38 @@ export default function TrainerTimetablePage() {
                   <span className="text-xs text-muted-foreground">{format(thisDate, "d MMM")}</span>
                 </div>
 
+                {/* Holiday markers render before any scheduled session. */}
+                {dayHolidays.map((h) => (
+                  <div
+                    key={h.id}
+                    className="flex items-center gap-1.5 rounded-md border border-dashed border-brand-navy/30 bg-brand-navy/5 px-2.5 py-1.5 text-xs font-medium text-brand-navy"
+                  >
+                    <CalendarOff className="size-3.5 shrink-0" />
+                    <span className="truncate">Holiday: {h.name}</span>
+                  </div>
+                ))}
+
                 {q.isLoading ? (
                   <div className="space-y-3">
                     <Skeleton className="h-24 w-full" />
                     <Skeleton className="h-24 w-full" />
                   </div>
                 ) : slots.length === 0 ? (
-                  <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border py-8 text-center">
-                    <CalendarRange className="size-5 text-muted-foreground/60" />
-                    <span className="text-xs text-muted-foreground">No sessions</span>
-                  </div>
+                  dayHolidays.length === 0 ? (
+                    <div className="flex flex-col items-center gap-1.5 rounded-md border border-dashed border-border py-8 text-center">
+                      <CalendarRange className="size-5 text-muted-foreground/60" />
+                      <span className="text-xs text-muted-foreground">No sessions</span>
+                    </div>
+                  ) : null
                 ) : (
                   <div className="space-y-3">
                     {slots.map((e, i) => (
-                      <SlotCard key={e.id} e={e} tone={TONES[i % TONES.length]} />
+                      <SlotCard
+                        key={e.id}
+                        e={e}
+                        tone={TONES[i % TONES.length]}
+                        onOpen={() => setSelected(e)}
+                      />
                     ))}
                   </div>
                 )}
@@ -209,6 +266,86 @@ export default function TrainerTimetablePage() {
           })}
         </div>
       )}
+
+      {/* Session detail popup */}
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent>
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex flex-wrap items-center gap-2 font-display text-xl">
+                  {selected.title}
+                  <Badge variant="outline" className="gap-1">
+                    {selected.isVirtual ? (
+                      <Video className="size-3" />
+                    ) : (
+                      <MapPin className="size-3" />
+                    )}
+                    {selected.isVirtual ? "Virtual" : "In person"}
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription>
+                  {format(new Date(selected.startsAt), "EEE d MMM yyyy, HH:mm")} –{" "}
+                  {format(new Date(selected.endsAt), "HH:mm")}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-2.5 text-sm">
+                {selected.courseTitle && (
+                  <p className="flex items-center gap-2 text-muted-foreground">
+                    <BookText className="size-4 shrink-0" /> {selected.courseTitle}
+                  </p>
+                )}
+                <p className="flex items-center gap-2 text-muted-foreground">
+                  {selected.isVirtual ? (
+                    <Video className="size-4 shrink-0" />
+                  ) : (
+                    <MapPin className="size-4 shrink-0" />
+                  )}
+                  {selected.isVirtual ? "Online" : selected.venue || "Venue to be confirmed"}
+                </p>
+                {selected.trainerName && (
+                  <p className="flex items-center gap-2 text-muted-foreground">
+                    <User className="size-4 shrink-0" /> {selected.trainerName}
+                  </p>
+                )}
+                <p className="flex items-center gap-2 text-muted-foreground">
+                  <Users className="size-4 shrink-0" />
+                  {selected.booked} booked
+                  {selected.capacity != null && ` of ${selected.capacity} places`}
+                </p>
+                <p className="text-xs capitalize text-muted-foreground">
+                  Status: {selected.status.replace("_", " ")}
+                </p>
+                {selected.description && (
+                  <p className="whitespace-pre-wrap pt-1 text-foreground">
+                    {selected.description}
+                  </p>
+                )}
+              </div>
+
+              <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+                {selected.isVirtual && (selected.meetUrl || selected.zoomUrl) && (
+                  <Button asChild variant="outline">
+                    <a
+                      href={selected.meetUrl || selected.zoomUrl || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Video className="mr-2 size-4" /> Join
+                    </a>
+                  </Button>
+                )}
+                <Button asChild>
+                  <Link to={`/platform/sessions/${selected.id}`}>
+                    <ExternalLink className="mr-2 size-4" /> Open session
+                  </Link>
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

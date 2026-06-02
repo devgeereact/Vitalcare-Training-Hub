@@ -78,6 +78,25 @@ export function useSessions() {
   return useQuery({ queryKey: sessionsKeys.list(), queryFn: getSessions })
 }
 
+// Booked-learner counts for a set of sessions, keyed by session id.
+async function getBookedCounts(sessionIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>()
+  if (sessionIds.length === 0) return counts
+  const { data, error } = await supabase
+    .from("session_bookings")
+    .select("session_id")
+    .in("session_id", sessionIds)
+    .is("deleted_at", null)
+  if (error) {
+    console.error("[getBookedCounts]", error)
+    return counts
+  }
+  for (const b of data ?? []) {
+    counts.set(b.session_id, (counts.get(b.session_id) ?? 0) + 1)
+  }
+  return counts
+}
+
 // ─── Timetable (weekly grid for one trainer) ─────────────────────────────────
 export interface TimetableEntry {
   id: string
@@ -89,6 +108,13 @@ export interface TimetableEntry {
   endsAt: string
   /** 0 = Monday … 6 = Sunday */
   weekday: number
+  trainerName: string | null
+  capacity: number | null
+  booked: number
+  meetUrl: string | null
+  zoomUrl: string | null
+  description: string | null
+  status: SessionStatus
 }
 
 export async function getTimetable(
@@ -98,7 +124,9 @@ export async function getTimetable(
 ): Promise<TimetableEntry[]> {
   const { data, error } = await supabase
     .from("training_sessions")
-    .select("id, title, course_id, venue, is_virtual, starts_at, ends_at")
+    .select(
+      "id, title, course_id, trainer_id, venue, is_virtual, starts_at, ends_at, capacity, meet_url, zoom_join_url, description, status",
+    )
     .eq("trainer_id", trainerId)
     .is("deleted_at", null)
     .gte("starts_at", fromISO)
@@ -111,10 +139,26 @@ export async function getTimetable(
   if (!data || data.length === 0) return []
 
   const courseIds = [...new Set(data.map((d) => d.course_id).filter(Boolean))] as string[]
-  const { data: courses } = courseIds.length
-    ? await supabase.from("courses").select("id, title").in("id", courseIds)
-    : { data: [] as { id: string; title: string }[] }
-  const titleById = new Map((courses ?? []).map((c) => [c.id, c.title]))
+  const trainerIds = [...new Set(data.map((d) => d.trainer_id).filter(Boolean))] as string[]
+  const [{ data: courses }, { data: trainerProfiles }, bookedCounts] = await Promise.all([
+    courseIds.length
+      ? supabase.from("courses").select("id, title").in("id", courseIds)
+      : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+    trainerIds.length
+      ? supabase
+          .from("profiles")
+          .select("id, full_name, first_name, last_name")
+          .in("id", trainerIds)
+      : Promise.resolve({ data: [] as { id: string; full_name: string | null; first_name: string | null; last_name: string | null }[] }),
+    getBookedCounts(data.map((d) => d.id)),
+  ])
+  const courseTitleById = new Map((courses ?? []).map((c) => [c.id, c.title]))
+  const trainerNameById = new Map(
+    (trainerProfiles ?? []).map((p) => [
+      p.id,
+      p.full_name || [p.first_name, p.last_name].filter(Boolean).join(" ") || null,
+    ]),
+  )
 
   return data.map((s) => {
     const d = new Date(s.starts_at)
@@ -123,12 +167,19 @@ export async function getTimetable(
     return {
       id: s.id,
       title: s.title,
-      courseTitle: s.course_id ? titleById.get(s.course_id) ?? null : null,
+      courseTitle: s.course_id ? courseTitleById.get(s.course_id) ?? null : null,
       venue: s.venue ?? "",
       isVirtual: s.is_virtual,
       startsAt: s.starts_at,
       endsAt: s.ends_at,
       weekday,
+      trainerName: s.trainer_id ? trainerNameById.get(s.trainer_id) ?? null : null,
+      capacity: s.capacity,
+      booked: bookedCounts.get(s.id) ?? 0,
+      meetUrl: s.meet_url ?? null,
+      zoomUrl: s.zoom_join_url ?? null,
+      description: s.description ?? null,
+      status: s.status,
     }
   })
 }
@@ -288,6 +339,45 @@ export function useSetSessionRecording(id: string) {
         .update({ recording_url: url.trim() || null })
         .eq("id", id)
       if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: sessionsKeys.detail(id) }),
+  })
+}
+
+// Upload a recording file to Google Drive (via the drive-upload Edge Function)
+// and store the returned public URL on the session. Falls back with a clear
+// error if Drive is not connected, so staff can paste a link instead.
+export function useUploadRecordingToDrive(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (file: File): Promise<string> => {
+      const form = new FormData()
+      form.append("file", file)
+      const { data, error } = await supabase.functions.invoke<{
+        ok?: boolean
+        url?: string
+        notConfigured?: boolean
+        error?: string
+      }>("drive-upload", { body: form })
+      if (error) {
+        console.error("[useUploadRecordingToDrive]", error)
+        throw error
+      }
+      if (data?.notConfigured) {
+        throw new Error("Google Drive is not connected. Paste a link instead.")
+      }
+      if (!data?.url) {
+        throw new Error(data?.error || "Drive upload failed")
+      }
+      const { error: upErr } = await supabase
+        .from("training_sessions")
+        .update({ recording_url: data.url })
+        .eq("id", id)
+      if (upErr) {
+        console.error("[useUploadRecordingToDrive:save]", upErr)
+        throw upErr
+      }
+      return data.url
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: sessionsKeys.detail(id) }),
   })

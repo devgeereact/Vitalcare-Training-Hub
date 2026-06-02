@@ -37,6 +37,8 @@ import {
 
 import { useUser } from "@/hooks/use-user"
 import { GradientStatCard } from "@/components/dashboard/GradientStatCard"
+import { QuickLinks } from "@/components/dashboard/QuickLinks"
+import { QuickCheckIn } from "@/components/dashboard/QuickCheckIn"
 import { AttendanceBars } from "@/components/dashboard/AttendanceBars"
 import { NoticeBoard } from "@/components/dashboard/NoticeBoard"
 import { TopLearnersList } from "@/components/dashboard/TopLearnersList"
@@ -243,6 +245,19 @@ function AdminDashboard(): JSX.Element {
           />
         </div>
       )}
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <QuickCheckIn
+            session={sessions.data?.[0] ?? null}
+            loading={sessions.isLoading}
+          />
+        </div>
+        <div className="lg:col-span-2">
+          <QuickLinks role="admin" />
+        </div>
+      </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -505,6 +520,19 @@ function TrainerDashboard({
         </div>
       )}
 
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <QuickCheckIn
+            session={sessions.data?.[0] ?? null}
+            loading={sessions.isLoading}
+          />
+        </div>
+        <div className="lg:col-span-2">
+          <QuickLinks role="trainer" />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -587,6 +615,19 @@ function LearnerDashboard({
           />
         </div>
       )}
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <QuickCheckIn
+            session={sessions.data?.[0] ?? null}
+            loading={sessions.isLoading}
+          />
+        </div>
+        <div className="lg:col-span-2">
+          <QuickLinks role="learner" />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

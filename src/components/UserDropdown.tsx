@@ -104,12 +104,12 @@ export function UserDropdown() {
 
         <DropdownMenuSeparator className="border-1 my-2"/>
 
-        <DropdownMenuItem className="gap-2 h-9">
+        <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/certificates")}>
           <Download className="!size-5" />
           Downloads
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="gap-2 h-9">
+        <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/invoices")}>
           <DollarSign className="!size-5" />
           Earnings
         </DropdownMenuItem>
