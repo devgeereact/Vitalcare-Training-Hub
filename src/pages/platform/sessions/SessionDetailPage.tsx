@@ -15,8 +15,10 @@ import {
   Users,
   Radio,
   PlayCircle,
+  Loader2,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { supabase } from "@/lib/supabase/client"
 
 import {
   Card,
@@ -64,6 +66,7 @@ export default function SessionDetailPage() {
   const setRec = useSetSessionRecording(id)
   const recordingRef = useRef("")
   const [addLearner, setAddLearner] = useState("")
+  const [zoomSyncing, setZoomSyncing] = useState(false)
 
   const bookedIds = new Set((roster.data ?? []).map((r) => r.learnerId))
   const available = (learners.data ?? []).filter((l) => !bookedIds.has(l.id))
@@ -180,6 +183,43 @@ export default function SessionDetailPage() {
               </Button>
             )}
           </div>
+
+          {s.zoom_meeting_id && (
+            <div className="pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={zoomSyncing}
+                onClick={async () => {
+                  setZoomSyncing(true)
+                  try {
+                    const { data, error } = await supabase.functions.invoke("zoom-sync-session", {
+                      body: { sessionId: id },
+                    })
+                    if (error) throw error
+                    toast.success("Synced from Zoom", {
+                      description: `${data?.attendanceMarked ?? 0} attendees marked${data?.recording ? ", recording linked" : ""}.`,
+                    })
+                    session.refetch()
+                    roster.refetch()
+                  } catch {
+                    toast.error("Zoom sync failed", {
+                      description: "Needs report + recording scopes on your Zoom app.",
+                    })
+                  } finally {
+                    setZoomSyncing(false)
+                  }
+                }}
+              >
+                {zoomSyncing ? (
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                ) : (
+                  <Radio className="mr-1.5 size-4" />
+                )}
+                Sync attendance + recording from Zoom
+              </Button>
+            </div>
+          )}
 
           {/* Recording: staff paste the link so absentees can replay. */}
           <div className="flex flex-wrap items-center gap-2 pt-2">
