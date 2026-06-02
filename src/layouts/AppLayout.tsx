@@ -5,6 +5,7 @@ import React from "react"
 import { NotificationDropdown } from "@/components/notification-dropdown"
 import AnnouncementPopup from "@/components/platform/AnnouncementPopup"
 import ProfileCompletionBanner from "@/components/platform/ProfileCompletionBanner"
+import AutoAttendance from "@/components/platform/AutoAttendance"
 
 import {
   Breadcrumb,
@@ -152,6 +153,7 @@ export default function AppLayout() {
         <Footer />
         <BottomTabBar />
         <AnnouncementPopup />
+        <AutoAttendance />
       </SidebarInset>
     </SidebarProvider>
   )
