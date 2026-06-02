@@ -37,6 +37,24 @@ export default function MediaUpload({
     }
     setBusy(true)
     try {
+      // Prefer Google Drive when connected; fall back to Supabase Storage.
+      try {
+        const fd = new FormData()
+        fd.append("file", file)
+        const { data: drive, error: driveErr } = await supabase.functions.invoke(
+          "drive-upload",
+          { body: fd },
+        )
+        if (!driveErr && drive?.url) {
+          onChange(drive.url as string)
+          toast.success("Uploaded to Google Drive")
+          setBusy(false)
+          return
+        }
+      } catch {
+        // Drive not configured or failed — use Supabase Storage below.
+      }
+
       const ext = file.name.split(".").pop() ?? "bin"
       const safe = file.name
         .replace(/\.[^.]+$/, "")
