@@ -47,6 +47,11 @@ import HolidaysPage from "@/pages/platform/sessions/HolidaysPage"
 import StoreCataloguePage from "@/pages/platform/store/StoreCataloguePage"
 import StoreOrdersPage from "@/pages/platform/store/StoreOrdersPage"
 import StoreCouponsPage from "@/pages/platform/store/StoreCouponsPage"
+import ThreadPage from "@/pages/platform/forums/ThreadPage"
+import QaWallPage from "@/pages/platform/qa/QaWallPage"
+import FeedbackPage from "@/pages/platform/feedback/FeedbackPage"
+import FeedbackResultsPage from "@/pages/platform/feedback/FeedbackResultsPage"
+import EmailComposerPage from "@/pages/platform/email/EmailComposerPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -560,6 +565,26 @@ export const router = createBrowserRouter (
 
         // 💬 COMMUNICATION (extended)
         { path: "forums", element: <ForumsPage /> },
+        { path: "forums/:id", element: <ThreadPage /> },
+        { path: "qa", element: <QaWallPage /> },
+        { path: "qa/:id", element: <ThreadPage /> },
+        { path: "feedback", element: <FeedbackPage /> },
+        {
+          path: "feedback/results",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
+              <FeedbackResultsPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "email",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <EmailComposerPage />
+            </RoleGuard>
+          ),
+        },
 
         // 🛍️ STORE
         {

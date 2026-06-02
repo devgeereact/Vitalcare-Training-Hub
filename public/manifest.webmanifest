@@ -1,0 +1,18 @@
+{
+  "name": "Vitalcare Training Hub",
+  "short_name": "Vitalcare",
+  "description": "CSTF-aligned, CPD-accredited healthcare training platform.",
+  "start_url": "/platform/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1b2e6b",
+  "icons": [
+    {
+      "src": "/logos/logo-round-navy.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

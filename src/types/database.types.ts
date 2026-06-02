@@ -220,6 +220,44 @@ export type GoogleOauthToken = {
   updated_at: string
 }
 
+export type ForumThreadKind = "discussion" | "qa"
+
+export type ForumThread = Timestamps & {
+  id: string
+  course_id: string | null
+  kind: ForumThreadKind
+  title: string
+  created_by: string | null
+  is_resolved: boolean
+}
+
+export type ForumPost = Timestamps & {
+  id: string
+  thread_id: string
+  author_id: string | null
+  body: string
+  is_answer: boolean
+}
+
+export type FeedbackResponse = {
+  id: string
+  course_id: string | null
+  learner_id: string | null
+  nps: number | null
+  rating: number | null
+  comment: string | null
+  created_at: string
+}
+
+export type PushSubscription = {
+  id: string
+  user_id: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  created_at: string
+}
+
 export type SessionBooking = Timestamps & {
   id: string
   session_id: string
@@ -398,6 +436,21 @@ export type Database = {
         Row: AuditLog
         Insert: Partial<AuditLog> & Pick<AuditLog, "action">
         Update: Partial<AuditLog>
+        Relationships: []
+      }
+      forum_threads: TableShape<ForumThread, "title">
+      forum_posts: TableShape<ForumPost, "thread_id" | "body">
+      feedback_responses: {
+        Row: FeedbackResponse
+        Insert: Partial<FeedbackResponse>
+        Update: Partial<FeedbackResponse>
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: PushSubscription
+        Insert: Partial<PushSubscription> &
+          Pick<PushSubscription, "user_id" | "endpoint" | "p256dh" | "auth">
+        Update: Partial<PushSubscription>
         Relationships: []
       }
     }

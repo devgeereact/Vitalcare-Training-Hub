@@ -1,18 +1,13 @@
-import { MessagesSquare } from "lucide-react"
-import PlannedModule from "@/components/platform/PlannedModule"
+import ThreadBoard from "@/components/platform/ThreadBoard"
 
 export default function ForumsPage() {
   return (
-    <PlannedModule
-      icon={MessagesSquare}
+    <ThreadBoard
+      kind="discussion"
+      basePath="/platform/forums"
       title="Forums"
-      description="Course discussion boards for learners and trainers."
-      features={[
-        "Threaded discussions attached to each course",
-        "Trainer-moderated questions and answers",
-        "Pin announcements and mark resolved replies",
-        "Notifications for new replies on threads you follow",
-      ]}
+      description="Course discussions for learners and trainers."
+      emptyText="No topics yet. Start the first discussion above."
     />
   )
 }

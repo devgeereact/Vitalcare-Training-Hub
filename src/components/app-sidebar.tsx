@@ -106,7 +106,10 @@ const data = {
         { title: "Notifications", url: "/platform/notifications" },
         { title: "Messages", url: "/platform/messages" },
         { title: "Announcements", url: "/platform/announcements" },
+        { title: "Email", url: "/platform/email" },
         { title: "Forums", url: "/platform/forums" },
+        { title: "Q&A Wall", url: "/platform/qa" },
+        { title: "Feedback & NPS", url: "/platform/feedback/results" },
       ],
     },
     {

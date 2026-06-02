@@ -9,7 +9,15 @@ import UIThemeProvider from "@/providers/ui-theme-provider"
 import { AuthProvider } from "@/contexts/AuthContext"
 
 import { router } from "@/routes"
+import { registerServiceWorker } from "@/lib/push"
 import "@/index.css"
+
+// Register the service worker so the app is installable and can receive push.
+if (typeof window !== "undefined") {
+  window.addEventListener("load", () => {
+    void registerServiceWorker()
+  })
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {

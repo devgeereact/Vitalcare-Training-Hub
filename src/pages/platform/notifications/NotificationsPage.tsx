@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { Link } from "react-router-dom"
+import { toast } from "sonner"
 import {
   Bell,
+  BellRing,
   AlertCircle,
   CheckCheck,
   GraduationCap,
@@ -22,7 +25,40 @@ import {
   useNotifications,
   useMarkNotification,
 } from "@/lib/queries/communication.queries"
+import { pushSupported, isPushEnabled, enablePush } from "@/lib/push"
 import type { NotificationType } from "@/types/database.types"
+
+function PushToggle({ userId }: { userId: string | undefined }) {
+  const [enabled, setEnabled] = useState(false)
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    isPushEnabled().then(setEnabled)
+  }, [])
+  if (!pushSupported() || enabled || !userId) return null
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={busy}
+      onClick={() => {
+        setBusy(true)
+        enablePush(userId)
+          .then(() => {
+            setEnabled(true)
+            toast.success("Push notifications enabled")
+          })
+          .catch((e) =>
+            toast.error("Could not enable push", {
+              description: e instanceof Error ? e.message : undefined,
+            }),
+          )
+          .finally(() => setBusy(false))
+      }}
+    >
+      <BellRing className="mr-2 size-4" /> Enable push
+    </Button>
+  )
+}
 
 const ICONS: Record<NotificationType, typeof Bell> = {
   info: Info,
@@ -49,16 +85,19 @@ export default function NotificationsPage() {
             {unread > 0 ? `${unread} unread` : "You are all caught up."}
           </p>
         </div>
-        {unread > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={mark.isPending}
-            onClick={() => mark.mutate({ all: true })}
-          >
-            <CheckCheck className="mr-2 size-4" /> Mark all read
-          </Button>
-        )}
+        <div className="flex gap-2">
+          <PushToggle userId={user?.id} />
+          {unread > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={mark.isPending}
+              onClick={() => mark.mutate({ all: true })}
+            >
+              <CheckCheck className="mr-2 size-4" /> Mark all read
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>
