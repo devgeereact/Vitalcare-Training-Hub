@@ -72,23 +72,34 @@ function ExpiryBadge({ cert }: { cert: CertRow }) {
   return <span className="text-xs text-muted-foreground">No expiry</span>
 }
 
+/** Default expiry: one year from today, as a yyyy-mm-dd string for the date input. */
+function oneYearFromToday(): string {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() + 1)
+  return d.toISOString().slice(0, 10)
+}
+
 function IssueDialog() {
   const [open, setOpen] = useState(false)
   const [learnerId, setLearnerId] = useState("")
   const [courseId, setCourseId] = useState("none")
   const [cpd, setCpd] = useState("0")
+  const [expiry, setExpiry] = useState(oneYearFromToday())
   const learners = useLearners()
   const courses = useCourses()
   const issue = useIssueCertificate()
 
   function submit() {
     if (!learnerId) return toast.error("Choose a learner")
+    // Send the chosen expiry as an ISO timestamp so the alert pipeline fires.
+    // A cleared date means the certificate never expires.
+    const expiresAt = expiry ? new Date(`${expiry}T00:00:00`).toISOString() : null
     issue
       .mutateAsync({
         learnerId,
         courseId: courseId === "none" ? null : courseId,
         cpdHours: Number(cpd) || 0,
-        expiresAt: null,
+        expiresAt,
       })
       .then(() => {
         toast.success("Certificate issued")
@@ -96,6 +107,7 @@ function IssueDialog() {
         setLearnerId("")
         setCourseId("none")
         setCpd("0")
+        setExpiry(oneYearFromToday())
       })
       .catch(() => toast.error("Could not issue certificate"))
   }
@@ -156,6 +168,19 @@ function IssueDialog() {
           <div className="space-y-1.5">
             <Label>CPD hours</Label>
             <Input type="number" min={0} step="0.5" value={cpd} onChange={(e) => setCpd(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cert-expiry">Expiry date</Label>
+            <Input
+              id="cert-expiry"
+              type="date"
+              value={expiry}
+              onChange={(e) => setExpiry(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Defaults to one year from today. The owner is alerted as it nears
+              expiry. Clear the date for a certificate that never expires.
+            </p>
           </div>
         </div>
         <DialogFooter>
@@ -293,6 +318,7 @@ export default function CertificatesListPage() {
                               cpdHours: c.cpdHours,
                               issuedAt: c.issuedAt,
                               verificationUuid: c.verificationUuid,
+                              preset: template.data?.preset,
                               titleText: template.data?.titleText,
                               introText: template.data?.introText,
                               completionText: template.data?.completionText,

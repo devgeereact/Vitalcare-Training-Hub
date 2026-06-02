@@ -174,10 +174,14 @@ export function useIssueCertificate() {
 // Certificate template designer
 // ---------------------------------------------------------------------------
 
+/** The three branded certificate layouts the designer can choose from. */
+export type CertPreset = "completion" | "participation" | "achievement"
+
 /** The designable sections of a certificate. */
 export interface CertTemplate {
   id: string | null
   name: string
+  preset: CertPreset
   titleText: string
   introText: string
   completionText: string
@@ -192,6 +196,7 @@ export interface CertTemplate {
 export const DEFAULT_TEMPLATE: CertTemplate = {
   id: null,
   name: "Standard certificate",
+  preset: "completion",
   titleText: "Certificate of Completion",
   introText: "This is to certify that",
   completionText: "has successfully completed",
@@ -205,6 +210,7 @@ export const DEFAULT_TEMPLATE: CertTemplate = {
 interface TemplateRow {
   id: string
   name: string
+  preset: string | null
   title_text: string
   intro_text: string
   completion_text: string
@@ -215,10 +221,17 @@ interface TemplateRow {
   footer_text: string
 }
 
+const PRESETS: readonly CertPreset[] = ["completion", "participation", "achievement"]
+
+function toPreset(value: string | null): CertPreset {
+  return PRESETS.includes(value as CertPreset) ? (value as CertPreset) : "completion"
+}
+
 function rowToTemplate(r: TemplateRow): CertTemplate {
   return {
     id: r.id,
     name: r.name,
+    preset: toPreset(r.preset),
     titleText: r.title_text,
     introText: r.intro_text,
     completionText: r.completion_text,
@@ -231,7 +244,7 @@ function rowToTemplate(r: TemplateRow): CertTemplate {
 }
 
 const TEMPLATE_COLS =
-  "id, name, title_text, intro_text, completion_text, accreditation_line, signatory_name, signatory_role, signature_image_url, footer_text"
+  "id, name, preset, title_text, intro_text, completion_text, accreditation_line, signatory_name, signatory_role, signature_image_url, footer_text"
 
 /**
  * Section columns are added by migration 033 but are not in the committed
@@ -299,6 +312,7 @@ export function useSaveTemplate() {
     mutationFn: async (t: CertTemplate) => {
       const payload = {
         name: t.name.trim() || "Standard certificate",
+        preset: t.preset,
         title_text: t.titleText,
         intro_text: t.introText,
         completion_text: t.completionText,
