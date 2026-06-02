@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Install deps
         run: npm i imapflow@1.0.171 mailparser@3.7.1 @supabase/supabase-js@2 --no-save
       - name: Pull inbox
