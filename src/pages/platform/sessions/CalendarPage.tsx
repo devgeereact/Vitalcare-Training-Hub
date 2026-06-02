@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/dialog"
 import { useAuth } from "@/hooks/use-auth"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
-import { useCalendarSessions } from "@/lib/queries/sessions.queries"
+import { useCalendarSessions, useCreateSession } from "@/lib/queries/sessions.queries"
 import {
   useCalendarEvents,
   useCalendarEventMutations,
@@ -48,6 +48,7 @@ import {
 } from "@/lib/queries/calendar.queries"
 import { getUpcomingHolidays } from "@/lib/integrations/holidays"
 import { useOneToOnes } from "@/lib/queries/one-to-one.queries"
+import { cn } from "@/lib/utils"
 
 const COLORS = {
   physical: "#1b2e6b",
@@ -80,6 +81,7 @@ export default function CalendarPage() {
   const sessions = useCalendarSessions()
   const customEvents = useCalendarEvents()
   const mut = useCalendarEventMutations()
+  const createSession = useCreateSession()
 
   const holidays = useQuery({
     queryKey: ["holidays", "GB"],
@@ -101,6 +103,10 @@ export default function CalendarPage() {
   const [fAllDay, setFAllDay] = useState(false)
   const [fColor, setFColor] = useState(COLORS.custom)
   const [editId, setEditId] = useState<string | null>(null)
+  // "reminder" creates a personal calendar event; "session" creates a real
+  // training session inline (no redirect to the sessions page).
+  const [fKind, setFKind] = useState<"reminder" | "session">("reminder")
+  const [fVirtual, setFVirtual] = useState(false)
 
   const events: EventInput[] = useMemo(() => {
     const out: EventInput[] = []
@@ -201,6 +207,8 @@ export default function CalendarPage() {
     setFEnd(toLocalInput(new Date(base.getTime() + 36e5)))
     setFAllDay(false)
     setFColor(COLORS.custom)
+    setFKind("reminder")
+    setFVirtual(false)
     setEditing(true)
   }
 
@@ -218,6 +226,30 @@ export default function CalendarPage() {
 
   function saveEvent() {
     if (!fTitle.trim() || !user?.id) return
+
+    // New session: create a real training session inline, no redirect.
+    if (!editId && fKind === "session") {
+      createSession
+        .mutateAsync({
+          title: fTitle,
+          description: fDesc,
+          course_id: "",
+          trainer_id: "",
+          starts_at: fStart,
+          ends_at: fEnd || fStart,
+          venue: "",
+          is_virtual: fVirtual,
+          is_public: false,
+          meeting_provider: "google_meet",
+        })
+        .then(() => {
+          toast.success("Session created")
+          setEditing(false)
+        })
+        .catch(() => toast.error("Could not create session"))
+      return
+    }
+
     const payload = {
       title: fTitle,
       description: fDesc,
@@ -250,10 +282,13 @@ export default function CalendarPage() {
           <Button variant="outline" onClick={() => openNew()}>
             <Plus className="mr-2 size-4" /> New event
           </Button>
-          <Button asChild>
-            <Link to="/platform/sessions/new">
-              <Plus className="mr-2 size-4" /> New session
-            </Link>
+          <Button
+            onClick={() => {
+              openNew()
+              setFKind("session")
+            }}
+          >
+            <Plus className="mr-2 size-4" /> New session
           </Button>
         </div>
       </div>
@@ -449,9 +484,30 @@ export default function CalendarPage() {
       <Dialog open={editing} onOpenChange={setEditing}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editId ? "Edit event" : "New event"}</DialogTitle>
+            <DialogTitle>
+              {editId ? "Edit event" : fKind === "session" ? "New session" : "New event"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            {!editId && (
+              <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                {(["reminder", "session"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setFKind(k)}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold",
+                      fKind === k
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {k}
+                  </button>
+                ))}
+              </div>
+            )}
             <Input placeholder="Title" value={fTitle} onChange={(e) => setFTitle(e.target.value)} />
             <div className="flex justify-end">
               <AiFieldsButton
@@ -491,6 +547,13 @@ export default function CalendarPage() {
                 />
               </div>
             </div>
+            {!editId && fKind === "session" && (
+              <div className="flex items-center gap-2">
+                <Switch checked={fVirtual} onCheckedChange={setFVirtual} />
+                <Label className="text-sm">Virtual session</Label>
+              </div>
+            )}
+            {(editId || fKind === "reminder") && (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Switch checked={fAllDay} onCheckedChange={setFAllDay} />
@@ -513,6 +576,7 @@ export default function CalendarPage() {
                 ))}
               </div>
             </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(false)}>
@@ -520,12 +584,17 @@ export default function CalendarPage() {
             </Button>
             <Button
               onClick={saveEvent}
-              disabled={!fTitle.trim() || mut.create.isPending || mut.update.isPending}
+              disabled={
+                !fTitle.trim() ||
+                mut.create.isPending ||
+                mut.update.isPending ||
+                createSession.isPending
+              }
             >
-              {(mut.create.isPending || mut.update.isPending) && (
+              {(mut.create.isPending || mut.update.isPending || createSession.isPending) && (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               )}
-              {editId ? "Save" : "Add event"}
+              {editId ? "Save" : fKind === "session" ? "Create session" : "Add event"}
             </Button>
           </DialogFooter>
         </DialogContent>
