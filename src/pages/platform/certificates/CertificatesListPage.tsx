@@ -139,6 +139,8 @@ function IssueDialog() {
 
 export default function CertificatesListPage() {
   const { data, isLoading, isError, refetch } = useCertificates()
+  const [signatory, setSignatory] = useState("")
+  const [signatoryRole, setSignatoryRole] = useState("")
 
   return (
     <div className="space-y-6">
@@ -156,6 +158,31 @@ export default function CertificatesListPage() {
           <IssueDialog />
         </div>
       </div>
+
+      {/* Signatory applied to downloaded certificates */}
+      <Card>
+        <CardContent className="flex flex-wrap items-end gap-3 p-4">
+          <div className="flex-1 min-w-[180px]">
+            <Label className="mb-1.5 block text-xs">Signatory name (on the certificate)</Label>
+            <Input
+              placeholder="e.g. Harni Muharami RN MSc"
+              value={signatory}
+              onChange={(e) => setSignatory(e.target.value)}
+            />
+          </div>
+          <div className="flex-1 min-w-[160px]">
+            <Label className="mb-1.5 block text-xs">Signatory role</Label>
+            <Input
+              placeholder="e.g. Clinical Director"
+              value={signatoryRole}
+              onChange={(e) => setSignatoryRole(e.target.value)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Leave blank to use the Clinical Director by default.
+          </p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-5">
@@ -214,6 +241,8 @@ export default function CertificatesListPage() {
                               cpdHours: c.cpdHours,
                               issuedAt: c.issuedAt,
                               verificationUuid: c.verificationUuid,
+                              signatoryName: signatory || undefined,
+                              signatoryRole: signatoryRole || undefined,
                             })
                           }
                         >

@@ -7,6 +7,8 @@ export interface CertificatePdfData {
   cpdHours: number
   issuedAt: string
   verificationUuid: string
+  signatoryName?: string
+  signatoryRole?: string
 }
 
 function fmt(iso: string) {
@@ -76,17 +78,24 @@ export function downloadCertificatePdf(data: CertificatePdfData) {
     { align: "center" },
   )
 
-  // Sign-off (left) + verification (right)
+  // Signatory (left). Italic script approximates a pen signature above the line.
+  const signName = data.signatoryName?.trim() || LEADERSHIP.clinicalDirector.name
+  const signRole = data.signatoryRole?.trim() || LEADERSHIP.clinicalDirector.role
+  doc.setFont("times", "italic")
+  doc.setFontSize(20)
+  doc.setTextColor(navy)
+  doc.text(signName, 42, 165)
   doc.setDrawColor(navy)
   doc.setLineWidth(0.4)
-  doc.line(40, 168, 110, 168)
+  doc.line(40, 168, 120, 168)
   doc.setFontSize(10)
   doc.setTextColor(navy)
   doc.setFont("helvetica", "bold")
-  doc.text(`Overseen by ${LEADERSHIP.clinicalDirector.name}`, 40, 174)
+  doc.text(signName, 40, 174)
   doc.setFont("helvetica", "normal")
   doc.setTextColor(110)
-  doc.text("Clinical Director", 40, 179)
+  doc.text(signRole, 40, 179)
+  doc.text(COMPANY.legalName, 40, 184)
 
   doc.setFontSize(9)
   doc.setTextColor(110)
