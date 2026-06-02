@@ -156,9 +156,7 @@ const data = {
       icon: UserCircle,
       items: [
         { title: "My Profile", url: "/platform/profile" },
-        { title: "Edit Profile", url: "/platform/settings" },
         { title: "Password", url: "/platform/account/password" },
-        { title: "Notifications", url: "/platform/notifications" },
       ],
     },
   ],
