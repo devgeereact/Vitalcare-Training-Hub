@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { ArrowLeft, AlertCircle, Send, Loader2, Reply } from "lucide-react"
+import { ArrowLeft, AlertCircle, Send, Loader2, Reply, Paperclip } from "lucide-react"
 
 import {
   Card,
@@ -138,8 +138,32 @@ export default function MailDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="whitespace-pre-wrap break-words text-sm text-foreground">
-            {cleanBody(data.body_html || data.snippet || "")}
+            {data.body_text || cleanBody(data.body_html || data.snippet || "")}
           </div>
+
+          {data.attachments?.length > 0 && (
+            <div className="space-y-1.5 rounded-lg border border-border p-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                Attachments ({data.attachments.length})
+              </p>
+              {data.attachments.map((a, i) => (
+                <a
+                  key={i}
+                  href={a.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <Paperclip className="size-3.5" /> {a.name}
+                  {a.size ? (
+                    <span className="text-xs text-muted-foreground">
+                      ({Math.round(a.size / 1024)} KB)
+                    </span>
+                  ) : null}
+                </a>
+              ))}
+            </div>
+          )}
 
           {!showReply ? (
             <Button onClick={() => setShowReply(true)}>

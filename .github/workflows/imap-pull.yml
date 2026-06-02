@@ -1,0 +1,30 @@
+name: IMAP inbox pull
+
+# Pulls the org mailbox into Supabase every 10 minutes with clean bodies +
+# attachments. Runs on GitHub's runners (reliable Node networking), unlike the
+# Supabase Edge function. Also runnable on demand from the Actions tab.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install deps
+        run: npm i imapflow@1.0.171 mailparser@3.7.1 @supabase/supabase-js@2 --no-save
+      - name: Pull inbox
+        env:
+          IMAP_HOST: ${{ secrets.IMAP_HOST }}
+          IMAP_PORT: ${{ secrets.IMAP_PORT }}
+          IMAP_USER: ${{ secrets.IMAP_USER }}
+          IMAP_PASS: ${{ secrets.IMAP_PASS }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/imap-pull.mjs

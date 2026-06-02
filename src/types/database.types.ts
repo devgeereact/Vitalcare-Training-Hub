@@ -296,6 +296,9 @@ export type MailMessage = {
   subject: string | null
   snippet: string | null
   body_html: string | null
+  body_text: string | null
+  has_attachments: boolean
+  attachments: { name: string; url: string; size?: number; type?: string }[]
   received_at: string | null
   seen: boolean
   created_at: string

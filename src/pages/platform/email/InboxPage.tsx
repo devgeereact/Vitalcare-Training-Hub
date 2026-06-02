@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
-import { Inbox, AlertCircle, RefreshCw, Loader2, Mail, PenSquare, Send } from "lucide-react"
+import { Inbox, AlertCircle, RefreshCw, Loader2, Mail, PenSquare, Send, Paperclip } from "lucide-react"
 
 import {
   Card,
@@ -168,7 +168,12 @@ export default function InboxPage() {
                             : ""}
                         </span>
                       </span>
-                      <span className="block truncate text-sm">{m.subject}</span>
+                      <span className="flex items-center gap-1 truncate text-sm">
+                        {m.has_attachments && (
+                          <Paperclip className="size-3 shrink-0 text-muted-foreground" />
+                        )}
+                        {m.subject}
+                      </span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {m.snippet}
                       </span>
