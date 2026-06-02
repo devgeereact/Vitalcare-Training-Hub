@@ -32,7 +32,7 @@ import {
   useCancelCampaign,
 } from "@/lib/queries/email.queries"
 import type { EmailCampaignStatus } from "@/types/database.types"
-import AiAssistButton from "@/components/ai/AiAssistButton"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
 
 const AUDIENCES = [
   { value: "all_learners", label: "All learners" },
@@ -170,10 +170,17 @@ export default function EmailComposerPage() {
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <Label>Message</Label>
-              <AiAssistButton
-                task="a clear, professional email to healthcare training learners"
-                context={subject ? `Subject: ${subject}` : undefined}
-                onInsert={(text) => setMessage(text)}
+              <AiFieldsButton
+                subject="a clear, professional email to healthcare training learners"
+                context={subject ? `Working subject: ${subject}` : undefined}
+                fields={[
+                  { key: "subject", label: "Subject", format: "text" },
+                  { key: "message", label: "Message", format: "text" },
+                ]}
+                onApply={(v) => {
+                  if (v.subject) setSubject(v.subject)
+                  if (v.message) setMessage(v.message)
+                }}
               />
             </div>
             <Textarea

@@ -39,7 +39,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { useAuth } from "@/hooks/use-auth"
-import AiAssistButton from "@/components/ai/AiAssistButton"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import { useCalendarSessions } from "@/lib/queries/sessions.queries"
 import {
   useCalendarEvents,
@@ -385,13 +385,16 @@ export default function CalendarPage() {
           <div className="space-y-3">
             <Input placeholder="Title" value={fTitle} onChange={(e) => setFTitle(e.target.value)} />
             <div className="flex justify-end">
-              <AiAssistButton
-                task="a short calendar event title and description"
+              <AiFieldsButton
+                subject="a short calendar event"
                 context={fTitle ? `Topic: ${fTitle}` : undefined}
-                onInsert={(text) => {
-                  const lines = text.split(/\n+/)
-                  if (!fTitle.trim() && lines[0]) setFTitle(lines[0].replace(/^title:\s*/i, "").slice(0, 80))
-                  setFDesc(text)
+                fields={[
+                  { key: "title", label: "Title", format: "text" },
+                  { key: "description", label: "Description", format: "text" },
+                ]}
+                onApply={(v) => {
+                  if (v.title) setFTitle(v.title.slice(0, 80))
+                  if (v.description) setFDesc(v.description)
                 }}
               />
             </div>

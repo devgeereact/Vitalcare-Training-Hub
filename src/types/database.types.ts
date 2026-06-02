@@ -85,12 +85,14 @@ export type Profile = Timestamps & {
   phone: string | null
   emergency_contact_name: string | null
   emergency_contact_phone: string | null
+  about: string | null
 }
 
 export type Department = Timestamps & {
   id: string
   organisation_id: string
   name: string
+  description: string | null
 }
 
 export type CourseCategory = Timestamps & {

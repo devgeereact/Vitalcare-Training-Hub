@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 
 import AiAssistButton from "@/components/ai/AiAssistButton"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import { sessionFormSchema, type SessionFormValues } from "@/lib/validations/session.schema"
 import {
   useSession,
@@ -146,6 +147,20 @@ export default function SessionFormPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <div className="flex justify-end">
+                <AiFieldsButton
+                  subject="a training session"
+                  context={`Working title: ${form.getValues("title") || "(none)"}`}
+                  fields={[
+                    { key: "title", label: "Title", format: "text" },
+                    { key: "description", label: "Description", format: "text" },
+                  ]}
+                  onApply={(v) => {
+                    if (v.title) form.setValue("title", v.title.slice(0, 120))
+                    if (v.description) form.setValue("description", v.description)
+                  }}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="title"

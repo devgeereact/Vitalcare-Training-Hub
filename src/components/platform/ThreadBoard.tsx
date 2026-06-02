@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog"
 import { useAuth } from "@/hooks/use-auth"
 import { useThreads, useCreateThread } from "@/lib/queries/forums.queries"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import type { ForumThreadKind } from "@/types/database.types"
 
 export default function ThreadBoard({
@@ -94,6 +95,24 @@ export default function ThreadBoard({
                 value={b}
                 onChange={(e) => setB(e.target.value)}
               />
+              <div className="flex justify-end">
+                <AiFieldsButton
+                  subject={
+                    kind === "qa"
+                      ? "a clear question for a healthcare training Q&A"
+                      : "a discussion topic for a healthcare training forum"
+                  }
+                  context={t ? `Working title: ${t}` : undefined}
+                  fields={[
+                    { key: "title", label: kind === "qa" ? "Question" : "Title", format: "text" },
+                    { key: "body", label: "Detail", format: "text" },
+                  ]}
+                  onApply={(v) => {
+                    if (v.title) setT(v.title)
+                    if (v.body) setB(v.body)
+                  }}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>

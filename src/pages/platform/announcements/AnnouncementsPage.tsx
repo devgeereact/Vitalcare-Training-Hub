@@ -26,7 +26,7 @@ import {
   useAnnouncements,
   useCreateAnnouncement,
 } from "@/lib/queries/communication.queries"
-import AiAssistButton from "@/components/ai/AiAssistButton"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
 
 export default function AnnouncementsPage() {
   const { profile, isAdmin } = useUser()
@@ -87,10 +87,17 @@ export default function AnnouncementsPage() {
                     onChange={(e) => setBody(e.target.value)}
                   />
                   <div className="mt-2">
-                    <AiAssistButton
-                      task="an organisation announcement for a healthcare training platform"
-                      context={title ? `Title: ${title}` : undefined}
-                      onInsert={(text) => setBody(text)}
+                    <AiFieldsButton
+                      subject="an organisation announcement for a healthcare training platform"
+                      context={title ? `Working title: ${title}` : undefined}
+                      fields={[
+                        { key: "title", label: "Title", format: "text" },
+                        { key: "body", label: "Body", format: "text" },
+                      ]}
+                      onApply={(v) => {
+                        if (v.title) setTitle(v.title)
+                        if (v.body) setBody(v.body)
+                      }}
                     />
                   </div>
                 </div>

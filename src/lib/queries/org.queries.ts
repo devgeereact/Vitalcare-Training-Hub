@@ -34,10 +34,15 @@ export function useDepartments() {
 export function useCreateDepartment() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { name: string; organisationId: string }) => {
+    mutationFn: async (input: {
+      name: string
+      organisationId: string
+      description?: string
+    }) => {
       const { error } = await supabase.from("departments").insert({
         name: input.name.trim(),
         organisation_id: input.organisationId,
+        description: input.description?.trim() || null,
       })
       if (error) {
         console.error("[useCreateDepartment]", error)

@@ -5,6 +5,8 @@ import { Building2, AlertCircle, Plus, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Dialog,
@@ -23,6 +25,7 @@ export default function DepartmentsPage() {
   const create = useCreateDepartment()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
 
   function submit() {
     if (!name.trim() || !profile?.organisation_id) {
@@ -31,10 +34,11 @@ export default function DepartmentsPage() {
       return
     }
     create
-      .mutateAsync({ name, organisationId: profile.organisation_id })
+      .mutateAsync({ name, organisationId: profile.organisation_id, description })
       .then(() => {
         toast.success("Department added")
         setName("")
+        setDescription("")
         setOpen(false)
       })
       .catch(() => toast.error("Could not add department. Please try again."))
@@ -59,12 +63,33 @@ export default function DepartmentsPage() {
             <DialogHeader>
               <DialogTitle>Add department</DialogTitle>
             </DialogHeader>
-            <Input
-              placeholder="Department name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-            />
+            <div className="space-y-3">
+              <Input
+                placeholder="Department name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <Textarea
+                placeholder="Details (optional)"
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+              <div className="flex justify-end">
+                <AiFieldsButton
+                  subject="a department in a healthcare training organisation"
+                  context={name ? `Working name: ${name}` : undefined}
+                  fields={[
+                    { key: "name", label: "Name", format: "text" },
+                    { key: "description", label: "Description", format: "text" },
+                  ]}
+                  onApply={(v) => {
+                    if (v.name) setName(v.name.slice(0, 80))
+                    if (v.description) setDescription(v.description)
+                  }}
+                />
+              </div>
+            </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancel
@@ -111,11 +136,18 @@ export default function DepartmentsPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data!.map((d) => (
             <Card key={d.id}>
-              <CardContent className="flex items-center gap-3 p-5">
-                <span className="flex size-10 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
+              <CardContent className="flex items-start gap-3 p-5">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
                   <Building2 className="size-5" />
                 </span>
-                <p className="font-medium">{d.name}</p>
+                <div className="min-w-0">
+                  <p className="font-medium">{d.name}</p>
+                  {d.description && (
+                    <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                      {d.description}
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
