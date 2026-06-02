@@ -236,6 +236,160 @@ export function useOrders(staff: boolean, buyerId?: string) {
   })
 }
 
+/* ----------------------------------------------------------- dashboard -- */
+
+export interface StoreStats {
+  totalProducts: number
+  publishedProducts: number
+  draftProducts: number
+  totalOrders: number
+  paidOrders: number
+  pendingOrders: number
+  /** Collected revenue from paid orders, in pence. */
+  revenuePence: number
+  /** Outstanding value of pending orders, in pence. */
+  outstandingPence: number
+  /** Average paid order value, in pence (0 if none paid). */
+  averageOrderPence: number
+  /** Orders count per month over the last 6 calendar months, oldest first. */
+  ordersByMonth: { label: string; orders: number; revenuePence: number }[]
+  /** Product counts grouped by published state. */
+  statusBreakdown: { label: string; count: number }[]
+  /** Top products by paid units sold (max 6). */
+  topProducts: {
+    id: string
+    name: string
+    pricePence: number
+    thumbnailUrl: string | null
+    unitsSold: number
+    revenuePence: number
+  }[]
+}
+
+/**
+ * Aggregate store metrics derived entirely from real products + orders.
+ * Revenue is only counted from orders marked `paid`. Nothing is fabricated.
+ */
+export function useStoreStats(): ReturnType<typeof useQuery<StoreStats>> {
+  return useQuery({
+    queryKey: ["store", "stats"],
+    queryFn: async (): Promise<StoreStats> => {
+      const [{ data: products, error: pErr }, { data: orders, error: oErr }] =
+        await Promise.all([
+          supabase
+            .from("products")
+            .select("id, name, price_pence, thumbnail_url, is_published")
+            .is("deleted_at", null),
+          supabase
+            .from("orders")
+            .select("id, status, total_pence, created_at, paid_at"),
+        ])
+      if (pErr) {
+        console.error("[useStoreStats:products]", pErr)
+        throw pErr
+      }
+      if (oErr) {
+        console.error("[useStoreStats:orders]", oErr)
+        throw oErr
+      }
+
+      const prods = (products ?? []) as Pick<
+        Product,
+        "id" | "name" | "price_pence" | "thumbnail_url" | "is_published"
+      >[]
+      const ords = (orders ?? []) as Pick<
+        Order,
+        "id" | "status" | "total_pence" | "created_at" | "paid_at"
+      >[]
+
+      const publishedProducts = prods.filter((p) => p.is_published).length
+      const paid = ords.filter((o) => o.status === "paid")
+      const pending = ords.filter((o) => o.status === "pending")
+      const revenuePence = paid.reduce((sum, o) => sum + o.total_pence, 0)
+      const outstandingPence = pending.reduce((sum, o) => sum + o.total_pence, 0)
+
+      // Six-month buckets, oldest first.
+      const now = new Date()
+      const buckets: { key: string; label: string; orders: number; revenuePence: number }[] = []
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        buckets.push({
+          key: `${d.getFullYear()}-${d.getMonth()}`,
+          label: d.toLocaleString("en-GB", { month: "short" }),
+          orders: 0,
+          revenuePence: 0,
+        })
+      }
+      const bucketByKey = new Map(buckets.map((b) => [b.key, b]))
+      for (const o of ords) {
+        const d = new Date(o.created_at)
+        const b = bucketByKey.get(`${d.getFullYear()}-${d.getMonth()}`)
+        if (!b) continue
+        b.orders += 1
+        if (o.status === "paid") b.revenuePence += o.total_pence
+      }
+
+      // Top products by paid units. Pull items for paid orders only.
+      const paidIds = paid.map((o) => o.id)
+      const unitsByProduct = new Map<string, number>()
+      const revenueByProduct = new Map<string, number>()
+      if (paidIds.length) {
+        const { data: items } = await supabase
+          .from("order_items")
+          .select("product_id, quantity, unit_price_pence, order_id")
+          .in("order_id", paidIds)
+        for (const it of items ?? []) {
+          if (!it.product_id) continue
+          unitsByProduct.set(
+            it.product_id,
+            (unitsByProduct.get(it.product_id) ?? 0) + it.quantity,
+          )
+          revenueByProduct.set(
+            it.product_id,
+            (revenueByProduct.get(it.product_id) ?? 0) +
+              it.quantity * it.unit_price_pence,
+          )
+        }
+      }
+
+      const topProducts = prods
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          pricePence: p.price_pence,
+          thumbnailUrl: p.thumbnail_url,
+          unitsSold: unitsByProduct.get(p.id) ?? 0,
+          revenuePence: revenueByProduct.get(p.id) ?? 0,
+        }))
+        .sort((a, b) => b.unitsSold - a.unitsSold || b.pricePence - a.pricePence)
+        .slice(0, 6)
+
+      return {
+        totalProducts: prods.length,
+        publishedProducts,
+        draftProducts: prods.length - publishedProducts,
+        totalOrders: ords.length,
+        paidOrders: paid.length,
+        pendingOrders: pending.length,
+        revenuePence,
+        outstandingPence,
+        averageOrderPence: paid.length ? Math.round(revenuePence / paid.length) : 0,
+        ordersByMonth: buckets.map((b) => ({
+          label: b.label,
+          orders: b.orders,
+          revenuePence: b.revenuePence,
+        })),
+        statusBreakdown: [
+          { label: "Published", count: publishedProducts },
+          { label: "Draft", count: prods.length - publishedProducts },
+        ],
+        topProducts,
+      }
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
 /** Staff: mark an order paid and auto-enrol the buyer on any linked courses. */
 export function useConfirmOrder(confirmerId: string | undefined) {
   const qc = useQueryClient()

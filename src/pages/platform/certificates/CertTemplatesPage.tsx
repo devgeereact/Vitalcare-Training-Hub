@@ -307,7 +307,7 @@ export default function CertTemplatesPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
+                onClick={() => {
                   downloadCertificatePdf({
                     learnerName: "Jane Okafor",
                     courseTitle: "Moving and Handling",
@@ -320,8 +320,8 @@ export default function CertTemplatesPage() {
                     footerText: tpl.footerText,
                     signatoryName: tpl.signatoryName,
                     signatoryRole: tpl.signatoryRole,
-                  })
-                }
+                  }).catch(() => toast.error("Could not generate the preview PDF."))
+                }}
               >
                 <Download className="mr-2 size-4" /> Preview PDF
               </Button>

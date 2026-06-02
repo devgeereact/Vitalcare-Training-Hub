@@ -1,6 +1,7 @@
+import { QRCodeSVG } from "qrcode.react"
 import { cn } from "@/lib/utils"
-import { COMPANY, LOGOS } from "@/lib/constants"
-import { certVerificationRef } from "@/lib/certificates/pdf"
+import { BRAND, COMPANY, LOGOS } from "@/lib/constants"
+import { certVerificationRef, certVerifyUrl } from "@/lib/certificates/pdf"
 import type { CertTemplate } from "@/lib/queries/certificates.queries"
 
 export interface CertificatePreviewValues {
@@ -243,7 +244,7 @@ export function CertificatePreview({
               />
             ) : (
               <p
-                className="mb-[2px] text-[clamp(1.3rem,3.6vw,2.2rem)] leading-none text-brand-navy"
+                className="mb-[2px] text-[clamp(0.95rem,2.4vw,1.5rem)] leading-none text-brand-navy"
                 style={CURSIVE_STYLE}
               >
                 {template.signatoryName}
@@ -264,17 +265,30 @@ export function CertificatePreview({
           {/* Seal (centre) */}
           <GoldSeal className="h-[clamp(2.6rem,9vw,5.5rem)] w-auto self-end" />
 
-          {/* Verification (right) */}
-          <div className="text-right">
-            <p className="text-[clamp(0.5rem,1.1vw,0.72rem)] font-semibold text-brand-navy">
-              {ref.short}
-            </p>
-            <p className="break-all text-[clamp(0.42rem,0.95vw,0.62rem)] text-muted-foreground">
-              {v.verificationUuid}
-            </p>
-            <p className="mt-[2px] text-[clamp(0.45rem,1vw,0.66rem)] text-muted-foreground">
-              Verify at {COMPANY.website}/verify
-            </p>
+          {/* Verification (right): certificate code, full UUID and scannable QR */}
+          <div className="flex items-end justify-end gap-[4%]">
+            <div className="min-w-0 text-right">
+              <p className="text-[clamp(0.5rem,1.1vw,0.72rem)] font-semibold text-brand-navy">
+                {ref.short}
+              </p>
+              <p className="text-[clamp(0.42rem,0.92vw,0.6rem)] text-muted-foreground">
+                Scan to verify
+              </p>
+              <p className="break-all text-[clamp(0.38rem,0.85vw,0.56rem)] leading-tight text-muted-foreground">
+                {v.verificationUuid}
+              </p>
+            </div>
+            <div className="shrink-0 rounded-[2px] bg-white p-[3px] shadow-sm ring-1 ring-brand-navy/10">
+              <QRCodeSVG
+                value={certVerifyUrl(v.verificationUuid)}
+                size={256}
+                level="M"
+                bgColor="#ffffff"
+                fgColor={BRAND.navy}
+                marginSize={2}
+                className="h-[clamp(2.2rem,7vw,4.2rem)] w-[clamp(2.2rem,7vw,4.2rem)]"
+              />
+            </div>
           </div>
         </div>
 

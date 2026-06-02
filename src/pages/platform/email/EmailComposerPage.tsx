@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { format, formatDistanceToNow } from "date-fns"
+import { format } from "date-fns"
 import { toast } from "sonner"
 import {
   Mail,
@@ -83,8 +83,10 @@ import {
 import type { EmailCampaignStatus } from "@/types/database.types"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import MailSidebar from "@/components/email/MailSidebar"
+import MailListRow from "@/components/email/MailListRow"
+import MailListToolbar from "@/components/email/MailListToolbar"
 import MailBody from "@/components/email/MailBody"
-import { cleanSnippet, mailPlainText, parseMailBody } from "@/lib/email/mime"
+import { mailPlainText, parseMailBody } from "@/lib/email/mime"
 import { sendChat } from "@/lib/queries/ai.queries"
 
 const AUDIENCES = [
@@ -217,6 +219,7 @@ export default function EmailComposerPage() {
   const [folder, setFolder] = useState<MailFolder>("inbox")
   const [category, setCategory] = useState<MailCategory | "all">("all")
   const [selected, setSelected] = useState<MailRow | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [syncing, setSyncing] = useState(false)
   const [composeOpen, setComposeOpen] = useState(false)
   const [prefill, setPrefill] = useState<ComposePrefill | null>(null)
@@ -225,6 +228,15 @@ export default function EmailComposerPage() {
   function openCompose(next: ComposePrefill | null) {
     setPrefill(next)
     setComposeOpen(true)
+  }
+
+  function toggleSelected(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
   }
 
   const list = useMailList(folder, category)
@@ -265,6 +277,7 @@ export default function EmailComposerPage() {
         onSelectFolder={(f) => {
           setFolder(f)
           setSelected(null)
+          setSelectedIds(new Set())
         }}
         category={category}
         onSelectCategory={(c) => setCategory(c)}
@@ -331,78 +344,66 @@ export default function EmailComposerPage() {
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-border">
-              {list.data!.map((m) => (
-                <li key={m.id}>
-                  <button
-                    type="button"
-                    onClick={() => openMessage(m)}
-                    className={cn(
-                      "flex w-full items-start gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-gold sm:px-5",
-                      !m.seen && m.folder === "inbox" && "bg-brand-navy/[0.03]",
-                    )}
-                  >
-                    {!m.seen && m.folder === "inbox" ? (
-                      <span
-                        aria-hidden
-                        className="mt-2 size-2 shrink-0 rounded-full bg-brand-gold"
-                      />
-                    ) : (
-                      <span aria-hidden className="mt-2 size-2 shrink-0" />
-                    )}
-                    <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-xs font-semibold text-brand-navy">
-                      {initials(m.from_name, m.from_addr || m.to_addr)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center justify-between gap-2">
-                        <span
-                          className={cn(
-                            "truncate text-sm text-foreground",
-                            !m.seen && m.folder === "inbox" && "font-semibold",
-                          )}
-                        >
-                          {folder === "sent" || folder === "draft"
-                            ? `To: ${m.to_addr || "(no recipient)"}`
-                            : m.from_name || m.from_addr || "Unknown sender"}
-                        </span>
-                        <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                          {m.important && (
-                            <Star className="size-3.5 fill-brand-gold text-brand-gold" />
-                          )}
-                          {safeDate(m.received_at)
-                            ? formatDistanceToNow(safeDate(m.received_at)!, {
-                                addSuffix: true,
-                              })
-                            : ""}
-                        </span>
-                      </span>
-                      <span className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-foreground">
-                        {m.has_attachments && (
-                          <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
-                        )}
-                        {m.subject || "(no subject)"}
-                      </span>
-                      <span className="mt-0.5 flex items-center gap-2">
-                        <span className="block flex-1 truncate text-xs text-muted-foreground">
-                          {cleanSnippet(m.body_text || m.body_html || m.snippet)}
-                        </span>
-                        {categoryMeta(m.category) && (
-                          <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
-                            <span
-                              className={cn(
-                                "size-2 rounded-full",
-                                categoryMeta(m.category)!.dot,
-                              )}
-                            />
-                            {categoryMeta(m.category)!.label}
-                          </span>
-                        )}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <>
+              <MailListToolbar
+                folder={folder}
+                rows={list.data!}
+                selectedIds={selectedIds}
+                onSelectAll={(checked) =>
+                  setSelectedIds(
+                    checked ? new Set(list.data!.map((m) => m.id)) : new Set(),
+                  )
+                }
+                onBulkTrash={() => {
+                  const ids = [...selectedIds]
+                  ids.forEach((id) => trash.mutate(id))
+                  setSelectedIds(new Set())
+                  if (ids.length) toast.success(`Moved ${ids.length} to Trash`)
+                }}
+                onBulkRestore={() => {
+                  const rows = list.data!.filter((m) => selectedIds.has(m.id))
+                  rows.forEach((m) =>
+                    restore.mutate({ id: m.id, isDraft: m.is_draft }),
+                  )
+                  setSelectedIds(new Set())
+                  if (rows.length) toast.success(`Restored ${rows.length}`)
+                }}
+                onBulkMarkSeen={() => {
+                  const ids = [...selectedIds]
+                  ids.forEach((id) => markSeen.mutate(id))
+                  setSelectedIds(new Set())
+                }}
+                onRefresh={() => list.refetch()}
+                refreshing={list.isFetching}
+              />
+              <div className="divide-y divide-border">
+                {list.data!.map((m) => (
+                  <MailListRow
+                    key={m.id}
+                    mail={m}
+                    folder={folder}
+                    selected={selectedIds.has(m.id)}
+                    onSelectedChange={(checked) => toggleSelected(m.id, checked)}
+                    onOpen={() => openMessage(m)}
+                    onToggleStar={() =>
+                      toggleImportant.mutate({ id: m.id, important: !m.important })
+                    }
+                    onTrash={() =>
+                      trash.mutate(m.id, {
+                        onSuccess: () => toast.success("Moved to Trash"),
+                      })
+                    }
+                    onRestore={() =>
+                      restore.mutate(
+                        { id: m.id, isDraft: m.is_draft },
+                        { onSuccess: () => toast.success("Restored") },
+                      )
+                    }
+                    onMarkSeen={() => markSeen.mutate(m.id)}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </Card>
 

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select"
 import { useUser } from "@/hooks/use-user"
 import { useAuth } from "@/hooks/use-auth"
+import StoreDashboard from "@/components/store/StoreDashboard"
 import {
   useProducts,
   useProductMutations,
@@ -123,7 +124,9 @@ export default function StoreCataloguePage() {
         <div>
           <h1 className="font-display text-3xl text-foreground">Store</h1>
           <p className="mt-1 text-muted-foreground">
-            Courses and bundles. Pay by bank transfer or PayPal.
+            {isAdmin
+              ? "Sales, orders and your course catalogue at a glance."
+              : "Browse courses and bundles, and track your orders."}
           </p>
         </div>
         {isAdmin && (
@@ -174,6 +177,18 @@ export default function StoreCataloguePage() {
           </Dialog>
         )}
       </div>
+
+      {/* Store overview dashboard */}
+      <StoreDashboard staff={isAdmin} buyerId={user?.id} />
+
+      {/* Catalogue list */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-display text-2xl text-foreground">Catalogue</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Courses and bundles. Pay by bank transfer or PayPal.
+          </p>
+        </div>
 
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -242,6 +257,7 @@ export default function StoreCataloguePage() {
           ))}
         </div>
       )}
+      </div>
 
       {/* Buy dialog */}
       <Dialog open={!!buy} onOpenChange={(o) => !o && resetBuy()}>

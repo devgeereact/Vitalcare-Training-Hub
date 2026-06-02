@@ -1,14 +1,7 @@
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
-import { AlertTriangle, Settings, UserRound } from "lucide-react"
+import { Settings, UserRound } from "lucide-react"
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/hooks/use-auth"
@@ -17,33 +10,22 @@ import {
   readProfileExtras,
   updateOwnProfile,
   useOrganisationName,
+  useProfileMetrics,
 } from "@/lib/queries/profile.queries"
 import ProfileHeader from "@/components/profile/ProfileHeader"
 import ProfileMetrics from "@/components/profile/ProfileMetrics"
-
-/** A single read-only label/value row. */
-function Field({
-  label,
-  value,
-}: {
-  label: string
-  value: string | null | undefined
-}): React.ReactElement {
-  return (
-    <div>
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-sm text-foreground">
-        {value?.trim() ? value : "Not set"}
-      </p>
-    </div>
-  )
-}
+import ProfileAbout from "@/components/profile/ProfileAbout"
+import ProfileContact from "@/components/profile/ProfileContact"
+import ProfileDepartments from "@/components/profile/ProfileDepartments"
+import ProfileActivity from "@/components/profile/ProfileActivity"
 
 export default function ProfilePage(): React.ReactElement {
   const { profile, refreshProfile, loading } = useAuth()
   const { role } = useUser()
   const extras = readProfileExtras(profile)
   const org = useOrganisationName(profile?.organisation_id)
+  // Headline chips reuse the same role-based metrics as the overview grid.
+  const metrics = useProfileMetrics(profile?.id, role)
 
   async function saveImage(
     field: "avatar_url" | "banner_url",
@@ -60,17 +42,20 @@ export default function ProfilePage(): React.ReactElement {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-5xl space-y-6">
         <Skeleton className="h-64 w-full rounded-2xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-72 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Skeleton className="h-72 w-full rounded-xl lg:col-span-1" />
+          <Skeleton className="h-72 w-full rounded-xl lg:col-span-2" />
+        </div>
       </div>
     )
   }
 
   if (!profile) {
     return (
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-5xl">
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-12 text-center">
           <UserRound className="size-8 text-muted-foreground" />
           <h1 className="font-display text-2xl text-foreground">
@@ -85,29 +70,32 @@ export default function ProfilePage(): React.ReactElement {
     )
   }
 
-  const emergencySet =
-    !!profile.emergency_contact_name?.trim() &&
-    !!profile.emergency_contact_phone?.trim()
+  const chips = metrics.data?.slice(0, 3)
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <ProfileHeader
         profile={profile}
         role={role}
         bannerUrl={extras.banner_url}
         jobTitle={extras.job_title}
         organisationName={org.data ?? null}
+        chips={chips}
         onAvatarUploaded={(url) => void saveImage("avatar_url", url)}
         onBannerUploaded={(url) => void saveImage("banner_url", url)}
       />
 
-      {/* Edit shortcut: all editing now lives in Settings. */}
+      {/* Single edit affordance: all editing lives in Settings. */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
         <p className="text-sm text-muted-foreground">
           This is how your profile appears to colleagues. Update your details in
           Settings.
         </p>
-        <Button asChild variant="outline">
+        <Button
+          asChild
+          variant="outline"
+          className="focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
+        >
           <Link to="/platform/settings">
             <Settings className="mr-2 size-4" />
             Edit in Settings
@@ -115,78 +103,24 @@ export default function ProfilePage(): React.ReactElement {
         </Button>
       </div>
 
-      <section>
-        <h2 className="mb-3 font-display text-xl text-foreground">
-          At a glance
-        </h2>
-        <ProfileMetrics userId={profile.id} role={role} />
-      </section>
-
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        {/* Read-only details */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your details</CardTitle>
-              <CardDescription>
-                Saved profile information. Read-only.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="First name" value={profile.first_name} />
-              <Field label="Last name" value={profile.last_name} />
-              <Field label="Job title" value={extras.job_title} />
-              <Field label="Phone" value={profile.phone} />
-            </CardContent>
-          </Card>
+        {/* Left column: About, Contact, Teams. */}
+        <div className="space-y-6 lg:col-span-1">
+          <ProfileAbout about={profile.about} />
+          <ProfileContact profile={profile} organisationName={org.data ?? null} />
+          <ProfileDepartments userId={profile.id} />
         </div>
 
-        <div className="space-y-6">
-          {/* About */}
-          <Card>
-            <CardHeader>
-              <CardTitle>About</CardTitle>
-              <CardDescription>A short bio for colleagues.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {profile.about?.trim() ? (
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                  {profile.about}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Add a short bio in Settings so colleagues know who you are.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+        {/* Main column: overview metrics + activity timeline. */}
+        <div className="space-y-6 lg:col-span-2">
+          <section>
+            <h2 className="mb-3 font-display text-xl text-foreground">
+              Overview
+            </h2>
+            <ProfileMetrics userId={profile.id} role={role} />
+          </section>
 
-          {/* Emergency contact */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Emergency contact</CardTitle>
-              <CardDescription>Who we call if needed.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {emergencySet ? (
-                <div className="space-y-1 text-sm">
-                  <p className="font-medium text-foreground">
-                    {profile.emergency_contact_name}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {profile.emergency_contact_phone}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm">
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
-                  <span className="text-foreground">
-                    No emergency contact on file. Add one in Settings.
-                  </span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ProfileActivity userId={profile.id} role={role} />
         </div>
       </div>
     </div>

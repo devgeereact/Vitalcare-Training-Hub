@@ -1,4 +1,7 @@
 import jsPDF from "jspdf"
+import { createElement } from "react"
+import { renderToStaticMarkup } from "react-dom/server"
+import { QRCodeSVG } from "qrcode.react"
 import { COMPANY, BRAND, LEADERSHIP } from "@/lib/constants"
 
 export interface CertificatePdfData {
@@ -40,6 +43,54 @@ export function certVerificationRef(uuid: string): { short: string; full: string
   const clean = uuid.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
   const tail = clean.slice(-4).padStart(4, "0")
   return { short: `VC-${tail}`, full: uuid }
+}
+
+/**
+ * The public verification URL encoded in the certificate QR code. Scanning it
+ * opens the verify page pre-filled with this certificate's identifier.
+ */
+export function certVerifyUrl(uuid: string): string {
+  return `https://${COMPANY.website}/verify?id=${uuid}`
+}
+
+/**
+ * Rasterise the verification QR code to a PNG data URL for embedding in the
+ * jsPDF certificate. The same QRCodeSVG component renders on screen, so the
+ * printed and on-screen QR codes are identical. Browser-only (uses Image and
+ * canvas); the certificate is always generated client-side.
+ */
+export async function certQrPngDataUrl(uuid: string, sizePx = 256): Promise<string> {
+  const [nr, ng, nb] = rgb(BRAND.navy)
+  const fg = `rgb(${nr},${ng},${nb})`
+  const svg = renderToStaticMarkup(
+    createElement(QRCodeSVG, {
+      value: certVerifyUrl(uuid),
+      size: sizePx,
+      level: "M",
+      bgColor: "#ffffff",
+      fgColor: fg,
+      marginSize: 2,
+    }),
+  )
+  const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  const img = new Image()
+  img.width = sizePx
+  img.height = sizePx
+  const loaded = new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve()
+    img.onerror = () => reject(new Error("Failed to render QR code image"))
+  })
+  img.src = svgUrl
+  await loaded
+  const canvas = document.createElement("canvas")
+  canvas.width = sizePx
+  canvas.height = sizePx
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Canvas 2D context unavailable")
+  ctx.fillStyle = "#ffffff"
+  ctx.fillRect(0, 0, sizePx, sizePx)
+  ctx.drawImage(img, 0, 0, sizePx, sizePx)
+  return canvas.toDataURL("image/png")
 }
 
 /** RGB triplet for a hex colour, used by jsPDF's numeric draw/text setters. */
@@ -97,7 +148,7 @@ function drawCorner(doc: jsPDF, x: number, y: number, sx: number, sy: number): v
 }
 
 /** Generate and download an A4-landscape Vitalcare certificate. */
-export function downloadCertificatePdf(data: CertificatePdfData): void {
+export async function downloadCertificatePdf(data: CertificatePdfData): Promise<void> {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
   const W = 297
   const H = 210
@@ -209,9 +260,9 @@ export function downloadCertificatePdf(data: CertificatePdfData): void {
   const signName = data.signatoryName?.trim() || LEADERSHIP.clinicalDirector.name
   const signRole = data.signatoryRole?.trim() || LEADERSHIP.clinicalDirector.role
   doc.setFont("times", "italic")
-  doc.setFontSize(20)
+  doc.setFontSize(15)
   doc.setTextColor(nr, ng, nb)
-  doc.text(signName, 42, 165)
+  doc.text(signName, 42, 166)
   doc.setDrawColor(nr, ng, nb)
   doc.setLineWidth(0.4)
   doc.line(40, 168, 110, 168)
@@ -224,18 +275,36 @@ export function downloadCertificatePdf(data: CertificatePdfData): void {
   doc.text(signRole, 40, 179)
   doc.text(COMPANY.legalName, 40, 184)
 
-  // Verification (right).
+  // Verification (right): scannable QR plus the certificate code and UUID.
+  // The QR encodes the verify URL so a scan opens the verification page
+  // pre-filled. No plain verify link is printed; the QR carries it instead.
   const ref = certVerificationRef(data.verificationUuid)
+  const qrSize = 22
+  const qrX = W - 19 - qrSize
+  const qrY = 150
+  try {
+    const qrPng = await certQrPngDataUrl(data.verificationUuid)
+    doc.addImage(qrPng, "PNG", qrX, qrY, qrSize, qrSize)
+  } catch (err) {
+    // If rasterising fails, fall back to a bordered placeholder so the layout
+    // stays intact; the printed code below still allows manual verification.
+    console.error("[downloadCertificatePdf:qr]", err)
+    doc.setDrawColor(nr, ng, nb)
+    doc.setLineWidth(0.3)
+    doc.rect(qrX, qrY, qrSize, qrSize)
+  }
+  // Code text sits to the left of the QR, right-aligned against it.
+  const codeRight = qrX - 4
   doc.setFont("helvetica", "bold")
   doc.setFontSize(11)
   doc.setTextColor(nr, ng, nb)
-  doc.text(ref.short, W - 40, 165, { align: "right" })
+  doc.text(ref.short, codeRight, 158, { align: "right" })
   doc.setFont("helvetica", "normal")
-  doc.setFontSize(8)
+  doc.setFontSize(7)
   doc.setTextColor(110, 110, 110)
-  doc.text(data.verificationUuid, W - 40, 170, { align: "right" })
-  doc.setFontSize(9)
-  doc.text(`Verify at ${COMPANY.website}/verify`, W - 40, 175, { align: "right" })
+  doc.text("Scan to verify", codeRight, 163, { align: "right" })
+  doc.setFontSize(6.5)
+  doc.text(data.verificationUuid, codeRight, 168, { align: "right" })
 
   // Footer.
   doc.setFontSize(8)

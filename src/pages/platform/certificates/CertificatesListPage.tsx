@@ -318,7 +318,7 @@ export default function CertificatesListPage() {
                           size="icon"
                           className="size-8"
                           aria-label="Download PDF"
-                          onClick={() =>
+                          onClick={() => {
                             downloadCertificatePdf({
                               learnerName: c.learnerName,
                               courseTitle: c.courseTitle,
@@ -334,8 +334,10 @@ export default function CertificatesListPage() {
                                 signatory || template.data?.signatoryName || undefined,
                               signatoryRole:
                                 signatoryRole || template.data?.signatoryRole || undefined,
-                            })
-                          }
+                            }).catch(() =>
+                              toast.error("Could not generate the certificate PDF."),
+                            )
+                          }}
                         >
                           <Download className="size-4" />
                         </Button>

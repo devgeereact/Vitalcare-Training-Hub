@@ -1,10 +1,10 @@
-import { Building2, ImageIcon, Mail, Phone, ShieldCheck } from "lucide-react"
+import { Building2, Mail, Phone, ShieldCheck } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { driveImageUrl } from "@/lib/drive-image"
 import { cn } from "@/lib/utils"
 import type { Profile, UserRole } from "@/types/database.types"
+import type { ProfileMetric } from "@/lib/queries/profile.queries"
 import ProfileImageUpload from "@/components/profile/ProfileImageUpload"
 
 interface Props {
@@ -13,6 +13,8 @@ interface Props {
   bannerUrl: string | null
   jobTitle: string | null
   organisationName: string | null
+  /** Up to three real headline metrics, shown as chips. Optional. */
+  chips?: ProfileMetric[]
   onAvatarUploaded: (url: string) => void
   onBannerUploaded: (url: string) => void
 }
@@ -31,36 +33,37 @@ export default function ProfileHeader({
   bannerUrl,
   jobTitle,
   organisationName,
+  chips,
   onAvatarUploaded,
   onBannerUploaded,
-}: Props) {
+}: Props): React.ReactElement {
   const name =
     [profile.first_name, profile.last_name].filter(Boolean).join(" ") ||
     profile.full_name ||
     "Your profile"
 
+  const avatarSrc = driveImageUrl(profile.avatar_url, 256)
+  const roleLabel = role?.replace(/_/g, " ") ?? "Member"
+
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      {/* Cover banner */}
-      <div
-        className={cn(
-          "relative h-36 sm:h-44",
-          !bannerUrl && "bg-gradient-to-br from-brand-navy via-brand-navy to-brand-navy-dark",
-        )}
-      >
+      {/* Cover banner: fixed aspect, object-cover, navy/gold gradient fallback. */}
+      <div className="relative aspect-[4/1] min-h-[120px] w-full overflow-hidden bg-brand-navy">
         {bannerUrl ? (
           <img
-            src={driveImageUrl(bannerUrl, 1200)}
+            src={driveImageUrl(bannerUrl, 1600)}
             alt=""
-            className="size-full object-cover"
+            className="absolute inset-0 size-full object-cover"
           />
         ) : (
-          <div className="flex size-full items-center justify-center text-white/20">
-            <ImageIcon className="size-8" />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-br from-brand-navy via-brand-navy-dark to-brand-navy"
+          >
+            <div className="absolute -right-8 -top-10 size-48 rounded-full bg-brand-gold/20 blur-2xl" />
+            <div className="absolute bottom-0 left-10 size-40 rounded-full bg-brand-gold/10 blur-2xl" />
           </div>
         )}
-        {/* Scrim so the avatar and the change-cover control stay legible. */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
         <div className="absolute right-3 top-3">
           <ProfileImageUpload
             folder="banners"
@@ -71,16 +74,24 @@ export default function ProfileHeader({
         </div>
       </div>
 
-      {/* Identity row */}
+      {/* Identity block. Name sits on the white card below the banner. */}
       <div className="px-5 pb-6 sm:px-7">
-        <div className="-mt-14 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
-          <div className="relative inline-block shrink-0">
-            <Avatar className="size-28 ring-4 ring-card shadow-md">
-              <AvatarImage src={driveImageUrl(profile.avatar_url, 240)} alt={name} />
-              <AvatarFallback className="bg-brand-navy/10 text-3xl font-semibold text-brand-navy">
-                {initials(name)}
-              </AvatarFallback>
-            </Avatar>
+        <div className="-mt-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+          {/* Avatar: fixed square, object-cover, rounded-full, ring. */}
+          <div className="relative shrink-0">
+            <div className="relative size-28 overflow-hidden rounded-full bg-brand-navy/5 ring-4 ring-card shadow-md">
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt={name}
+                  className="size-full object-cover"
+                />
+              ) : (
+                <div className="flex size-full items-center justify-center bg-brand-navy/10 text-3xl font-semibold text-brand-navy">
+                  {initials(name)}
+                </div>
+              )}
+            </div>
             <div className="absolute bottom-1 right-1">
               <ProfileImageUpload
                 folder="avatars"
@@ -92,15 +103,22 @@ export default function ProfileHeader({
           </div>
 
           <div className="min-w-0 flex-1 sm:pb-1.5">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-              <h1 className="font-display text-3xl leading-none text-foreground">{name}</h1>
-              <Badge variant="secondary" className="gap-1 capitalize">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1 className="font-display text-3xl leading-tight text-foreground sm:text-4xl">
+                {name}
+              </h1>
+              <Badge
+                variant="secondary"
+                className="gap-1 border-brand-navy/10 bg-brand-navy/5 capitalize text-brand-navy"
+              >
                 <ShieldCheck className="size-3" />
-                {role?.replace(/_/g, " ") ?? "Member"}
+                {roleLabel}
               </Badge>
             </div>
             {jobTitle && (
-              <p className="mt-1.5 text-sm font-medium text-muted-foreground">{jobTitle}</p>
+              <p className="mt-1 text-sm font-medium text-muted-foreground">
+                {jobTitle}
+              </p>
             )}
           </div>
         </div>
@@ -126,6 +144,27 @@ export default function ProfileHeader({
             </span>
           )}
         </div>
+
+        {/* Quick-stat chips from real metrics. */}
+        {chips && chips.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {chips.map((m) => (
+              <span
+                key={m.key}
+                className={cn(
+                  "inline-flex items-baseline gap-1.5 rounded-full border border-border",
+                  "bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground",
+                )}
+              >
+                <span className="font-display text-sm leading-none text-brand-navy">
+                  {m.value.toLocaleString("en-GB")}
+                  {m.suffix ?? ""}
+                </span>
+                {m.label}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

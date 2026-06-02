@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Megaphone, MessagesSquare, HelpCircle, Star } from "lucide-react"
+import { Bell, Megaphone, MessagesSquare, HelpCircle, Star } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -13,6 +13,12 @@ interface CommsNavItem {
 }
 
 const NAV_ITEMS: CommsNavItem[] = [
+  {
+    to: "/platform/notifications",
+    label: "Notifications",
+    icon: Bell,
+    matchPrefix: "/platform/notifications",
+  },
   {
     to: "/platform/announcements",
     label: "Announcements",

@@ -6,6 +6,8 @@ import {
   Award,
   Users,
   MessagesSquare,
+  Mail,
+  MessageSquare,
   Sparkles,
   Building2,
   ShoppingCart,
@@ -83,7 +85,6 @@ const data = {
         { title: "Sessions", url: "/platform/sessions" },
         { title: "Trainer Timetable", url: "/platform/timetable", roles: MGMT_T },
         { title: "Attendance Log", url: "/platform/attendance", roles: MGMT_T },
-        { title: "Holidays", url: "/platform/holidays" },
       ],
     },
     {
@@ -108,18 +109,20 @@ const data = {
       ],
     },
     {
+      title: "Email",
+      url: "/platform/email",
+      icon: Mail,
+      roles: STAFF,
+    },
+    {
+      title: "Chat",
+      url: "/platform/messages",
+      icon: MessageSquare,
+    },
+    {
       title: "Communication",
-      url: "#",
+      url: "/platform/announcements",
       icon: MessagesSquare,
-      items: [
-        { title: "Email", url: "/platform/email", roles: STAFF },
-        { title: "Chat", url: "/platform/messages" },
-        { title: "Announcements", url: "/platform/announcements" },
-        { title: "Notifications", url: "/platform/notifications" },
-        { title: "Forum", url: "/platform/forums" },
-        { title: "Q&A", url: "/platform/qa" },
-        { title: "Feedback", url: "/platform/feedback/results" },
-      ],
     },
     {
       title: "Store",

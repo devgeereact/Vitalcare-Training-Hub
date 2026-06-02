@@ -8,7 +8,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -20,7 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, BadgeCheckIcon, Settings as SettingsIcon, BellIcon, LogOutIcon } from "lucide-react"
+import { ChevronsUpDownIcon, BadgeCheckIcon, LogOutIcon } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -118,24 +117,12 @@ const handleSignOut = async () => {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="my-2"/>
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/profile")}>
-                <BadgeCheckIcon className="!size-5" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/settings")}>
-                <SettingsIcon className="!size-5" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/notifications")}>
-                <BellIcon className="!size-5" />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator className="my-2"/>
+            <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/profile")}>
+              <BadgeCheckIcon className="!size-5" />
+              View profile
+            </DropdownMenuItem>
             <DropdownMenuItem className="gap-2 h-9" onClick={handleSignOut}>
-              <LogOutIcon className="!size-5"
-              />
+              <LogOutIcon className="!size-5" />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -9,7 +9,6 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { MailFolder, MailCategory, MailCounts } from "@/lib/queries/email.queries"
 
@@ -26,7 +25,7 @@ const FOLDERS: Folder[] = [
   { key: "inbox", label: "Inbox", icon: Inbox },
   { key: "sent", label: "Sent", icon: Send },
   { key: "important", label: "Important", icon: Star },
-  { key: "draft", label: "Draft", icon: FileText },
+  { key: "draft", label: "Drafts", icon: FileText },
   { key: "trash", label: "Trash", icon: Trash2 },
 ]
 
@@ -56,20 +55,26 @@ export default function MailSidebar({
   onCompose,
 }: MailSidebarProps) {
   return (
-    <aside className="w-full shrink-0 space-y-4 md:w-60">
+    <aside className="w-full shrink-0 space-y-3 md:w-60">
       <Button
         onClick={onCompose}
-        className={cn("h-11 w-full justify-center gap-2 text-sm font-semibold", FOCUS_RING)}
+        className={cn(
+          "h-12 w-full justify-center gap-2 rounded-full bg-brand-navy text-sm font-semibold text-white shadow-sm hover:bg-brand-navy-dark",
+          FOCUS_RING,
+        )}
       >
         <PenSquare className="size-4" />
         Compose
       </Button>
 
-      <nav className="rounded-xl border border-border bg-card p-2">
+      <nav className="rounded-xl border border-border bg-card p-1.5">
         <ul className="space-y-0.5">
           {FOLDERS.map((f) => {
             const isActive = f.key === active
             const count = counts?.[f.key]
+            // The Inbox count is unread mail, so it carries a gold accent; the
+            // other folders show a plain total in muted grey.
+            const accent = f.key === "inbox" || f.key === "important"
             return (
               <li key={f.key}>
                 <button
@@ -77,10 +82,10 @@ export default function MailSidebar({
                   onClick={() => onSelectFolder(f.key)}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    "flex w-full items-center gap-3 rounded-full px-3 py-2 text-sm transition-colors",
                     isActive
-                      ? "bg-brand-navy/10 text-brand-navy"
-                      : "text-foreground hover:bg-muted",
+                      ? "bg-brand-navy/10 font-semibold text-brand-navy"
+                      : "font-medium text-foreground hover:bg-muted",
                     FOCUS_RING,
                   )}
                 >
@@ -92,15 +97,18 @@ export default function MailSidebar({
                   />
                   <span className="flex-1 truncate text-left">{f.label}</span>
                   {count != null && count > 0 && (
-                    <Badge
-                      variant="secondary"
+                    <span
                       className={cn(
-                        "h-5 min-w-5 justify-center px-1.5 text-xs",
-                        isActive ? "bg-brand-navy text-white" : "",
+                        "shrink-0 text-xs tabular-nums",
+                        isActive
+                          ? "font-semibold text-brand-navy"
+                          : accent
+                            ? "font-semibold text-brand-navy"
+                            : "text-muted-foreground",
                       )}
                     >
                       {count}
-                    </Badge>
+                    </span>
                   )}
                 </button>
               </li>
@@ -109,8 +117,8 @@ export default function MailSidebar({
         </ul>
       </nav>
 
-      <div className="rounded-xl border border-border bg-card p-3">
-        <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="rounded-xl border border-border bg-card p-2">
+        <p className="px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Categories
         </p>
         <ul className="space-y-0.5">
