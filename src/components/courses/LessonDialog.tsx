@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import MediaUpload from "@/components/courses/MediaUpload"
 import {
   lessonFormSchema,
   type LessonFormValues,
@@ -164,10 +165,17 @@ export default function LessonDialog({
                 name="video_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Video URL</FormLabel>
+                    <FormLabel>Video</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://…" {...field} />
+                      <Input placeholder="https://… (or upload below)" {...field} />
                     </FormControl>
+                    <MediaUpload
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      variant="file"
+                      accept="video/*"
+                      folder="lessons"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -179,10 +187,17 @@ export default function LessonDialog({
                 name="document_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Document URL</FormLabel>
+                    <FormLabel>Document</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://…" {...field} />
+                      <Input placeholder="https://… (or upload below)" {...field} />
                     </FormControl>
+                    <MediaUpload
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      variant="file"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx"
+                      folder="lessons"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -194,10 +209,17 @@ export default function LessonDialog({
                 name="scorm_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{type.toUpperCase()} URL</FormLabel>
+                    <FormLabel>{type.toUpperCase()} package</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://…" {...field} />
+                      <Input placeholder="https://… (or upload a .zip below)" {...field} />
                     </FormControl>
+                    <MediaUpload
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      variant="file"
+                      accept=".zip"
+                      folder="lessons"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}

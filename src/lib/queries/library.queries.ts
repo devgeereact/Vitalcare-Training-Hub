@@ -9,6 +9,7 @@ export interface LibraryResource {
   durationMins: number
   isCstfAligned: boolean
   categoryName: string
+  thumbnailUrl: string | null
 }
 
 /** Published courses surfaced as a browsable learning-resource library. */
@@ -20,7 +21,7 @@ export function useLibrary() {
       const { data, error } = await supabase
         .from("courses")
         .select(
-          "id, title, summary, cpd_hours, duration_mins, is_cstf_aligned, category_id",
+          "id, title, summary, cpd_hours, duration_mins, is_cstf_aligned, category_id, thumbnail_url",
         )
         .eq("is_published", true)
         .is("deleted_at", null)
@@ -47,6 +48,7 @@ export function useLibrary() {
         durationMins: r.duration_mins,
         isCstfAligned: r.is_cstf_aligned,
         categoryName: r.category_id ? nameById.get(r.category_id) ?? "General" : "General",
+        thumbnailUrl: r.thumbnail_url ?? null,
       }))
     },
   })

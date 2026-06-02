@@ -92,6 +92,7 @@ export type Course = Timestamps & {
   cpd_hours: number
   duration_mins: number
   is_published: boolean
+  thumbnail_url: string | null
   organisation_id: string | null
   created_by: string | null
 }

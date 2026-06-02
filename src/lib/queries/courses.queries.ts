@@ -52,13 +52,16 @@ export interface CourseRow {
   cpdHours: number
   status: "Published" | "Draft"
   updatedAt: string
+  thumbnailUrl: string | null
 }
 
 export async function getCourses(): Promise<CourseRow[]> {
   const [courses, categories] = await Promise.all([
     supabase
       .from("courses")
-      .select("id, title, category_id, is_cstf_aligned, cpd_hours, is_published, updated_at")
+      .select(
+        "id, title, category_id, is_cstf_aligned, cpd_hours, is_published, updated_at, thumbnail_url",
+      )
       .is("deleted_at", null)
       .order("updated_at", { ascending: false }),
     getCategories(),
@@ -76,6 +79,7 @@ export async function getCourses(): Promise<CourseRow[]> {
     cpdHours: c.cpd_hours,
     status: c.is_published ? "Published" : "Draft",
     updatedAt: c.updated_at,
+    thumbnailUrl: c.thumbnail_url ?? null,
   }))
 }
 
@@ -158,6 +162,7 @@ function toCourseRow(values: CourseFormValues) {
     cpd_hours: values.cpd_hours,
     duration_mins: values.duration_mins,
     is_published: values.is_published,
+    thumbnail_url: values.thumbnail_url || null,
   }
 }
 

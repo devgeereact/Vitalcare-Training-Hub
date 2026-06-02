@@ -80,7 +80,14 @@ export default function LibraryPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((r) => (
-            <Card key={r.id} className="flex flex-col">
+            <Card key={r.id} className="flex flex-col overflow-hidden">
+              {r.thumbnailUrl && (
+                <img
+                  src={r.thumbnailUrl}
+                  alt={r.title}
+                  className="aspect-video w-full object-cover"
+                />
+              )}
               <CardHeader className="pb-2">
                 <Badge variant="secondary" className="w-fit font-normal">
                   {r.categoryName}

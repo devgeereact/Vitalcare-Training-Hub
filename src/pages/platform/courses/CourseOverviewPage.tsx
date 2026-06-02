@@ -67,7 +67,14 @@ export default function CourseOverviewPage() {
         </Link>
       </Button>
 
-      <Card>
+      <Card className="overflow-hidden">
+        {c.thumbnail_url && (
+          <img
+            src={c.thumbnail_url}
+            alt={c.title}
+            className="aspect-[21/9] w-full object-cover"
+          />
+        )}
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <CardTitle className="font-display text-2xl">{c.title}</CardTitle>

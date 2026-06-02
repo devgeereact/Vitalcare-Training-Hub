@@ -37,6 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import RichTextEditor from "@/components/courses/RichTextEditor"
 import AiAssistButton from "@/components/ai/AiAssistButton"
 import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
+import MediaUpload from "@/components/courses/MediaUpload"
 import {
   courseFormSchema,
   type CourseFormValues,
@@ -57,6 +58,7 @@ const EMPTY: CourseFormValues = {
   cpd_hours: 0,
   duration_mins: 0,
   is_published: false,
+  thumbnail_url: "",
 }
 
 export default function CourseBuilderPage() {
@@ -86,6 +88,7 @@ export default function CourseBuilderPage() {
         cpd_hours: course.data.cpd_hours,
         duration_mins: course.data.duration_mins,
         is_published: course.data.is_published,
+        thumbnail_url: course.data.thumbnail_url ?? "",
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -156,6 +159,25 @@ export default function CourseBuilderPage() {
                     <FormLabel>Title</FormLabel>
                     <FormControl>
                       <Input placeholder="Moving and Handling" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="thumbnail_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Featured image</FormLabel>
+                    <FormControl>
+                      <MediaUpload
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        variant="image"
+                        accept="image/*"
+                        folder="courses"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

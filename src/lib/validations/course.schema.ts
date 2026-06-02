@@ -9,6 +9,7 @@ export const courseFormSchema = z.object({
   cpd_hours: z.coerce.number().min(0, "Cannot be negative").max(999),
   duration_mins: z.coerce.number().min(0, "Cannot be negative").max(100000),
   is_published: z.boolean(),
+  thumbnail_url: z.string().optional().or(z.literal("")),
 })
 
 export const moduleFormSchema = z.object({
