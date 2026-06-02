@@ -259,6 +259,22 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type LearningPath = Timestamps & {
+  id: string
+  name: string
+  description: string | null
+  thumbnail_url: string | null
+  is_published: boolean
+  created_by: string | null
+}
+
+export type LearningPathCourse = {
+  id: string
+  path_id: string
+  course_id: string
+  position: number
+}
+
 export type CourseReview = {
   id: string
   course_id: string
@@ -519,6 +535,14 @@ export type Database = {
         Row: EmailCampaign
         Insert: Partial<EmailCampaign> & Pick<EmailCampaign, "subject" | "message">
         Update: Partial<EmailCampaign>
+        Relationships: []
+      }
+      learning_paths: TableShape<LearningPath, "name">
+      learning_path_courses: {
+        Row: LearningPathCourse
+        Insert: Partial<LearningPathCourse> &
+          Pick<LearningPathCourse, "path_id" | "course_id">
+        Update: Partial<LearningPathCourse>
         Relationships: []
       }
       course_reviews: {

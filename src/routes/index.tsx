@@ -41,6 +41,7 @@ import DepartmentsPage from "@/pages/platform/departments/DepartmentsPage"
 import VirtualTrainingPage from "@/pages/platform/virtual/VirtualTrainingPage"
 import LibraryPage from "@/pages/platform/library/LibraryPage"
 import LearningPathsPage from "@/pages/platform/courses/LearningPathsPage"
+import LearningPathDetailPage from "@/pages/platform/courses/LearningPathDetailPage"
 import CohortsPage from "@/pages/platform/cohorts/CohortsPage"
 import ForumsPage from "@/pages/platform/forums/ForumsPage"
 import HolidaysPage from "@/pages/platform/sessions/HolidaysPage"
@@ -524,6 +525,7 @@ export const router = createBrowserRouter (
         // 📚 LEARNING (extended)
         { path: "library", element: <LibraryPage /> },
         { path: "courses/paths", element: <LearningPathsPage /> },
+        { path: "courses/paths/:id", element: <LearningPathDetailPage /> },
         {
           path: "enrolments",
           element: (
