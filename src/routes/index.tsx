@@ -52,6 +52,7 @@ import QaWallPage from "@/pages/platform/qa/QaWallPage"
 import FeedbackPage from "@/pages/platform/feedback/FeedbackPage"
 import FeedbackResultsPage from "@/pages/platform/feedback/FeedbackResultsPage"
 import EmailComposerPage from "@/pages/platform/email/EmailComposerPage"
+import CohortDetailPage from "@/pages/platform/cohorts/CohortDetailPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -546,6 +547,14 @@ export const router = createBrowserRouter (
           element: (
             <RoleGuard roles={["admin", "super_admin", "manager"]}>
               <CohortsPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "cohorts/:id",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <CohortDetailPage />
             </RoleGuard>
           ),
         },

@@ -258,6 +258,21 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type Cohort = Timestamps & {
+  id: string
+  name: string
+  description: string | null
+  organisation_id: string | null
+  created_by: string | null
+}
+
+export type CohortMember = {
+  id: string
+  cohort_id: string
+  learner_id: string
+  created_at: string
+}
+
 export type EmailCampaignStatus =
   | "scheduled"
   | "sending"
@@ -478,6 +493,13 @@ export type Database = {
         Row: EmailCampaign
         Insert: Partial<EmailCampaign> & Pick<EmailCampaign, "subject" | "message">
         Update: Partial<EmailCampaign>
+        Relationships: []
+      }
+      cohorts: TableShape<Cohort, "name">
+      cohort_members: {
+        Row: CohortMember
+        Insert: Partial<CohortMember> & Pick<CohortMember, "cohort_id" | "learner_id">
+        Update: Partial<CohortMember>
         Relationships: []
       }
     }
