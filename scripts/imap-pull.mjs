@@ -20,10 +20,22 @@ const {
   SUPABASE_SERVICE_ROLE_KEY,
 } = process.env
 
-if (!IMAP_HOST || !IMAP_USER || !IMAP_PASS || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error("Missing env vars")
+const missing = Object.entries({
+  IMAP_HOST,
+  IMAP_USER,
+  IMAP_PASS,
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY,
+})
+  .filter(([, v]) => !v)
+  .map(([k]) => k)
+if (missing.length) {
+  console.error("Missing secrets:", missing.join(", "))
   process.exit(1)
 }
+console.log(
+  `Config: host=${IMAP_HOST} port=${IMAP_PORT} user=${IMAP_USER} supabase=${(SUPABASE_URL || "").slice(0, 30)}`,
+)
 
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
