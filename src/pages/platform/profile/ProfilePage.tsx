@@ -4,6 +4,7 @@ import { AlertTriangle, UserRound } from "lucide-react"
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -81,14 +82,14 @@ export default function ProfilePage() {
         onBannerUploaded={(url) => void saveImage("banner_url", url)}
       />
 
-      <div>
+      <section>
         <h2 className="mb-3 font-display text-xl text-foreground">
           At a glance
         </h2>
         <ProfileMetrics userId={profile.id} role={role} />
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <ProfileDetailsCard />
         </div>
@@ -97,7 +98,8 @@ export default function ProfilePage() {
           {/* About */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">About</CardTitle>
+              <CardTitle>About</CardTitle>
+              <CardDescription>A short bio for colleagues.</CardDescription>
             </CardHeader>
             <CardContent>
               {profile.about?.trim() ? (
@@ -116,7 +118,8 @@ export default function ProfilePage() {
           {/* Emergency contact */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Emergency contact</CardTitle>
+              <CardTitle>Emergency contact</CardTitle>
+              <CardDescription>Who we call if needed.</CardDescription>
             </CardHeader>
             <CardContent>
               {emergencySet ? (

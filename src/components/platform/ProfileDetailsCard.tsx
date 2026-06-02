@@ -101,7 +101,7 @@ export default function ProfileDetailsCard() {
           </div>
           <Textarea rows={3} value={about} onChange={(e) => setAbout(e.target.value)} />
         </div>
-        <div className="sm:col-span-2 flex justify-end">
+        <div className="sm:col-span-2 flex justify-end border-t border-border pt-4">
           <Button onClick={save} disabled={saving}>
             {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
             Save details

@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   ChevronRight,
   KeyRound,
-  Plug,
   UserRound,
   Video,
 } from "lucide-react"
@@ -27,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import MailSettingsCard from "@/components/platform/MailSettingsCard"
+import SettingsShell from "@/components/settings/SettingsShell"
 
 const VITALCARE_THEMES = [
   {
@@ -142,26 +142,21 @@ export default function SettingsPage() {
     "Your profile"
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-foreground">Settings</h1>
-        <p className="mt-1 text-muted-foreground">
-          Manage your account, integrations and how the platform looks.
-        </p>
-      </div>
-
+    <SettingsShell>
       {/* Account shortcuts */}
       <Card>
         <CardHeader>
           <CardTitle>Account</CardTitle>
-          <CardDescription>Your profile, password and links.</CardDescription>
+          <CardDescription>
+            Your profile and sign-in password.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Link
             to="/platform/profile"
             className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-brand-gold/60 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
           >
-            <span className="flex size-10 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
               <UserRound className="size-5" />
             </span>
             <span className="min-w-0 flex-1">
@@ -170,14 +165,14 @@ export default function SettingsPage() {
                 {profile?.email ?? "View and edit your profile"}
               </span>
             </span>
-            <ChevronRight className="size-4 text-muted-foreground" />
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
           </Link>
 
           <Link
             to="/platform/account/password"
             className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-brand-gold/60 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
           >
-            <span className="flex size-10 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
               <KeyRound className="size-5" />
             </span>
             <span className="min-w-0 flex-1">
@@ -186,26 +181,8 @@ export default function SettingsPage() {
                 Change your sign-in password
               </span>
             </span>
-            <ChevronRight className="size-4 text-muted-foreground" />
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
           </Link>
-
-          {isAdmin && (
-            <Link
-              to="/platform/settings/integrations"
-              className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-brand-gold/60 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
-            >
-              <span className="flex size-10 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
-                <Plug className="size-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium">Integrations</span>
-                <span className="block text-xs text-muted-foreground">
-                  Manage connected services
-                </span>
-              </span>
-              <ChevronRight className="size-4 text-muted-foreground" />
-            </Link>
-          )}
         </CardContent>
       </Card>
 
@@ -253,7 +230,7 @@ export default function SettingsPage() {
             Choose what you hear about. Saved on this device.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-1">
+        <CardContent className="space-y-2">
           <NotifRow
             id="notif-sessions"
             title="Session reminders"
@@ -327,7 +304,7 @@ export default function SettingsPage() {
       )}
 
       <MailSettingsCard />
-    </div>
+    </SettingsShell>
   )
 }
 
@@ -341,7 +318,7 @@ interface NotifRowProps {
 
 function NotifRow({ id, title, description, checked, onChange }: NotifRowProps) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg p-2">
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-3">
       <div className="min-w-0">
         <Label htmlFor={id} className="text-sm font-medium">
           {title}

@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { supabase } from "@/lib/supabase/client"
+import SettingsShell from "@/components/settings/SettingsShell"
 
 interface KeyStatus {
   name: string
@@ -143,14 +144,7 @@ export default function IntegrationsPage() {
   const reload = () => qc.invalidateQueries({ queryKey: ["integrations", "list"] })
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-foreground">Integrations</h1>
-        <p className="mt-1 text-muted-foreground">
-          Connect external services by adding their API keys and secrets.
-        </p>
-      </div>
-
+    <SettingsShell description="Connect external services by adding their API keys and secrets.">
       <Card className="border-warning/40 bg-warning/5">
         <CardContent className="flex items-start gap-3 p-4 text-sm">
           <ShieldAlert className="mt-0.5 size-5 shrink-0 text-warning" />
@@ -218,6 +212,6 @@ export default function IntegrationsPage() {
           })}
         </div>
       )}
-    </div>
+    </SettingsShell>
   )
 }

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase/client"
+import SettingsShell from "@/components/settings/SettingsShell"
 
 export default function PasswordSettingsPage() {
   const [pw, setPw] = useState("")
@@ -42,12 +43,7 @@ export default function PasswordSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-foreground">Password</h1>
-        <p className="mt-1 text-muted-foreground">Change the password for your account.</p>
-      </div>
-
+    <SettingsShell description="Change the password for your account.">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -56,26 +52,28 @@ export default function PasswordSettingsPage() {
           <CardDescription>At least 8 characters.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label className="mb-1.5 block text-xs">New password</Label>
-            <Input
-              type="password"
-              autoComplete="new-password"
-              value={pw}
-              onChange={(e) => setPw(e.target.value)}
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <Label className="mb-1.5 block text-xs">New password</Label>
+              <Input
+                type="password"
+                autoComplete="new-password"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label className="mb-1.5 block text-xs">Confirm new password</Label>
+              <Input
+                type="password"
+                autoComplete="new-password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && save()}
+              />
+            </div>
           </div>
-          <div>
-            <Label className="mb-1.5 block text-xs">Confirm new password</Label>
-            <Input
-              type="password"
-              autoComplete="new-password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && save()}
-            />
-          </div>
-          <div className="flex justify-end">
+          <div className="flex justify-end border-t border-border pt-4">
             <Button onClick={save} disabled={saving}>
               {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
               Update password
@@ -83,6 +81,6 @@ export default function PasswordSettingsPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </SettingsShell>
   )
 }
