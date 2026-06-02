@@ -40,12 +40,12 @@ export default function ProfileHeader({
     "Your profile"
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       {/* Cover banner */}
       <div
         className={cn(
-          "relative h-40 sm:h-48",
-          !bannerUrl && "bg-gradient-to-br from-brand-navy to-brand-navy-dark",
+          "relative h-36 sm:h-44",
+          !bannerUrl && "bg-gradient-to-br from-brand-navy via-brand-navy to-brand-navy-dark",
         )}
       >
         {bannerUrl ? (
@@ -55,68 +55,60 @@ export default function ProfileHeader({
             className="size-full object-cover"
           />
         ) : (
-          <div className="flex size-full items-center justify-center text-white/30">
+          <div className="flex size-full items-center justify-center text-white/20">
             <ImageIcon className="size-8" />
           </div>
         )}
+        {/* Scrim so the avatar and the change-cover control stay legible. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
         <div className="absolute right-3 top-3">
           <ProfileImageUpload
             folder="banners"
             label="Change cover image"
             onUploaded={onBannerUploaded}
-            className="size-9 bg-black/50 hover:bg-black/70"
+            className="size-9 bg-black/40 text-white hover:bg-black/60"
           />
         </div>
       </div>
 
       {/* Identity row */}
-      <div className="px-5 pb-5 sm:px-7">
-        <div className="-mt-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-5">
-          <div className="relative inline-block">
-            <Avatar className="size-24 border-4 border-card shadow-sm">
-              <AvatarImage
-                src={driveImageUrl(profile.avatar_url, 240)}
-                alt={name}
-              />
-              <AvatarFallback className="bg-brand-navy/10 text-2xl font-semibold text-brand-navy">
+      <div className="px-5 pb-6 sm:px-7">
+        <div className="-mt-14 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+          <div className="relative inline-block shrink-0">
+            <Avatar className="size-28 ring-4 ring-card shadow-md">
+              <AvatarImage src={driveImageUrl(profile.avatar_url, 240)} alt={name} />
+              <AvatarFallback className="bg-brand-navy/10 text-3xl font-semibold text-brand-navy">
                 {initials(name)}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute -bottom-1 -right-1">
+            <div className="absolute bottom-1 right-1">
               <ProfileImageUpload
                 folder="avatars"
                 label="Change profile picture"
                 onUploaded={onAvatarUploaded}
-                className="size-8 border-2 border-card"
+                className="size-8 border-2 border-card shadow-sm"
               />
             </div>
           </div>
 
-          <div className="min-w-0 flex-1 pb-1">
-            <h1 className="font-display text-3xl leading-tight text-foreground">
-              {name}
-            </h1>
-            {jobTitle && (
-              <p className="mt-0.5 text-sm font-medium text-muted-foreground">
-                {jobTitle}
-              </p>
-            )}
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Badge
-                variant="secondary"
-                className="gap-1 capitalize"
-              >
+          <div className="min-w-0 flex-1 sm:pb-1.5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <h1 className="font-display text-3xl leading-none text-foreground">{name}</h1>
+              <Badge variant="secondary" className="gap-1 capitalize">
                 <ShieldCheck className="size-3" />
-                {role?.replace("_", " ") ?? "Member"}
+                {role?.replace(/_/g, " ") ?? "Member"}
               </Badge>
             </div>
+            {jobTitle && (
+              <p className="mt-1.5 text-sm font-medium text-muted-foreground">{jobTitle}</p>
+            )}
           </div>
         </div>
 
         {/* Contact line */}
-        <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+        <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-4 text-sm text-muted-foreground">
           {profile.email && (
-            <span className="flex items-center gap-1.5">
+            <span className="flex min-w-0 items-center gap-1.5">
               <Mail className="size-4 shrink-0 text-brand-navy" />
               <span className="truncate">{profile.email}</span>
             </span>
