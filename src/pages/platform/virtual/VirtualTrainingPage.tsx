@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { format, isPast } from "date-fns"
-import { Video, AlertCircle, Clock, Plus } from "lucide-react"
+import { Video, AlertCircle, Clock, Plus, PlayCircle } from "lucide-react"
 
 import {
   Card,
@@ -117,7 +117,14 @@ export default function VirtualTrainingPage() {
                         </a>
                       </Button>
                     )}
-                    {!s.meet_url && !s.zoom_join_url && (
+                    {s.recording_url && (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={s.recording_url} target="_blank" rel="noopener noreferrer">
+                          <PlayCircle className="mr-1.5 size-4" /> Watch recording
+                        </a>
+                      </Button>
+                    )}
+                    {!s.meet_url && !s.zoom_join_url && !s.recording_url && (
                       <span className="text-xs text-muted-foreground">
                         No meeting link yet.
                       </span>

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { QRCodeSVG } from "qrcode.react"
 import { format } from "date-fns"
@@ -13,7 +13,10 @@ import {
   UserPlus,
   AlertCircle,
   Users,
+  Radio,
+  PlayCircle,
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
 
 import {
   Card,
@@ -38,6 +41,7 @@ import {
   useRoster,
   useRosterMutations,
   useDeleteSession,
+  useSetSessionRecording,
 } from "@/lib/queries/sessions.queries"
 import { useLearners } from "@/lib/queries/learners.queries"
 import type { AttendanceStatus } from "@/types/database.types"
@@ -57,6 +61,8 @@ export default function SessionDetailPage() {
   const learners = useLearners()
   const mut = useRosterMutations(id)
   const del = useDeleteSession()
+  const setRec = useSetSessionRecording(id)
+  const recordingRef = useRef("")
   const [addLearner, setAddLearner] = useState("")
 
   const bookedIds = new Set((roster.data ?? []).map((r) => r.learnerId))
@@ -87,6 +93,7 @@ export default function SessionDetailPage() {
   }
 
   const s = session.data!
+  recordingRef.current = recordingRef.current || s.recording_url || ""
 
   return (
     <div className="space-y-6">
@@ -158,6 +165,43 @@ export default function SessionDetailPage() {
                 </a>
               </Button>
             )}
+            {s.zoom_start_url && (
+              <Button asChild size="sm" variant="outline">
+                <a href={s.zoom_start_url} target="_blank" rel="noopener noreferrer">
+                  <Radio className="mr-1.5 size-4" /> Launch as host
+                </a>
+              </Button>
+            )}
+            {s.recording_url && (
+              <Button asChild size="sm" variant="outline">
+                <a href={s.recording_url} target="_blank" rel="noopener noreferrer">
+                  <PlayCircle className="mr-1.5 size-4" /> Watch recording
+                </a>
+              </Button>
+            )}
+          </div>
+
+          {/* Recording: staff paste the link so absentees can replay. */}
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <Input
+              placeholder="Recording link (Zoom/Drive/YouTube)…"
+              defaultValue={s.recording_url ?? ""}
+              onChange={(e) => (recordingRef.current = e.target.value)}
+              className="max-w-xs"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={setRec.isPending}
+              onClick={() =>
+                setRec
+                  .mutateAsync(recordingRef.current)
+                  .then(() => toast.success("Recording saved"))
+                  .catch(() => toast.error("Could not save"))
+              }
+            >
+              Save recording
+            </Button>
           </div>
         </CardContent>
       </Card>

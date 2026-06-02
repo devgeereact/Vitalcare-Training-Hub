@@ -9,6 +9,7 @@ import {
   Video,
   QrCode,
   Loader2,
+  PlayCircle,
 } from "lucide-react"
 
 import {
@@ -126,6 +127,13 @@ export default function MySessionsPage() {
                           rel="noopener noreferrer"
                         >
                           <Video className="mr-1.5 size-4" /> Join
+                        </a>
+                      </Button>
+                    )}
+                    {s.recordingUrl && (
+                      <Button asChild variant="outline" size="sm">
+                        <a href={s.recordingUrl} target="_blank" rel="noopener noreferrer">
+                          <PlayCircle className="mr-1.5 size-4" /> Watch recording
                         </a>
                       </Button>
                     )}

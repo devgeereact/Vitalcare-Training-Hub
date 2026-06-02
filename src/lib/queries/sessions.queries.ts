@@ -150,6 +150,7 @@ export function useCreateSession() {
           if (!zErr && zoom?.join_url) {
             patch.zoom_meeting_id = zoom.id
             patch.zoom_join_url = zoom.join_url
+            if (zoom.start_url) patch.zoom_start_url = zoom.start_url
             return true
           }
         } catch (zoomErr) {
@@ -211,6 +212,20 @@ export function useCreateSession() {
       qc.invalidateQueries({ queryKey: sessionsKeys.list() })
       qc.invalidateQueries({ queryKey: sessionsKeys.calendar() })
     },
+  })
+}
+
+export function useSetSessionRecording(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (url: string) => {
+      const { error } = await supabase
+        .from("training_sessions")
+        .update({ recording_url: url.trim() || null })
+        .eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: sessionsKeys.detail(id) }),
   })
 }
 

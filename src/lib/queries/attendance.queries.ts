@@ -10,6 +10,7 @@ export interface MySession {
   isVirtual: boolean
   meetUrl: string | null
   zoomUrl: string | null
+  recordingUrl: string | null
   attendance: AttendanceStatus | null
 }
 
@@ -53,6 +54,7 @@ export function useMyBookedSessions(learnerId: string | undefined) {
         isVirtual: s.is_virtual,
         meetUrl: s.meet_url,
         zoomUrl: s.zoom_join_url,
+        recordingUrl: s.recording_url,
         attendance: statusBySession.get(s.id) ?? null,
       }))
     },
