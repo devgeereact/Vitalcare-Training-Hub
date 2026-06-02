@@ -7,7 +7,7 @@ const TABS = [
   { label: "Courses", to: "/platform/courses", icon: BookOpen },
   { label: "Calendar", to: "/platform/calendar", icon: CalendarDays },
   { label: "Alerts", to: "/platform/notifications", icon: Bell },
-  { label: "Profile", to: "/platform/settings", icon: User },
+  { label: "Profile", to: "/platform/profile", icon: User },
 ]
 
 export default function BottomTabBar() {

@@ -23,7 +23,6 @@ import MailSettingsCard from "@/components/platform/MailSettingsCard"
 const VITALCARE_THEMES = [
   { id: "vitalcare-default", label: "Vitalcare", preview: "bg-gradient-to-br from-[#1b2e6b] to-[#d4a843]" },
   { id: "dark-clinical", label: "Dark Clinical", preview: "bg-gradient-to-br from-slate-900 to-slate-700" },
-  { id: "light-professional", label: "Light Pro", preview: "bg-gradient-to-br from-gray-50 to-gray-200" },
   { id: "navy-minimal", label: "Navy Minimal", preview: "bg-gradient-to-br from-[#1b2e6b] to-[#142054]" },
 ]
 
