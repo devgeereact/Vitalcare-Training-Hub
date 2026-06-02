@@ -17,6 +17,7 @@ export const learnersKeys = {
   enrolments: (id: string) => [...learnersKeys.all, "enrolments", id] as const,
   certificates: (id: string) =>
     [...learnersKeys.all, "certificates", id] as const,
+  exams: (id: string) => [...learnersKeys.all, "exams", id] as const,
 }
 
 export interface LearnerRow {
@@ -176,6 +177,53 @@ export function useLearnerCertificates(id: string) {
   return useQuery({
     queryKey: learnersKeys.certificates(id),
     queryFn: () => getLearnerCertificates(id),
+    enabled: !!id,
+  })
+}
+
+export interface LearnerExamResult {
+  id: string
+  assessmentTitle: string
+  score: number
+  passed: boolean
+  completedAt: string | null
+}
+
+export async function getLearnerExamResults(
+  learnerId: string,
+): Promise<LearnerExamResult[]> {
+  const { data, error } = await supabase
+    .from("assessment_attempts")
+    .select("id, assessment_id, score, passed, completed_at")
+    .eq("learner_id", learnerId)
+    .order("completed_at", { ascending: false })
+
+  if (error) {
+    console.error("[getLearnerExamResults]", error)
+    throw error
+  }
+  if (!data || data.length === 0) return []
+
+  const assessmentIds = [...new Set(data.map((d) => d.assessment_id))]
+  const { data: assessments } = await supabase
+    .from("assessments")
+    .select("id, title")
+    .in("id", assessmentIds)
+  const titleById = new Map((assessments ?? []).map((a) => [a.id, a.title]))
+
+  return data.map((d) => ({
+    id: d.id,
+    assessmentTitle: titleById.get(d.assessment_id) ?? "—",
+    score: d.score,
+    passed: d.passed,
+    completedAt: d.completed_at,
+  }))
+}
+
+export function useLearnerExamResults(id: string) {
+  return useQuery({
+    queryKey: learnersKeys.exams(id),
+    queryFn: () => getLearnerExamResults(id),
     enabled: !!id,
   })
 }
