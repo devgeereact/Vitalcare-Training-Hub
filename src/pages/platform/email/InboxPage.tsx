@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase/client"
+import MailSidebar from "@/components/email/MailSidebar"
 import type { MailMessage } from "@/types/database.types"
 
 export default function InboxPage() {
@@ -94,32 +95,37 @@ export default function InboxPage() {
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl text-foreground">Inbox</h1>
-          <p className="mt-1 text-muted-foreground">
-            Your received mail. Use Sync now to pull the latest from your mailbox.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={syncNow} disabled={syncing}>
-            {syncing ? (
-              <Loader2 className="mr-2 size-4 animate-spin" />
-            ) : (
-              <RefreshCw className="mr-2 size-4" />
-            )}
-            Sync now
-          </Button>
-          <Button onClick={() => setCompose(true)}>
-            <PenSquare className="mr-2 size-4" /> Compose
-          </Button>
-        </div>
-      </div>
+  const unread = data?.filter((m) => !m.seen).length ?? 0
 
-      <Card>
-        <CardContent className="p-0">
+  return (
+    <div className="flex flex-col gap-6 md:flex-row md:items-start">
+      <MailSidebar active="inbox" inboxCount={unread} />
+
+      <div className="min-w-0 flex-1 space-y-6">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="font-display text-3xl text-foreground">Inbox</h1>
+            <p className="mt-1 text-muted-foreground">
+              Your received mail. Use Sync now to pull the latest from your mailbox.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={syncNow} disabled={syncing}>
+              {syncing ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 size-4" />
+              )}
+              Sync now
+            </Button>
+            <Button onClick={() => setCompose(true)}>
+              <PenSquare className="mr-2 size-4" /> Compose
+            </Button>
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="p-0">
           {isLoading ? (
             <div className="space-y-2 p-5">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -185,9 +191,10 @@ export default function InboxPage() {
                 </li>
               ))}
             </ul>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Compose (sends from your own account) */}
       <Dialog open={compose} onOpenChange={setCompose}>

@@ -8,6 +8,9 @@ import {
   FileText,
   AlertCircle,
   PlayCircle,
+  Layers,
+  BookOpen,
+  Tag,
 } from "lucide-react"
 
 import {
@@ -19,12 +22,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, formatCourseDuration } from "@/lib/utils"
 import {
   useCourse,
   useCurriculum,
   useMyCourses,
   useEnrolSelf,
+  useCategoryNameMap,
 } from "@/lib/queries/courses.queries"
 import CourseDiscussion from "@/components/platform/CourseDiscussion"
 import CourseReviews from "@/components/courses/CourseReviews"
@@ -42,9 +46,13 @@ export default function CourseOverviewPage() {
   const myCourses = useMyCourses()
   const enrol = useEnrolSelf()
   const prereqs = usePrerequisites(id, user?.id)
+  const categoryNames = useCategoryNameMap()
 
   const mine = myCourses.data?.find((m) => m.course.id === id)
   const firstLesson = curriculum.data?.flatMap((m) => m.lessons)[0]
+  const moduleCount = curriculum.data?.length ?? 0
+  const lessonCount =
+    curriculum.data?.reduce((sum, m) => sum + m.lessons.length, 0) ?? 0
   const unmetPrereqs = (prereqs.data ?? []).filter((p) => !p.completed)
   const prereqsBlocked = unmetPrereqs.length > 0
 
@@ -69,79 +77,181 @@ export default function CourseOverviewPage() {
   }
 
   const c = course.data!
+  const categoryName = c.category_id
+    ? categoryNames.get(c.category_id) ?? null
+    : null
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/platform/courses">
           <ArrowLeft className="mr-1.5 size-4" /> Back to courses
         </Link>
       </Button>
 
-      <Card className="overflow-hidden">
-        {c.thumbnail_url && (
-          <img
-            src={driveImageUrl(c.thumbnail_url, 1400)}
-            alt={c.title}
-            className="aspect-[21/9] w-full object-cover"
-          />
-        )}
-        <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <CardTitle className="font-display text-2xl">{c.title}</CardTitle>
-            <div className="flex flex-wrap gap-2">
-              {c.is_cstf_aligned && (
-                <Badge variant="outline" className="gap-1 text-success">
-                  <ShieldCheck className="size-3.5" /> CSTF aligned
-                </Badge>
-              )}
-              <Badge variant="outline" className="gap-1">
-                <Award className="size-3.5" /> {c.cpd_hours} CPD
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <Clock className="size-3.5" /> {c.duration_mins} mins
-              </Badge>
+      {/* About course: two-column hero */}
+      <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
+        {/* Left: thumbnail + facts */}
+        <Card className="h-fit overflow-hidden lg:sticky lg:top-6">
+          {c.thumbnail_url && (
+            <img
+              src={driveImageUrl(c.thumbnail_url, 800)}
+              alt=""
+              className="aspect-video w-full object-cover"
+            />
+          )}
+          <CardContent className="space-y-4 p-5">
+            <h1 className="font-display text-2xl leading-tight text-brand-navy">
+              {c.title}
+            </h1>
+
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                About course
+              </p>
+              <dl className="space-y-2.5 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="size-4 text-brand-navy/60" /> Duration
+                  </dt>
+                  <dd className="font-medium text-foreground">
+                    {formatCourseDuration(c.duration_mins)}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <Award className="size-4 text-brand-navy/60" /> CPD hours
+                  </dt>
+                  <dd className="font-medium text-foreground">{c.cpd_hours}</dd>
+                </div>
+                {categoryName && (
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="flex items-center gap-2 text-muted-foreground">
+                      <Tag className="size-4 text-brand-navy/60" /> Category
+                    </dt>
+                    <dd className="text-right font-medium text-foreground">
+                      {categoryName}
+                    </dd>
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="flex items-center gap-2 text-muted-foreground">
+                    <ShieldCheck className="size-4 text-brand-navy/60" />{" "}
+                    Accreditation
+                  </dt>
+                  <dd className="text-right font-medium text-foreground">
+                    {c.is_cstf_aligned ? "CSTF-aligned, CPD" : "CPD-accredited"}
+                  </dd>
+                </div>
+              </dl>
             </div>
+
+            {(moduleCount > 0 || lessonCount > 0) && (
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="rounded-lg border border-border bg-muted/40 p-3 text-center">
+                  <p className="flex items-center justify-center gap-1.5 text-lg font-semibold text-brand-navy">
+                    <Layers className="size-4 text-brand-gold" /> {moduleCount}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Modules</p>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/40 p-3 text-center">
+                  <p className="flex items-center justify-center gap-1.5 text-lg font-semibold text-brand-navy">
+                    <BookOpen className="size-4 text-brand-gold" /> {lessonCount}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Lessons</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2 pt-1">
+              {mine?.enrolled ? (
+                firstLesson ? (
+                  <Button asChild className="w-full">
+                    <Link to={`/platform/courses/${id}/learn/${firstLesson.id}`}>
+                      <PlayCircle className="mr-2 size-4" /> Continue learning
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button disabled className="w-full">
+                    No lessons yet
+                  </Button>
+                )
+              ) : (
+                <Button
+                  className="w-full"
+                  disabled={enrol.isPending || prereqsBlocked}
+                  onClick={() =>
+                    enrol
+                      .mutateAsync(id)
+                      .then(() => toast.success("Enrolled"))
+                      .catch(() => toast.error("Could not enrol"))
+                  }
+                >
+                  {prereqsBlocked && <Lock className="mr-2 size-4" />}
+                  {prereqsBlocked
+                    ? "Complete prerequisites first"
+                    : "Enrol on this course"}
+                </Button>
+              )}
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/platform/one-to-one">Request 1:1 with a trainer</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Right: overview + accreditation + what you will cover */}
+        <div className="space-y-5">
+          <div className="flex flex-wrap items-center gap-2">
+            {c.is_cstf_aligned && (
+              <Badge
+                variant="outline"
+                className="gap-1 border-success/30 bg-success/10 text-success"
+              >
+                <ShieldCheck className="size-3.5" /> CSTF aligned
+              </Badge>
+            )}
+            {categoryName && (
+              <Badge variant="outline" className="gap-1">
+                <Tag className="size-3.5" /> {categoryName}
+              </Badge>
+            )}
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {c.summary && <p className="text-muted-foreground">{c.summary}</p>}
+
+          {c.summary && (
+            <p className="max-w-[65ch] text-lg leading-relaxed text-foreground">
+              {c.summary}
+            </p>
+          )}
           {c.description && (
             <div
-              className="prose prose-sm max-w-none"
+              className="prose prose-sm max-w-[65ch]"
               dangerouslySetInnerHTML={{ __html: c.description }}
             />
           )}
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            {mine?.enrolled ? (
-              firstLesson ? (
-                <Button asChild>
-                  <Link to={`/platform/courses/${id}/learn/${firstLesson.id}`}>
-                    <PlayCircle className="mr-2 size-4" /> Continue learning
-                  </Link>
-                </Button>
-              ) : (
-                <Button disabled>No lessons yet</Button>
-              )
-            ) : (
-              <Button
-                disabled={enrol.isPending || prereqsBlocked}
-                onClick={() =>
-                  enrol
-                    .mutateAsync(id)
-                    .then(() => toast.success("Enrolled"))
-                    .catch(() => toast.error("Could not enrol"))
-                }
-              >
-                {prereqsBlocked && <Lock className="mr-2 size-4" />}
-                {prereqsBlocked ? "Complete prerequisites first" : "Enrol on this course"}
-              </Button>
-            )}
-            <Button asChild variant="outline">
-              <Link to="/platform/one-to-one">Request 1:1 with a trainer</Link>
-            </Button>
-          </div>
+          {moduleCount > 0 && (
+            <div>
+              <h2 className="font-display text-xl text-brand-navy">
+                What you will cover
+              </h2>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                {curriculum.data!.map((mod) => (
+                  <li
+                    key={mod.id}
+                    className="flex items-start gap-2 text-sm text-foreground"
+                  >
+                    <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand-gold" />
+                    {mod.title}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <p className="text-sm text-muted-foreground">
+            CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify.
+          </p>
 
           {(prereqs.data?.length ?? 0) > 0 && (
             <div className="rounded-lg border border-border p-3">
@@ -158,7 +268,9 @@ export default function CourseOverviewPage() {
                       to={`/platform/courses/${p.prerequisiteId}`}
                       className={cn(
                         "hover:underline",
-                        p.completed ? "text-muted-foreground line-through" : "text-foreground",
+                        p.completed
+                          ? "text-muted-foreground line-through"
+                          : "text-foreground",
                       )}
                     >
                       {p.title}
@@ -168,8 +280,8 @@ export default function CourseOverviewPage() {
               </ul>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Card>
         <CardHeader>

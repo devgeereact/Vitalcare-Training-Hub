@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { Mail, Loader2, Send, Clock, X, CheckCircle2 } from "lucide-react"
+import { Mail, Loader2, Send, Clock, X, CheckCircle2, Upload, Trash2 } from "lucide-react"
 
 import {
   Card,
@@ -33,6 +33,7 @@ import {
 } from "@/lib/queries/email.queries"
 import type { EmailCampaignStatus } from "@/types/database.types"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
+import MailSidebar from "@/components/email/MailSidebar"
 
 const AUDIENCES = [
   { value: "all_learners", label: "All learners" },
@@ -125,7 +126,10 @@ export default function EmailComposerPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="flex flex-col gap-6 md:flex-row md:items-start">
+      <MailSidebar active="inbox" />
+
+      <div className="min-w-0 flex-1 space-y-6">
       <div>
         <h1 className="font-display text-3xl text-foreground">Email</h1>
         <p className="mt-1 text-muted-foreground">
@@ -211,8 +215,15 @@ export default function EmailComposerPage() {
               rows={10}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write your message…"
+              placeholder="Enter text…"
             />
+          </div>
+          <div>
+            <Label className="mb-1.5 block">Attachment</Label>
+            <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+              <Upload className="size-5" />
+              <span>Drop files here to upload.</span>
+            </div>
           </div>
           <div className="flex flex-wrap items-end justify-between gap-3 pt-1">
             <div>
@@ -243,16 +254,26 @@ export default function EmailComposerPage() {
                 className="max-w-xs"
               />
             )}
-            <Button onClick={send} disabled={sending || schedule.isPending}>
-              {sending || schedule.isPending ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : when === "later" ? (
-                <Clock className="mr-2 size-4" />
-              ) : (
-                <Send className="mr-2 size-4" />
-              )}
-              {when === "later" ? "Schedule email" : "Send email"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={reset}
+                disabled={sending || schedule.isPending}
+              >
+                <Trash2 className="mr-2 size-4" />
+                Discard
+              </Button>
+              <Button onClick={send} disabled={sending || schedule.isPending}>
+                {sending || schedule.isPending ? (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                ) : when === "later" ? (
+                  <Clock className="mr-2 size-4" />
+                ) : (
+                  <Send className="mr-2 size-4" />
+                )}
+                {when === "later" ? "Schedule email" : "Send email"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -317,6 +338,7 @@ export default function EmailComposerPage() {
         <Mail className="size-3.5" /> Sent from info@vitalcare.uk · Resend free tier
         allows 3,000 emails per month.
       </p>
+      </div>
     </div>
   )
 }

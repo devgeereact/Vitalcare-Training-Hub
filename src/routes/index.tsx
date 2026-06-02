@@ -62,6 +62,7 @@ import InboxPage from "@/pages/platform/email/InboxPage"
 import MailDetailPage from "@/pages/platform/email/MailDetailPage"
 import MySessionsPage from "@/pages/platform/sessions/MySessionsPage"
 import TrainerTimetablePage from "@/pages/platform/sessions/TrainerTimetablePage"
+import PayrollPage from "@/pages/platform/payroll/PayrollPage"
 import PasswordSettingsPage from "@/pages/platform/account/PasswordSettingsPage"
 import InvoicesPage from "@/pages/platform/invoices/InvoicesPage"
 import FileManagerPage2 from "@/pages/platform/files/FileManagerPage"
@@ -156,6 +157,7 @@ import HomePage from "@/pages/marketing/HomePage"
 import AboutUsPage from "@/pages/marketing/AboutUsPage"
 import OurCoursesPage from "@/pages/marketing/OurCoursesPage"
 import CategoryPage from "@/pages/marketing/CategoryPage"
+import CourseDetailPage from "@/pages/marketing/CourseDetailPage"
 import TrainingSolutionPage from "@/pages/marketing/TrainingSolutionPage"
 import VerifyCertPage from "@/pages/marketing/VerifyCertPage"
 import AccreditationsPage from "@/pages/marketing/AccreditationsPage"
@@ -178,6 +180,7 @@ export const router = createBrowserRouter (
         { index: true, element: <HomePage /> },
         { path: "about-us", element: <AboutUsPage /> },
         { path: "our-courses", element: <OurCoursesPage /> },
+        { path: "our-courses/course/:slug", element: <CourseDetailPage /> },
         { path: "our-courses/:categorySlug", element: <CategoryPage /> },
         { path: "training-solutions/:sector", element: <TrainingSolutionPage /> },
         { path: "resources/verify-certificate", element: <VerifyCertPage /> },
@@ -591,6 +594,7 @@ export const router = createBrowserRouter (
         { path: "profile", element: <ProfilePage /> },
         { path: "account/password", element: <PasswordSettingsPage /> },
         { path: "invoices", element: <InvoicesPage /> },
+        { path: "payroll", element: <PayrollPage /> },
         {
           path: "files",
           element: (

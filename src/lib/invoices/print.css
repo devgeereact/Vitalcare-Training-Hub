@@ -1,0 +1,37 @@
+/**
+ * Invoice print stylesheet.
+ *
+ * When the View dialog is open and the user prints, only #invoice-printable
+ * should appear on the page. We hide everything from the document root down,
+ * then re-show the printable subtree and pin it to the top-left of the page.
+ */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  #invoice-printable,
+  #invoice-printable * {
+    visibility: visible !important;
+  }
+
+  #invoice-printable {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    box-shadow: none !important;
+  }
+
+  /* Print accent colours reliably. */
+  #invoice-printable thead tr {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    margin: 12mm;
+  }
+}

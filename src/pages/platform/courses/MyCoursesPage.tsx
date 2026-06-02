@@ -11,12 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Link as RLink } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -33,7 +28,12 @@ import {
 import { Clock, Award, ShieldCheck as ShieldIcon, PlayCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { driveImageUrl } from "@/lib/drive-image"
-import { useMyCourses, useEnrolSelf } from "@/lib/queries/courses.queries"
+import {
+  useMyCourses,
+  useEnrolSelf,
+  useCategoryNameMap,
+} from "@/lib/queries/courses.queries"
+import { CourseCard } from "@/components/courses/CourseCard"
 import type { Course } from "@/types/database.types"
 
 interface CardData {
@@ -45,6 +45,7 @@ interface CardData {
 export default function MyCoursesPage() {
   const { data, isLoading, isError, refetch } = useMyCourses()
   const enrol = useEnrolSelf()
+  const categoryNames = useCategoryNameMap()
   const [view, setView] = useState<"grid" | "list">("grid")
   const [selected, setSelected] = useState<CardData | null>(null)
   const [query, setQuery] = useState("")
@@ -104,9 +105,9 @@ export default function MyCoursesPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-48 w-full" />
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-72 w-full rounded-xl" />
           ))}
         </div>
       ) : isError ? (
@@ -194,77 +195,37 @@ export default function MyCoursesPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paged.map(({ course, enrolled, progressPct }) => (
-            <Card key={course.id} className="flex flex-col overflow-hidden">
-              {course.thumbnail_url && (
-                <img
-                  src={driveImageUrl(course.thumbnail_url, 600)}
-                  alt={course.title}
-                  className="aspect-video w-full object-cover"
-                />
-              )}
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-lg leading-snug">{course.title}</CardTitle>
-                  {course.is_cstf_aligned && (
-                    <Badge variant="outline" className="shrink-0 gap-1 text-success">
-                      <ShieldCheck className="size-3" /> CSTF
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col">
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {course.summary || "No summary provided."}
-                </p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {course.cpd_hours} CPD hours
-                </p>
-
-                {enrolled && (
-                  <div className="mt-3">
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${progressPct}%` }}
-                      />
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{progressPct}% complete</p>
+            <div key={course.id} className="flex flex-col">
+              <CourseCard
+                title={course.title}
+                href={`/platform/courses/${course.id}`}
+                categoryName={
+                  course.category_id
+                    ? categoryNames.get(course.category_id) ?? null
+                    : null
+                }
+                cpdHours={course.cpd_hours}
+                durationMins={course.duration_mins}
+                cstf={course.is_cstf_aligned}
+                thumbnailUrl={course.thumbnail_url}
+                ctaLabel={enrolled ? "Continue" : "View course"}
+              />
+              {enrolled && (
+                <div className="mt-2 px-1">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-brand-gold"
+                      style={{ width: `${progressPct}%` }}
+                    />
                   </div>
-                )}
-
-                <div className="mt-4 flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setSelected({ course, enrolled, progressPct })}
-                  >
-                    View
-                  </Button>
-                  {enrolled ? (
-                    <Button asChild size="sm" className="flex-1">
-                      <Link to={`/platform/courses/${course.id}`}>Continue</Link>
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      className="flex-1"
-                      disabled={enrol.isPending}
-                      onClick={() =>
-                        enrol
-                          .mutateAsync(course.id)
-                          .then(() => toast.success("Enrolled"))
-                          .catch(() => toast.error("Could not enrol"))
-                      }
-                    >
-                      Enrol
-                    </Button>
-                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {progressPct}% complete
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
           ))}
         </div>
       )}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { ArrowLeft, AlertCircle, Send, Loader2, Reply, Paperclip } from "lucide-react"
+import { ArrowLeft, AlertCircle, Send, Loader2, Reply, Forward, Paperclip } from "lucide-react"
 
 import {
   Card,
@@ -15,10 +15,21 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
+import MailSidebar from "@/components/email/MailSidebar"
 import type { MailMessage } from "@/types/database.types"
+
+/** Two-letter initials from a sender name or address, for the avatar. */
+function initials(name: string | null, addr: string | null): string {
+  const source = (name || addr || "?").trim()
+  const parts = source.split(/[\s@.]+/).filter(Boolean)
+  if (parts.length === 0) return "?"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[1][0]).toUpperCase()
+}
 
 /** Best-effort clean text from a stored raw body. */
 function cleanBody(raw: string): string {
@@ -70,6 +81,17 @@ export default function MailDetailPage() {
     }
   }, [data])
 
+  function startForward() {
+    if (!data) return
+    setTo("")
+    setSubject(data.subject?.startsWith("Fwd:") ? data.subject : `Fwd: ${data.subject ?? ""}`)
+    const original = data.body_text || cleanBody(data.body_html || data.snippet || "")
+    setReply(
+      `\n\n---------- Forwarded message ----------\nFrom: ${data.from_name || data.from_addr || "Unknown sender"}\nSubject: ${data.subject ?? ""}\n\n${original}`,
+    )
+    setShowReply(true)
+  }
+
   async function send() {
     if (!to.trim() || !reply.trim()) {
       toast.error("Add a recipient and a message.")
@@ -98,26 +120,35 @@ export default function MailDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-64 w-full" />
+      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+        <MailSidebar active="inbox" />
+        <div className="min-w-0 flex-1 space-y-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-64 w-full" />
+        </div>
       </div>
     )
   }
   if (isError || !data) {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-center">
-        <AlertCircle className="size-8 text-destructive" />
-        <p className="text-sm text-muted-foreground">Could not load this message.</p>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          Retry
-        </Button>
+      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+        <MailSidebar active="inbox" />
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-3 py-16 text-center">
+          <AlertCircle className="size-8 text-destructive" />
+          <p className="text-sm text-muted-foreground">Could not load this message.</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="flex flex-col gap-6 md:flex-row md:items-start">
+      <MailSidebar active="inbox" />
+
+      <div className="min-w-0 flex-1 space-y-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/platform/inbox">
           <ArrowLeft className="mr-1.5 size-4" /> Back to inbox
@@ -126,16 +157,25 @@ export default function MailDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-display text-xl">
-            {data.subject || "(no subject)"}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {data.from_name ? `${data.from_name} · ` : ""}
-            {data.from_addr}
-            {data.received_at
-              ? ` · ${format(new Date(data.received_at), "EEE d MMM yyyy, HH:mm")}`
-              : ""}
-          </p>
+          <div className="flex items-start gap-3">
+            <Avatar className="size-11 shrink-0">
+              <AvatarFallback className="bg-brand-navy/10 text-sm font-semibold text-brand-navy">
+                {initials(data.from_name, data.from_addr)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <CardTitle className="font-display text-xl">
+                {data.subject || "(no subject)"}
+              </CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {data.from_name ? `${data.from_name} · ` : ""}
+                {data.from_addr}
+                {data.received_at
+                  ? ` · ${format(new Date(data.received_at), "EEE d MMM yyyy, HH:mm")}`
+                  : ""}
+              </p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="whitespace-pre-wrap break-words text-sm text-foreground">
@@ -167,9 +207,14 @@ export default function MailDetailPage() {
           )}
 
           {!showReply ? (
-            <Button onClick={() => setShowReply(true)}>
-              <Reply className="mr-2 size-4" /> Reply
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setShowReply(true)}>
+                <Reply className="mr-2 size-4" /> Reply
+              </Button>
+              <Button variant="outline" onClick={startForward}>
+                <Forward className="mr-2 size-4" /> Forward
+              </Button>
+            </div>
           ) : (
             <div className="space-y-3 rounded-lg border border-border p-4">
               <div>
@@ -217,6 +262,7 @@ export default function MailDetailPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

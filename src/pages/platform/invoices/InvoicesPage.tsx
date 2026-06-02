@@ -9,6 +9,8 @@ import {
   Download,
   Trash2,
   Check,
+  Eye,
+  Printer,
 } from "lucide-react"
 
 import {
@@ -40,7 +42,9 @@ import { useUser } from "@/hooks/use-user"
 import { useAllUsers } from "@/lib/queries/users.queries"
 import { useInvoices, useInvoiceMutations, gbp } from "@/lib/queries/invoices.queries"
 import { downloadInvoicePdf } from "@/lib/invoices/pdf"
-import type { InvoiceItem, InvoiceStatus } from "@/types/database.types"
+import { InvoiceView } from "./InvoiceView"
+import "@/lib/invoices/print.css"
+import type { Invoice, InvoiceItem, InvoiceStatus } from "@/types/database.types"
 
 const STATUS_STYLE: Record<InvoiceStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -56,6 +60,7 @@ export default function InvoicesPage() {
   const users = useAllUsers()
 
   const [open, setOpen] = useState(false)
+  const [viewing, setViewing] = useState<Invoice | null>(null)
   const [recipient, setRecipient] = useState("")
   const [dueDate, setDueDate] = useState("")
   const [notes, setNotes] = useState("")
@@ -281,6 +286,15 @@ export default function InvoicesPage() {
                             variant="ghost"
                             size="icon"
                             className="size-8"
+                            aria-label="View"
+                            onClick={() => setViewing(inv)}
+                          >
+                            <Eye className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
                             aria-label="Download"
                             onClick={() => downloadInvoicePdf(inv)}
                           >
@@ -312,6 +326,23 @@ export default function InvoicesPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto print:max-h-none print:overflow-visible">
+          <DialogHeader className="print:hidden">
+            <DialogTitle>Invoice {viewing?.number}</DialogTitle>
+          </DialogHeader>
+          {viewing && <InvoiceView invoice={viewing} />}
+          <DialogFooter className="print:hidden">
+            <Button variant="outline" onClick={() => viewing && downloadInvoicePdf(viewing)}>
+              <Download className="mr-2 size-4" /> Download PDF
+            </Button>
+            <Button onClick={() => window.print()}>
+              <Printer className="mr-2 size-4" /> Print
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

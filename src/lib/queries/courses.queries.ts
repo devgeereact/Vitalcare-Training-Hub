@@ -43,6 +43,15 @@ export function useCategories() {
   })
 }
 
+/**
+ * Map of category id -> category name, for resolving a course's category name
+ * in card grids. Returns an empty map while loading.
+ */
+export function useCategoryNameMap(): Map<string, string> {
+  const { data } = useCategories()
+  return new Map((data ?? []).map((c) => [c.id, c.name]))
+}
+
 // ─── Course list ─────────────────────────────────────────────────────────────
 export interface CourseRow {
   id: string

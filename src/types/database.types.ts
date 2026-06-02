@@ -311,6 +311,25 @@ export type Invoice = {
   paid_at: string | null
 }
 
+export type PayrollStatus = "draft" | "approved" | "paid"
+export type Payroll = {
+  id: string
+  staff_id: string
+  staff_name: string
+  staff_email: string | null
+  period: string
+  period_start: string | null
+  period_end: string | null
+  gross_pence: number
+  deductions_pence: number
+  net_pence: number
+  notes: string | null
+  status: PayrollStatus
+  issued_by: string | null
+  paid_at: string | null
+  created_at: string
+}
+
 export type MailMessage = {
   id: string
   message_id: string | null
@@ -708,6 +727,12 @@ export type Database = {
         Row: Invoice
         Insert: Partial<Invoice> & Pick<Invoice, "number">
         Update: Partial<Invoice>
+        Relationships: []
+      }
+      payroll: {
+        Row: Payroll
+        Insert: Partial<Payroll> & Pick<Payroll, "staff_id" | "staff_name" | "period">
+        Update: Partial<Payroll>
         Relationships: []
       }
       calendar_events: {

@@ -1,14 +1,8 @@
 import { Link, useParams } from "react-router-dom"
-import { Clock } from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
 import { CTABand } from "@/components/marketing/CTABand"
+import { CourseCard } from "@/components/courses/CourseCard"
 import { getCategory, getCoursesByCategory } from "@/data/courses"
-
-function formatDuration(mins: number): string {
-  if (mins < 60) return `${mins} min`
-  const hours = Math.round((mins / 60) * 10) / 10
-  return `${hours} hr`
-}
 
 export default function CategoryPage() {
   const { categorySlug } = useParams<{ categorySlug: string }>()
@@ -42,7 +36,7 @@ export default function CategoryPage() {
         </p>
       </PageHero>
 
-      <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         {courses.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-12 text-center">
             <h2 className="font-display text-2xl text-brand-navy">
@@ -60,32 +54,22 @@ export default function CategoryPage() {
             </Link>
           </div>
         ) : (
-          <ul className="divide-y divide-border rounded-xl border border-border">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {courses.map((course) => (
-              <li
+              <CourseCard
                 key={course.slug}
-                className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <h3 className="font-semibold text-brand-navy">{course.title}</h3>
-                  <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="size-4" />
-                      {formatDuration(course.durationMins)}
-                    </span>
-                    <span>{course.cpdHours} CPD hours</span>
-                  </div>
-                </div>
-                {course.cstf ? (
-                  <span className="inline-flex w-fit items-center rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-                    CSTF aligned
-                  </span>
-                ) : null}
-              </li>
+                title={course.title}
+                href={`/our-courses/course/${course.slug}`}
+                categoryName={category.name}
+                cpdHours={course.cpdHours}
+                durationMins={course.durationMins}
+                cstf={course.cstf}
+                ctaLabel="Read more"
+              />
             ))}
-          </ul>
+          </div>
         )}
-        <p className="mt-6 text-sm text-muted-foreground">
+        <p className="mt-8 text-sm text-muted-foreground">
           CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify.
         </p>
       </section>
