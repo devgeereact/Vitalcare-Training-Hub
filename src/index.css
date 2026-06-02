@@ -657,37 +657,6 @@
   --sidebar-ring: 43 65% 56%;
 }
 
-/* Light Professional: light grey app + sidebar, navy text */
-.light-professional {
-  --background: 210 20% 98%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --primary: 225 61% 27%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 16% 93%;
-  --secondary-foreground: 222 47% 11%;
-  --muted: 210 16% 93%;
-  --muted-foreground: 215 16% 47%;
-  --accent: 43 65% 56%;
-  --accent-foreground: 225 61% 18%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 214 20% 88%;
-  --input: 214 20% 88%;
-  --ring: 43 65% 56%;
-  --sidebar-background: 210 16% 96%;
-  --sidebar-foreground: 222 47% 20%;
-  --sidebar-primary: 225 61% 27%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 16% 90%;
-  --sidebar-accent-foreground: 225 61% 27%;
-  --sidebar-border: 214 20% 86%;
-  --sidebar-ring: 43 65% 56%;
-}
-
 /* Navy Minimal: navy app + deeper navy sidebar */
 .navy-minimal {
   --background: 225 45% 13%;
