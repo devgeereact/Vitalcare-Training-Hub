@@ -1,4 +1,6 @@
+import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { supabase } from "@/lib/supabase/client"
 import type {
   Announcement,
@@ -22,6 +24,10 @@ export function useNotifications(userId: string | undefined) {
   return useQuery({
     queryKey: commKeys.notifications(userId ?? "anon"),
     enabled: !!userId,
+    // Poll as a fallback so new mail/event notifications surface without a
+    // manual refresh even if the realtime channel is unavailable.
+    refetchInterval: 60 * 1000,
+    refetchIntervalInBackground: false,
     queryFn: async (): Promise<Notification[]> => {
       const { data, error } = await supabase
         .from("notifications")
@@ -37,6 +43,43 @@ export function useNotifications(userId: string | undefined) {
       return (data ?? []) as Notification[]
     },
   })
+}
+
+/**
+ * Subscribe to live notification inserts for the signed-in user. New rows
+ * refresh the notifications query immediately and raise a low-key toast so a
+ * fresh email or event is noticed without a manual refresh. The 60s poll on
+ * useNotifications is the fallback when realtime is unavailable.
+ */
+export function useNotificationsRealtime(userId: string | undefined): void {
+  const qc = useQueryClient()
+  useEffect(() => {
+    if (!userId) return
+    const channel = supabase
+      .channel(`notifications:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          qc.invalidateQueries({ queryKey: commKeys.notifications(userId) })
+          const row = payload.new as Partial<Notification>
+          if (row?.title) {
+            toast(row.title, {
+              description: row.body ?? undefined,
+            })
+          }
+        },
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [userId, qc])
 }
 
 export function useMarkNotification(userId: string | undefined) {

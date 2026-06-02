@@ -53,6 +53,37 @@ function safeName(name) {
     .slice(0, 60)
 }
 
+// Staff/admin profile ids that should be notified about org-inbox mail.
+let staffIdsCache = null
+async function staffIds() {
+  if (staffIdsCache) return staffIdsCache
+  const { data } = await admin
+    .from("profiles")
+    .select("id, role")
+    .is("deleted_at", null)
+    .in("role", ["super_admin", "admin", "manager"])
+  staffIdsCache = (data || []).map((p) => p.id)
+  return staffIdsCache
+}
+
+// Notify the relevant owner(s) about a newly-stored message. Owner-scoped mail
+// notifies just the owner; the shared org inbox (owner_id null) notifies staff.
+async function notifyNewMail({ ownerId, from, subject }) {
+  const recipients = ownerId ? [ownerId] : await staffIds()
+  if (!recipients.length) return
+  const title = "New email"
+  const body = `${from || "Someone"}: ${(subject || "(no subject)").slice(0, 120)}`
+  const rows = recipients.map((uid) => ({
+    user_id: uid,
+    type: "message",
+    title,
+    body,
+    link: "/platform/email",
+  }))
+  const { error } = await admin.from("notifications").insert(rows)
+  if (error) console.error("notify", error.message)
+}
+
 // Sync one mailbox into mail_messages tagged with ownerId (null = org inbox).
 async function syncMailbox({ host, port, user, pass, ownerId }) {
   const client = new ImapFlow({
@@ -72,6 +103,15 @@ async function syncMailbox({ host, port, user, pass, ownerId }) {
       for await (const msg of client.fetch(`${start}:*`, { uid: true, source: true })) {
         const parsed = await simpleParser(msg.source)
         const messageId = parsed.messageId || `uid-${ownerId ?? "org"}-${msg.uid}`
+
+        // Is this message already stored? Only brand-new mail triggers a
+        // notification, so existing rows (re-pulled each run) stay quiet.
+        const { data: existing } = await admin
+          .from("mail_messages")
+          .select("id")
+          .eq("message_id", messageId)
+          .maybeSingle()
+        const isNew = !existing
 
         // Upload attachments.
         const attachments = []
@@ -114,8 +154,16 @@ async function syncMailbox({ host, port, user, pass, ownerId }) {
           },
           { onConflict: "message_id" },
         )
-        if (!error) stored++
-        else console.error("upsert", error.message)
+        if (!error) {
+          stored++
+          if (isNew) {
+            await notifyNewMail({
+              ownerId,
+              from: parsed.from?.value?.[0]?.name || parsed.from?.value?.[0]?.address,
+              subject: parsed.subject,
+            })
+          }
+        } else console.error("upsert", error.message)
       }
     }
   } finally {

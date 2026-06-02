@@ -19,6 +19,36 @@ const json = (b: unknown, status = 200) =>
 
 const snippet = (t: string, n = 200) => t.replace(/\s+/g, " ").trim().slice(0, n)
 
+// Notify the relevant owner(s) about newly-stored mail. Owner-scoped mail
+// notifies the owner; the shared org inbox (ownerId null) notifies staff/admins.
+async function notifyNewMail(
+  admin: SupabaseClient,
+  input: { ownerId: string | null; from: string | null; subject: string | null },
+): Promise<void> {
+  let recipients: string[] = []
+  if (input.ownerId) {
+    recipients = [input.ownerId]
+  } else {
+    const { data } = await admin
+      .from("profiles")
+      .select("id")
+      .is("deleted_at", null)
+      .in("role", ["super_admin", "admin", "manager"])
+    recipients = (data ?? []).map((p: { id: string }) => p.id)
+  }
+  if (!recipients.length) return
+  const body = `${input.from ?? "Someone"}: ${(input.subject ?? "(no subject)").slice(0, 120)}`
+  const rows = recipients.map((uid) => ({
+    user_id: uid,
+    type: "message",
+    title: "New email",
+    body,
+    link: "/platform/email",
+  }))
+  const { error } = await admin.from("notifications").insert(rows)
+  if (error) console.error("[imap-sync notify]", error.message)
+}
+
 interface Mailbox {
   host: string
   port: number
@@ -61,6 +91,15 @@ async function syncMailbox(admin: SupabaseClient, mb: Mailbox): Promise<number> 
           const bodyStart = raw.indexOf("\r\n\r\n")
           const bodyRaw = bodyStart >= 0 ? raw.slice(bodyStart + 4) : raw
           const text = bodyRaw.replace(/<[^>]+>/g, " ")
+
+          // Only brand-new mail raises a notification; re-pulled rows stay quiet.
+          const { data: existing } = await admin
+            .from("mail_messages")
+            .select("id")
+            .eq("message_id", messageId)
+            .maybeSingle()
+          const isNew = !existing
+
           const { error } = await admin.from("mail_messages").upsert(
             {
               message_id: messageId,
@@ -75,7 +114,16 @@ async function syncMailbox(admin: SupabaseClient, mb: Mailbox): Promise<number> 
             },
             { onConflict: "message_id" },
           )
-          if (!error) stored++
+          if (!error) {
+            stored++
+            if (isNew) {
+              await notifyNewMail(admin, {
+                ownerId: mb.ownerId,
+                from: fromObj?.name ?? fromObj?.address ?? null,
+                subject: env?.subject ?? null,
+              })
+            }
+          }
         }
       }
     } finally {

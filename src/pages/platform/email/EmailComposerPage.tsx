@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { format, formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
 import {
@@ -17,6 +17,7 @@ import {
   Inbox as InboxIcon,
   RefreshCw,
   Reply,
+  Forward,
   Megaphone,
 } from "lucide-react"
 
@@ -75,6 +76,8 @@ import {
 import type { EmailCampaignStatus } from "@/types/database.types"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import MailSidebar from "@/components/email/MailSidebar"
+import MailBody from "@/components/email/MailBody"
+import { cleanSnippet, mailPlainText, parseMailBody } from "@/lib/email/mime"
 
 const AUDIENCES = [
   { value: "all_learners", label: "All learners" },
@@ -129,17 +132,42 @@ function categoryMeta(category: string | null): { label: string; dot: string } |
   return CATEGORY_META[category as MailCategory] ?? null
 }
 
-function cleanBody(raw: string): string {
-  return raw
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\r\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim()
+/** Prefill payload handed to the compose dialog for reply/forward. */
+interface ComposePrefill {
+  to: string
+  subject: string
+  body: string
+}
+
+/** Build a quoted-original block ("On <date>, <from> wrote:" + quoted text). */
+function quoteOriginal(mail: MailRow): string {
+  const original = mailPlainText(parseMailBody(mail.body_html ?? mail.body_text ?? mail.snippet))
+  const quoted = original
+    .split("\n")
+    .map((line) => `> ${line}`)
+    .join("\n")
+  const who = mail.from_name || mail.from_addr || "the sender"
+  const received = safeDate(mail.received_at)
+  const when = received ? format(received, "EEE d MMM yyyy, HH:mm") : "an earlier date"
+  return `\n\nOn ${when}, ${who} wrote:\n${quoted}`
+}
+
+function buildReplyPrefill(mail: MailRow): ComposePrefill {
+  const subject = mail.subject || "(no subject)"
+  return {
+    to: mail.from_addr ?? "",
+    subject: /^re:/i.test(subject) ? subject : `Re: ${subject}`,
+    body: quoteOriginal(mail),
+  }
+}
+
+function buildForwardPrefill(mail: MailRow): ComposePrefill {
+  const subject = mail.subject || "(no subject)"
+  return {
+    to: "",
+    subject: /^fwd:/i.test(subject) ? subject : `Fwd: ${subject}`,
+    body: quoteOriginal(mail),
+  }
 }
 
 export default function EmailComposerPage() {
@@ -151,7 +179,13 @@ export default function EmailComposerPage() {
   const [selected, setSelected] = useState<MailRow | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [composeOpen, setComposeOpen] = useState(false)
+  const [prefill, setPrefill] = useState<ComposePrefill | null>(null)
   const [broadcastOpen, setBroadcastOpen] = useState(false)
+
+  function openCompose(next: ComposePrefill | null) {
+    setPrefill(next)
+    setComposeOpen(true)
+  }
 
   const list = useMailList(folder, category)
   const counts = useMailCounts()
@@ -197,7 +231,7 @@ export default function EmailComposerPage() {
         counts={counts.data}
         onCompose={() => {
           setSelected(null)
-          setComposeOpen(true)
+          openCompose(null)
         }}
       />
 
@@ -306,7 +340,7 @@ export default function EmailComposerPage() {
                           </span>
                           <span className="flex items-center gap-2">
                             <span className="block flex-1 truncate text-xs text-muted-foreground">
-                              {m.snippet ?? ""}
+                              {cleanSnippet(m.body_text || m.body_html || m.snippet)}
                             </span>
                             {categoryMeta(m.category) && (
                               <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
@@ -335,6 +369,8 @@ export default function EmailComposerPage() {
                   key={selected.id}
                   mail={selected}
                   onBack={() => setSelected(null)}
+                  onReply={() => openCompose(buildReplyPrefill(selected))}
+                  onForward={() => openCompose(buildForwardPrefill(selected))}
                   onToggleImportant={() =>
                     toggleImportant.mutate(
                       { id: selected.id, important: !selected.important },
@@ -400,6 +436,7 @@ export default function EmailComposerPage() {
         open={composeOpen}
         onOpenChange={setComposeOpen}
         ownerId={ownerId}
+        prefill={prefill}
         onSent={() => {
           list.refetch()
           counts.refetch()
@@ -420,6 +457,8 @@ export default function EmailComposerPage() {
 function MailDetail({
   mail,
   onBack,
+  onReply,
+  onForward,
   onToggleImportant,
   onSetCategory,
   onTrash,
@@ -428,14 +467,16 @@ function MailDetail({
 }: {
   mail: MailRow
   onBack: () => void
+  onReply: () => void
+  onForward: () => void
   onToggleImportant: () => void
   onSetCategory: (c: MailCategory | null) => void
   onTrash: () => void
   onRestore: () => void
   onDeleteForever: () => void
 }) {
-  const body = mail.body_text || cleanBody(mail.body_html || mail.snippet || "")
   const receivedAt = safeDate(mail.received_at)
+  const canReply = !!mail.from_addr && mail.folder !== "trash"
   const detailCategory = categoryMeta(mail.category)
   const attachments = Array.isArray(mail.attachments) ? mail.attachments : []
   return (
@@ -535,9 +576,7 @@ function MailDetail({
         </div>
       </div>
 
-      <div className="whitespace-pre-wrap break-words text-sm text-foreground">
-        {body || "(no content)"}
-      </div>
+      <MailBody raw={mail.body_html || mail.body_text || mail.snippet} />
 
       {attachments.length > 0 && (
         <div className="space-y-1.5 rounded-lg border border-border p-3">
@@ -558,10 +597,23 @@ function MailDetail({
         </div>
       )}
 
-      {mail.from_addr && mail.folder !== "trash" && (
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Reply className="size-3.5" /> Use Compose to reply to {mail.from_addr}.
-        </p>
+      {mail.folder !== "trash" && (
+        <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+          <Button
+            onClick={onReply}
+            disabled={!canReply}
+            className="bg-brand-navy text-white hover:bg-brand-navy-dark focus-visible:ring-2 focus-visible:ring-brand-gold"
+          >
+            <Reply className="mr-2 size-4" /> Reply
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onForward}
+            className="focus-visible:ring-2 focus-visible:ring-brand-gold"
+          >
+            <Forward className="mr-2 size-4" /> Forward
+          </Button>
+        </div>
       )}
     </div>
   )
@@ -573,11 +625,13 @@ function ComposeDialog({
   open,
   onOpenChange,
   ownerId,
+  prefill,
   onSent,
 }: {
   open: boolean
   onOpenChange: (v: boolean) => void
   ownerId: string
+  prefill: ComposePrefill | null
   onSent: () => void
 }) {
   const [to, setTo] = useState("")
@@ -587,6 +641,23 @@ function ComposeDialog({
   const [sending, setSending] = useState(false)
   const saveDraft = useSaveDraft()
   const recordSent = useRecordSent()
+
+  // When the dialog opens, seed the fields from a reply/forward prefill (or
+  // clear them for a fresh compose). Keyed on `open` so reopening re-seeds.
+  useEffect(() => {
+    if (!open) return
+    setDraftId(undefined)
+    if (prefill) {
+      setTo(prefill.to)
+      setSubject(prefill.subject)
+      setBody(prefill.body)
+    } else {
+      setTo("")
+      setSubject("")
+      setBody("")
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   function reset() {
     setTo("")

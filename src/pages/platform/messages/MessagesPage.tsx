@@ -218,14 +218,22 @@ function ThreadView({
             return (
               <div
                 key={m.id}
-                className={cn("flex", mine ? "justify-end" : "justify-start")}
+                className={cn(
+                  "flex items-end gap-2",
+                  mine ? "justify-end" : "justify-start",
+                )}
               >
+                {!mine && (
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-[11px] font-semibold text-brand-navy">
+                    {otherName.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
                 <div
                   className={cn(
-                    "max-w-[80%] min-w-0 overflow-hidden rounded-2xl px-3.5 py-2 text-sm sm:max-w-[75%]",
+                    "max-w-[80%] min-w-0 overflow-hidden px-3.5 py-2.5 text-sm shadow-sm sm:max-w-[75%]",
                     mine
-                      ? "rounded-br-sm bg-brand-navy text-white"
-                      : "rounded-bl-sm bg-muted text-foreground",
+                      ? "rounded-2xl rounded-br-md bg-brand-navy text-white"
+                      : "rounded-2xl rounded-bl-md border border-border bg-muted text-foreground",
                   )}
                 >
                   {m.attachment_url && (

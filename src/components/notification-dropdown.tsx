@@ -24,6 +24,7 @@ import { useAuth } from "@/hooks/use-auth"
 import {
   useNotifications,
   useMarkNotification,
+  useNotificationsRealtime,
 } from "@/lib/queries/communication.queries"
 import type { NotificationType } from "@/types/database.types"
 
@@ -40,6 +41,7 @@ const ICONS: Record<NotificationType, typeof Bell> = {
 export function NotificationDropdown() {
   const { user } = useAuth()
   const { data } = useNotifications(user?.id)
+  useNotificationsRealtime(user?.id)
   const mark = useMarkNotification(user?.id)
   const items = data ?? []
   const unreadCount = items.filter((n) => !n.read_at).length
