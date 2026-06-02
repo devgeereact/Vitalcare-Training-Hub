@@ -133,6 +133,7 @@ export default function CalendarPage() {
   }, [sessions.data, customEvents.data, holidays.data])
 
   const upcoming = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity -- time-based filter is intentional
     const now = Date.now()
     return events
       .filter((e) => e.start && new Date(e.start as string).getTime() >= now - 36e5)
