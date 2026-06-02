@@ -8,6 +8,9 @@
 //   OPENROUTER_API_KEY, OR_MODEL (default anthropic/claude-3.5-haiku)
 // Verify JWT stays ON — only signed-in users can call this.
 
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { getSecret } from "../_shared/secrets.ts"
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -30,10 +33,10 @@ function json(body: unknown, status = 200) {
   })
 }
 
-async function tryGemini(messages: ChatMessage[]): Promise<string | null> {
-  const key = Deno.env.get("GOOGLE_AI_API_KEY")
+async function tryGemini(admin: SupabaseClient, messages: ChatMessage[]): Promise<string | null> {
+  const key = await getSecret(admin, "GOOGLE_AI_API_KEY")
   if (!key) return null
-  const model = Deno.env.get("GOOGLE_AI_MODEL") ?? "gemini-1.5-flash"
+  const model = (await getSecret(admin, "GOOGLE_AI_MODEL")) ?? "gemini-2.0-flash"
   const contents = messages.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
@@ -59,10 +62,10 @@ async function tryGemini(messages: ChatMessage[]): Promise<string | null> {
   return typeof text === "string" ? text : null
 }
 
-async function tryOpenRouter(messages: ChatMessage[]): Promise<string | null> {
-  const key = Deno.env.get("OPENROUTER_API_KEY")
+async function tryOpenRouter(admin: SupabaseClient, messages: ChatMessage[]): Promise<string | null> {
+  const key = await getSecret(admin, "OPENROUTER_API_KEY")
   if (!key) return null
-  const model = Deno.env.get("OR_MODEL") ?? "anthropic/claude-3.5-haiku"
+  const model = (await getSecret(admin, "OR_MODEL")) ?? "anthropic/claude-3.5-haiku"
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -97,10 +100,15 @@ Deno.serve(async (req) => {
   }
   if (messages.length === 0) return json({ error: "No messages" }, 400)
 
-  let reply = await tryGemini(messages)
+  const admin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  )
+
+  let reply = await tryGemini(admin, messages)
   let provider = "gemini"
   if (!reply) {
-    reply = await tryOpenRouter(messages)
+    reply = await tryOpenRouter(admin, messages)
     provider = "openrouter"
   }
   if (!reply) {

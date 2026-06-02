@@ -26,12 +26,13 @@ const CATALOGUE: { id: string; label: string; keys: string[] }[] = [
   { id: "google_meet", label: "Google Meet & Calendar", keys: ["GCAL_CALENDAR_ID"] },
   { id: "zoom", label: "Zoom (backup video)", keys: ["ZOOM_ACCOUNT_ID", "ZOOM_CLIENT_ID", "ZOOM_CLIENT_SECRET"] },
   { id: "openweather", label: "OpenWeather", keys: ["OPENWEATHER_API_KEY"] },
-  { id: "gemini", label: "Gemini AI (primary)", keys: ["GEMINI_API_KEY"] },
+  { id: "gemini", label: "Google AI / Gemini (primary)", keys: ["GOOGLE_AI_API_KEY", "GOOGLE_AI_MODEL"] },
   { id: "openrouter", label: "OpenRouter (AI fallback)", keys: ["OPENROUTER_API_KEY"] },
   {
     id: "google_drive",
     label: "Google Drive (file storage)",
     keys: [
+      "GDRIVE_API_KEY",
       "GDRIVE_CLIENT_ID",
       "GDRIVE_CLIENT_SECRET",
       "GDRIVE_REFRESH_TOKEN",
