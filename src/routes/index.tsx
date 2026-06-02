@@ -247,7 +247,7 @@ export const router = createBrowserRouter (
         {
           path: "learners",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
               <LearnersListPage />
             </RoleGuard>
           ),
@@ -255,7 +255,7 @@ export const router = createBrowserRouter (
         {
           path: "learners/new",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
               <LearnerNewPage />
             </RoleGuard>
           ),
@@ -263,7 +263,7 @@ export const router = createBrowserRouter (
         {
           path: "learners/:id",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
               <LearnerDetailPage />
             </RoleGuard>
           ),
@@ -271,7 +271,7 @@ export const router = createBrowserRouter (
         {
           path: "learners/:id/edit",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
               <LearnerEditPage />
             </RoleGuard>
           ),
@@ -281,18 +281,11 @@ export const router = createBrowserRouter (
         { path: "courses", element: <MyCoursesPage /> },
         { path: "courses/:id", element: <CourseOverviewPage /> },
         { path: "courses/:id/learn/:lessonId", element: <LessonPlayerPage /> },
-        {
-          path: "courses/manage",
-          element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
-              <CoursesManagePage />
-            </RoleGuard>
-          ),
-        },
+        { path: "courses/manage", element: <CoursesManagePage /> },
         {
           path: "courses/builder",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
               <CourseBuilderPage />
             </RoleGuard>
           ),
@@ -300,7 +293,7 @@ export const router = createBrowserRouter (
         {
           path: "courses/builder/:id",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
               <CourseBuilderPage />
             </RoleGuard>
           ),
@@ -311,7 +304,7 @@ export const router = createBrowserRouter (
         {
           path: "assessments/builder",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
               <QuizListPage />
             </RoleGuard>
           ),
@@ -319,7 +312,7 @@ export const router = createBrowserRouter (
         {
           path: "assessments/builder/:id",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
               <QuizBuilderPage />
             </RoleGuard>
           ),
@@ -327,7 +320,7 @@ export const router = createBrowserRouter (
         {
           path: "assessments/results",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
               <ResultsPage />
             </RoleGuard>
           ),
@@ -339,89 +332,54 @@ export const router = createBrowserRouter (
         {
           path: "timetable",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
               <TrainerTimetablePage />
             </RoleGuard>
           ),
         },
         { path: "sessions/:id/checkin", element: <CheckInPage /> },
-        {
-          path: "sessions",
-          element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
-              <SessionsListPage />
-            </RoleGuard>
-          ),
-        },
-        {
-          path: "sessions/new",
-          element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
-              <SessionFormPage />
-            </RoleGuard>
-          ),
-        },
-        {
-          path: "sessions/:id",
-          element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
-              <SessionDetailPage />
-            </RoleGuard>
-          ),
-        },
-        {
-          path: "sessions/:id/edit",
-          element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
-              <SessionFormPage />
-            </RoleGuard>
-          ),
-        },
+        { path: "sessions", element: <SessionsListPage /> },
+        { path: "sessions/new", element: <SessionFormPage /> },
+        { path: "sessions/:id", element: <SessionDetailPage /> },
+        { path: "sessions/:id/edit", element: <SessionFormPage /> },
         {
           path: "attendance",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
               <AttendanceLogPage />
             </RoleGuard>
           ),
         },
 
         // 🎓 CERTIFICATES
-        {
-          // Learners reach this to view/download their OWN certificates (RLS
-          // scopes the data); staff manage and issue.
-          path: "certificates",
-          element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer", "manager", "learner"]}>
-              <CertificatesListPage />
-            </RoleGuard>
-          ),
-        },
+        // Learners reach this to view/download their OWN certificates (RLS
+        // scopes the data); staff manage and issue. Role-aware, open to all.
+        { path: "certificates", element: <CertificatesListPage /> },
         {
           path: "certificates/templates",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
               <CertTemplatesPage />
             </RoleGuard>
           ),
         },
+        { path: "certificates/verify", element: <CertVerifyPage /> },
+
+        // 🤖 AI ASSISTANT
         {
-          path: "certificates/verify",
+          path: "ai",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
-              <CertVerifyPage />
+            <RoleGuard roles={["super_admin", "admin"]}>
+              <AiAssistantPage />
             </RoleGuard>
           ),
         },
-
-        // 🤖 AI ASSISTANT
-        { path: "ai", element: <AiAssistantPage /> },
 
         // 📊 ANALYTICS (admin / manager / trainer)
         {
           path: "analytics",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
               <AnalyticsPage />
             </RoleGuard>
           ),
@@ -439,7 +397,7 @@ export const router = createBrowserRouter (
         {
           path: "trainers",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <TrainersListPage />
             </RoleGuard>
           ),
@@ -450,11 +408,11 @@ export const router = createBrowserRouter (
         { path: "messages", element: <MessagesPage /> },
         { path: "announcements", element: <AnnouncementsPage /> },
 
-        // 💳 PAYMENTS (admin / manager)
+        // 💳 PAYMENTS (super admin / admin)
         {
           path: "payments",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin"]}>
               <PaymentsPage />
             </RoleGuard>
           ),
@@ -475,7 +433,7 @@ export const router = createBrowserRouter (
         {
           path: "settings/integrations",
           element: (
-            <RoleGuard roles={["super_admin"]}>
+            <RoleGuard roles={["super_admin", "admin"]}>
               <IntegrationsPage />
             </RoleGuard>
           ),
@@ -562,7 +520,7 @@ export const router = createBrowserRouter (
         {
           path: "enrolments",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
               <EnrolmentsPage />
             </RoleGuard>
           ),
@@ -572,7 +530,7 @@ export const router = createBrowserRouter (
         {
           path: "staff",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <StaffPage />
             </RoleGuard>
           ),
@@ -580,7 +538,7 @@ export const router = createBrowserRouter (
         {
           path: "cohorts",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <CohortsPage />
             </RoleGuard>
           ),
@@ -588,7 +546,7 @@ export const router = createBrowserRouter (
         {
           path: "users",
           element: (
-            <RoleGuard roles={["super_admin"]}>
+            <RoleGuard roles={["super_admin", "admin"]}>
               <UserManagementPage />
             </RoleGuard>
           ),
@@ -596,11 +554,18 @@ export const router = createBrowserRouter (
         { path: "profile", element: <ProfilePage /> },
         { path: "account/password", element: <PasswordSettingsPage /> },
         { path: "invoices", element: <InvoicesPage /> },
-        { path: "payroll", element: <PayrollPage /> },
+        {
+          path: "payroll",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
+              <PayrollPage />
+            </RoleGuard>
+          ),
+        },
         {
           path: "files",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <FileManagerPage2 />
             </RoleGuard>
           ),
@@ -608,7 +573,7 @@ export const router = createBrowserRouter (
         {
           path: "cohorts/:id",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <CohortDetailPage />
             </RoleGuard>
           ),
@@ -619,14 +584,7 @@ export const router = createBrowserRouter (
         { path: "one-to-one", element: <OneToOnePage /> },
 
         // 📅 SCHEDULING (extended)
-        {
-          path: "holidays",
-          element: (
-            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
-              <HolidaysPage />
-            </RoleGuard>
-          ),
-        },
+        { path: "holidays", element: <HolidaysPage /> },
 
         // 💬 COMMUNICATION (extended)
         { path: "forums", element: <ForumsPage /> },
@@ -634,18 +592,11 @@ export const router = createBrowserRouter (
         { path: "qa", element: <QaWallPage /> },
         { path: "qa/:id", element: <ThreadPage /> },
         { path: "feedback", element: <FeedbackPage /> },
-        {
-          path: "feedback/results",
-          element: (
-            <RoleGuard roles={["admin", "super_admin", "manager", "trainer"]}>
-              <FeedbackResultsPage />
-            </RoleGuard>
-          ),
-        },
+        { path: "feedback/results", element: <FeedbackResultsPage /> },
         {
           path: "email",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <EmailComposerPage />
             </RoleGuard>
           ),
@@ -653,7 +604,7 @@ export const router = createBrowserRouter (
         {
           path: "inbox",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <InboxPage />
             </RoleGuard>
           ),
@@ -661,25 +612,18 @@ export const router = createBrowserRouter (
         {
           path: "inbox/:id",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <MailDetailPage />
             </RoleGuard>
           ),
         },
 
         // 🛍️ STORE
-        {
-          path: "store",
-          element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
-              <StoreCataloguePage />
-            </RoleGuard>
-          ),
-        },
+        { path: "store", element: <StoreCataloguePage /> },
         {
           path: "store/orders",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <StoreOrdersPage />
             </RoleGuard>
           ),
@@ -687,7 +631,7 @@ export const router = createBrowserRouter (
         {
           path: "store/coupons",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <StoreCouponsPage />
             </RoleGuard>
           ),
@@ -697,7 +641,7 @@ export const router = createBrowserRouter (
         {
           path: "departments",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <DepartmentsPage />
             </RoleGuard>
           ),
@@ -705,7 +649,7 @@ export const router = createBrowserRouter (
         {
           path: "payments/fees",
           element: (
-            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+            <RoleGuard roles={["super_admin", "admin"]}>
               <FeesReceiptsPage />
             </RoleGuard>
           ),
