@@ -24,7 +24,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
 import { CertificatePreview } from "@/components/certificates/CertificatePreview"
 import { downloadCertificatePdf } from "@/lib/certificates/pdf"
 import {
@@ -32,64 +31,8 @@ import {
   uploadSignatureImage,
   useDefaultTemplate,
   useSaveTemplate,
-  type CertPreset,
   type CertTemplate,
 } from "@/lib/queries/certificates.queries"
-
-const PRESET_OPTIONS: { value: CertPreset; label: string; description: string }[] = [
-  {
-    value: "completion",
-    label: "Completion",
-    description: "Navy banner, gold wavy divider and rosette. Two signatories.",
-  },
-  {
-    value: "participation",
-    label: "Participation",
-    description: "Corner waves and hexagon accents. Centred, single signatory.",
-  },
-  {
-    value: "achievement",
-    label: "Achievement",
-    description: "Ornate double border and gold medallion. Two signatories.",
-  },
-]
-
-/** A small branded thumbnail hinting at each preset's layout. */
-function PresetThumbnail({ preset }: { preset: CertPreset }): React.JSX.Element {
-  const base = "h-full w-full rounded-sm bg-white"
-  if (preset === "completion") {
-    return (
-      <div className={base}>
-        <div className="h-[38%] w-full rounded-t-sm bg-brand-navy" />
-        <div className="h-[3px] w-full bg-brand-gold" />
-        <div className="space-y-1 p-1.5">
-          <div className="h-1 w-1/2 rounded bg-brand-navy/30" />
-          <div className="h-1 w-3/4 rounded bg-brand-navy/20" />
-        </div>
-      </div>
-    )
-  }
-  if (preset === "participation") {
-    return (
-      <div className={cn(base, "relative overflow-hidden")}>
-        <div className="absolute left-0 top-0 size-4 rounded-br-full bg-brand-navy" />
-        <div className="absolute bottom-0 right-0 size-4 rounded-tl-full bg-brand-gold" />
-        <div className="flex h-full flex-col items-center justify-center gap-1">
-          <div className="h-1.5 w-1/2 rounded bg-brand-navy/40" />
-          <div className="h-1 w-1/3 rounded bg-brand-gold" />
-        </div>
-      </div>
-    )
-  }
-  return (
-    <div className={cn(base, "p-1")}>
-      <div className="flex h-full flex-col items-center justify-center gap-1 rounded-sm border-2 border-brand-navy">
-        <div className="size-3 rounded-full bg-brand-gold" />
-        <div className="h-1 w-1/2 rounded bg-brand-navy/30" />
-      </div>
-    </div>
-  )
-}
 
 function Section({
   title,
@@ -222,47 +165,6 @@ export default function CertTemplatesPage() {
               </div>
             ) : (
               <>
-                <Section
-                  title="Layout"
-                  description="Choose a branded design. The preview updates to match."
-                >
-                  <fieldset className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <legend className="sr-only">Certificate layout</legend>
-                    {PRESET_OPTIONS.map((opt) => {
-                      const selected = tpl.preset === opt.value
-                      return (
-                        <label
-                          key={opt.value}
-                          className={cn(
-                            "flex cursor-pointer flex-col gap-2 rounded-lg border-2 p-2.5 transition-colors focus-within:ring-2 focus-within:ring-[#d4a843] focus-within:ring-offset-2",
-                            selected
-                              ? "border-brand-navy bg-brand-navy/[0.04]"
-                              : "border-border hover:border-brand-navy/40",
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name="cert-preset"
-                            value={opt.value}
-                            checked={selected}
-                            onChange={() => set("preset", opt.value)}
-                            className="sr-only"
-                          />
-                          <div className="aspect-[297/210] w-full overflow-hidden rounded border border-border bg-muted">
-                            <PresetThumbnail preset={opt.value} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{opt.label}</p>
-                            <p className="text-xs text-muted-foreground">{opt.description}</p>
-                          </div>
-                        </label>
-                      )
-                    })}
-                  </fieldset>
-                </Section>
-
-                <Separator />
-
                 <Section title="Template name" description="For your reference only.">
                   <Input
                     value={tpl.name}
@@ -412,7 +314,6 @@ export default function CertTemplatesPage() {
                     cpdHours: 3,
                     issuedAt: new Date().toISOString(),
                     verificationUuid: "00000000-0000-0000-0000-000000000000",
-                    preset: tpl.preset,
                     titleText: tpl.titleText,
                     introText: tpl.introText,
                     completionText: tpl.completionText,

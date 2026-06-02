@@ -319,7 +319,6 @@ export default function CertificatesListPage() {
                               issuedAt: c.issuedAt,
                               expiresAt: c.expiresAt,
                               verificationUuid: c.verificationUuid,
-                              preset: template.data?.preset,
                               titleText: template.data?.titleText,
                               introText: template.data?.introText,
                               completionText: template.data?.completionText,
