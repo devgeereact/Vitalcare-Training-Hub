@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { formatDistanceToNow, format } from "date-fns"
 import { toast } from "sonner"
 import { MessageSquare, AlertCircle, Send, ArrowLeft } from "lucide-react"
@@ -126,6 +127,18 @@ export default function MessagesPage() {
   const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useThreads(user?.id)
   const [active, setActive] = useState<{ id: string; name: string } | null>(null)
+  const [params, setParams] = useSearchParams()
+
+  // Open a thread directly from a contact (Message button -> ?to=&name=).
+  useEffect(() => {
+    const to = params.get("to")
+    if (!to) return
+    setActive({ id: to, name: params.get("name") || "Contact" })
+    params.delete("to")
+    params.delete("name")
+    setParams(params, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="space-y-6">

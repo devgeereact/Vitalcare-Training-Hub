@@ -4,6 +4,7 @@ import BottomTabBar from "@/components/platform/BottomTabBar"
 import React from "react"
 import { NotificationDropdown } from "@/components/notification-dropdown"
 import AnnouncementPopup from "@/components/platform/AnnouncementPopup"
+import ProfileCompletionBanner from "@/components/platform/ProfileCompletionBanner"
 
 import {
   Breadcrumb,
@@ -140,6 +141,8 @@ export default function AppLayout() {
                     </div>
                 </div>
               </header>
+
+        <ProfileCompletionBanner />
 
         {/* PAGE CONTENT */}
         <main className="flex-1 p-6 pb-24 md:pb-6">

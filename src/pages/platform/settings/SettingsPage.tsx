@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import ProfileDetailsCard from "@/components/platform/ProfileDetailsCard"
 
 const VITALCARE_THEMES = [
   { id: "vitalcare-default", label: "Vitalcare", preview: "bg-gradient-to-br from-[#1b2e6b] to-[#d4a843]" },
@@ -155,6 +156,8 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <ProfileDetailsCard />
 
       {/* Account */}
       <Card>

@@ -1,4 +1,5 @@
-import { Users, AlertCircle, Mail } from "lucide-react"
+import { Link } from "react-router-dom"
+import { Users, AlertCircle, Mail, MessageSquare } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -79,6 +80,11 @@ export default function StaffPage() {
                   <Badge variant="secondary" className={ROLE_STYLE[s.role]}>
                     {ROLE_LABEL[s.role] ?? s.role}
                   </Badge>
+                  <Button asChild variant="ghost" size="icon" className="size-8" aria-label="Message">
+                    <Link to={`/platform/messages?to=${s.id}&name=${encodeURIComponent(s.name)}`}>
+                      <MessageSquare className="size-4" />
+                    </Link>
+                  </Button>
                 </li>
               ))}
             </ul>

@@ -83,6 +83,8 @@ export type Profile = Timestamps & {
   role: UserRole
   organisation_id: string | null
   phone: string | null
+  emergency_contact_name: string | null
+  emergency_contact_phone: string | null
 }
 
 export type Department = Timestamps & {
