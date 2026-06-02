@@ -38,6 +38,7 @@ const AUDIENCES = [
   { value: "all_learners", label: "All learners" },
   { value: "all_trainers", label: "All trainers" },
   { value: "all_staff", label: "All staff" },
+  { value: "single", label: "One person" },
 ] as const
 
 const STATUS_STYLE: Record<EmailCampaignStatus, string> = {
@@ -51,6 +52,7 @@ const STATUS_STYLE: Record<EmailCampaignStatus, string> = {
 export default function EmailComposerPage() {
   const { profile } = useUser()
   const [audience, setAudience] = useState<string>("all_learners")
+  const [singleEmail, setSingleEmail] = useState("")
   const [subject, setSubject] = useState("")
   const [message, setMessage] = useState("")
   const [sending, setSending] = useState(false)
@@ -72,7 +74,11 @@ export default function EmailComposerPage() {
       toast.error("Add a subject and a message.")
       return
     }
-    if (when === "later") {
+    if (audience === "single" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(singleEmail.trim())) {
+      toast.error("Enter a valid recipient email.")
+      return
+    }
+    if (when === "later" && audience !== "single") {
       if (!scheduledAt || new Date(scheduledAt) <= new Date()) {
         toast.error("Choose a future date and time.")
         return
@@ -90,7 +96,10 @@ export default function EmailComposerPage() {
     setSending(true)
     try {
       const { data, error } = await supabase.functions.invoke("send-email", {
-        body: { audience, subject, message },
+        body:
+          audience === "single"
+            ? { emails: [singleEmail.trim()], subject, message }
+            : { audience, subject, message },
       })
       if (error) throw error
       toast.success("Email sent", {
@@ -142,6 +151,18 @@ export default function EmailComposerPage() {
               </SelectContent>
             </Select>
           </div>
+          {audience === "single" && (
+            <div>
+              <Label className="mb-1.5 block">Recipient email</Label>
+              <Input
+                type="email"
+                placeholder="name@example.com"
+                value={singleEmail}
+                onChange={(e) => setSingleEmail(e.target.value)}
+                className="max-w-xs"
+              />
+            </div>
+          )}
           <div>
             <Label className="mb-1.5 block">Subject</Label>
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} />

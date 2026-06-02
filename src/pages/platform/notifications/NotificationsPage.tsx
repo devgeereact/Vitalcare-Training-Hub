@@ -19,6 +19,15 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/use-auth"
 import {
@@ -26,7 +35,7 @@ import {
   useMarkNotification,
 } from "@/lib/queries/communication.queries"
 import { pushSupported, isPushEnabled, enablePush } from "@/lib/push"
-import type { NotificationType } from "@/types/database.types"
+import type { Notification, NotificationType } from "@/types/database.types"
 
 function PushToggle({ userId }: { userId: string | undefined }) {
   const [enabled, setEnabled] = useState(false)
@@ -75,6 +84,7 @@ export default function NotificationsPage() {
   const { data, isLoading, isError, refetch } = useNotifications(user?.id)
   const mark = useMarkNotification(user?.id)
   const unread = (data ?? []).filter((n) => !n.read_at).length
+  const [selected, setSelected] = useState<Notification | null>(null)
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -166,17 +176,17 @@ export default function NotificationsPage() {
                   </div>
                 )
                 return (
-                  <li
-                    key={n.id}
-                    onMouseEnter={() => !n.read_at && mark.mutate({ id: n.id })}
-                  >
-                    {n.link ? (
-                      <Link to={n.link} className="block hover:bg-muted/50">
-                        {body}
-                      </Link>
-                    ) : (
-                      body
-                    )}
+                  <li key={n.id}>
+                    <button
+                      type="button"
+                      className="block w-full text-left hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
+                      onClick={() => {
+                        if (!n.read_at) mark.mutate({ id: n.id })
+                        setSelected(n)
+                      }}
+                    >
+                      {body}
+                    </button>
                   </li>
                 )
               })}
@@ -184,6 +194,34 @@ export default function NotificationsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Notification detail popup */}
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent>
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selected.title}</DialogTitle>
+                <DialogDescription>
+                  {format(new Date(selected.created_at), "EEE d MMM yyyy, HH:mm")}
+                </DialogDescription>
+              </DialogHeader>
+              {selected.body && (
+                <p className="whitespace-pre-wrap text-sm text-foreground">
+                  {selected.body}
+                </p>
+              )}
+              {selected.link && (
+                <DialogFooter>
+                  <Button asChild onClick={() => setSelected(null)}>
+                    <Link to={selected.link}>Open</Link>
+                  </Button>
+                </DialogFooter>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

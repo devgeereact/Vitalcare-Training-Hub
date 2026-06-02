@@ -484,12 +484,77 @@
   --sidebar-ring: 43 65% 56%;
 }
 
-/* REMOVE default FullCalendar button styles */
-.fc .fc-button {
-  background: none;
-  border: none;
-  padding: 0;
+/* ================================
+   Vitalcare calendar polish
+================================ */
+.vitalcare-calendar .fc .fc-toolbar-title {
+  font-family: "DM Serif Display", serif;
+  font-weight: 400;
+  font-size: 1.35rem;
+  color: hsl(var(--foreground));
+}
+.vitalcare-calendar .fc .fc-button {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
   box-shadow: none;
+  transition: background-color 0.15s ease;
+}
+.vitalcare-calendar .fc .fc-button:hover {
+  background-color: hsl(var(--border));
+}
+.vitalcare-calendar .fc .fc-button-primary:not(:disabled).fc-button-active,
+.vitalcare-calendar .fc .fc-today-button:not(:disabled) {
+  background-color: #1b2e6b;
+  border-color: #1b2e6b;
+  color: #fff;
+}
+.vitalcare-calendar .fc .fc-button:focus-visible {
+  outline: 2px solid #d4a843;
+  outline-offset: 2px;
+}
+.vitalcare-calendar .fc .fc-button-group > .fc-button {
+  border-radius: 0;
+}
+.vitalcare-calendar .fc .fc-button-group > .fc-button:first-child {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+.vitalcare-calendar .fc .fc-button-group > .fc-button:last-child {
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+.vitalcare-calendar .fc .fc-col-header-cell-cushion {
+  padding: 8px 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
+}
+.vitalcare-calendar .fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(212, 168, 67, 0.1) !important;
+}
+.vitalcare-calendar .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  background-color: #d4a843;
+  color: #1b2e6b;
+  border-radius: 9999px;
+  font-weight: 700;
+  padding: 1px 7px;
+}
+.vitalcare-calendar .fc .fc-event {
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+.vitalcare-calendar .fc .fc-toolbar.fc-header-toolbar {
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 /* Custom scrollbar for dark themes */
