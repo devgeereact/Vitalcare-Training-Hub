@@ -1,6 +1,7 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { formatDistanceToNow, format } from "date-fns"
+import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
 import { Inbox, AlertCircle, RefreshCw, Loader2, Mail, PenSquare, Send } from "lucide-react"
 
@@ -27,7 +28,6 @@ import type { MailMessage } from "@/types/database.types"
 
 export default function InboxPage() {
   const qc = useQueryClient()
-  const [selected, setSelected] = useState<MailMessage | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [compose, setCompose] = useState(false)
   const [cTo, setCTo] = useState("")
@@ -94,15 +94,6 @@ export default function InboxPage() {
     }
   }
 
-  function open(m: MailMessage) {
-    setSelected(m)
-    if (!m.seen) {
-      supabase.from("mail_messages").update({ seen: true }).eq("id", m.id).then(() => {
-        qc.invalidateQueries({ queryKey: ["mail", "inbox"] })
-      })
-    }
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -156,9 +147,8 @@ export default function InboxPage() {
             <ul className="divide-y divide-border">
               {data!.map((m) => (
                 <li key={m.id}>
-                  <button
-                    type="button"
-                    onClick={() => open(m)}
+                  <Link
+                    to={`/platform/inbox/${m.id}`}
                     className={cn(
                       "flex w-full items-start gap-3 px-5 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold",
                       !m.seen && "bg-muted/40",
@@ -186,43 +176,13 @@ export default function InboxPage() {
                     {!m.seen && (
                       <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand-gold" />
                     )}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          {selected && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{selected.subject || "(no subject)"}</DialogTitle>
-                <DialogDescription>
-                  {selected.from_name ? `${selected.from_name} · ` : ""}
-                  {selected.from_addr}
-                  {selected.received_at
-                    ? ` · ${format(new Date(selected.received_at), "d MMM yyyy, HH:mm")}`
-                    : ""}
-                </DialogDescription>
-              </DialogHeader>
-              <pre className="whitespace-pre-wrap break-words font-sans text-sm text-foreground">
-                {(selected.body_html || selected.snippet || "")
-                  .replace(/<[^>]+>/g, " ")
-                  .replace(/&nbsp;/g, " ")
-                  .slice(0, 8000)}
-              </pre>
-              {selected.from_addr && (
-                <Button asChild variant="outline" size="sm" className="w-fit">
-                  <a href={`mailto:${selected.from_addr}`}>Reply by email</a>
-                </Button>
-              )}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Compose (sends from your own account) */}
       <Dialog open={compose} onOpenChange={setCompose}>

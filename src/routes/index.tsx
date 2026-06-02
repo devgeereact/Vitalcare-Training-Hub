@@ -59,6 +59,7 @@ import OneToOnePage from "@/pages/platform/one-to-one/OneToOnePage"
 import UserManagementPage from "@/pages/platform/people/UserManagementPage"
 import ProfilePage from "@/pages/platform/profile/ProfilePage"
 import InboxPage from "@/pages/platform/email/InboxPage"
+import MailDetailPage from "@/pages/platform/email/MailDetailPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -624,6 +625,14 @@ export const router = createBrowserRouter (
           element: (
             <RoleGuard roles={["admin", "super_admin", "manager"]}>
               <InboxPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "inbox/:id",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "manager"]}>
+              <MailDetailPage />
             </RoleGuard>
           ),
         },

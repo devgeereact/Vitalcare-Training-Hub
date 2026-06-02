@@ -64,6 +64,11 @@ Deno.serve(async (req) => {
   const audience = String(body.audience ?? "all_learners")
   if (!subject || !message) return json({ error: "Missing subject or message" }, 400)
 
+  // Super-admin may choose the sender identity (must be a vitalcare.uk address).
+  const fromReq = typeof body.from === "string" ? body.from.trim() : ""
+  const sender =
+    profile.role === "super_admin" && /@vitalcare\.uk>?\s*$/i.test(fromReq) ? fromReq : from
+
   // Resolve recipients.
   let emails: string[] = []
   if (Array.isArray(body.emails) && body.emails.length) {
@@ -88,7 +93,7 @@ Deno.serve(async (req) => {
     </div>`
 
   // Prefer the organisation's own SMTP when configured.
-  const smtp = await sendViaSmtp(admin, { to: emails, subject, html })
+  const smtp = await sendViaSmtp(admin, { to: emails, subject, html, from: sender })
   if (smtp.configured) {
     return json({
       ok: smtp.sent > 0,
@@ -110,7 +115,7 @@ Deno.serve(async (req) => {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: chunk, subject, html }),
+      body: JSON.stringify({ from: sender, to: chunk, subject, html }),
     })
     if (res.ok) {
       sent += chunk.length

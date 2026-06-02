@@ -13,13 +13,14 @@ export interface SmtpResult {
 
 export async function sendViaSmtp(
   admin: SupabaseClient,
-  msg: { to: string[]; subject: string; html: string },
+  msg: { to: string[]; subject: string; html: string; from?: string },
 ): Promise<SmtpResult> {
   const host = await getSecret(admin, "SMTP_HOST")
   const portRaw = await getSecret(admin, "SMTP_PORT")
   const user = await getSecret(admin, "SMTP_USER")
   const pass = await getSecret(admin, "SMTP_PASS")
   const from =
+    msg.from ??
     (await getSecret(admin, "SMTP_FROM")) ??
     (await getSecret(admin, "RESEND_FROM")) ??
     user

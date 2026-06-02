@@ -49,9 +49,15 @@ const STATUS_STYLE: Record<EmailCampaignStatus, string> = {
   cancelled: "bg-muted text-muted-foreground",
 }
 
+const SENDERS = [
+  "Vitalcare Training Hub <info@vitalcare.uk>",
+  "Gideon Akinlotan <gideon@vitalcare.uk>",
+]
+
 export default function EmailComposerPage() {
-  const { profile } = useUser()
+  const { profile, isSuperAdmin } = useUser()
   const [audience, setAudience] = useState<string>("all_learners")
+  const [fromAccount, setFromAccount] = useState(SENDERS[0])
   const [singleEmail, setSingleEmail] = useState("")
   const [subject, setSubject] = useState("")
   const [message, setMessage] = useState("")
@@ -95,11 +101,12 @@ export default function EmailComposerPage() {
     }
     setSending(true)
     try {
+      const fromOverride = isSuperAdmin ? { from: fromAccount } : {}
       const { data, error } = await supabase.functions.invoke("send-email", {
         body:
           audience === "single"
-            ? { emails: [singleEmail.trim()], subject, message }
-            : { audience, subject, message },
+            ? { emails: [singleEmail.trim()], subject, message, ...fromOverride }
+            : { audience, subject, message, ...fromOverride },
       })
       if (error) throw error
       toast.success("Email sent", {
@@ -136,6 +143,23 @@ export default function EmailComposerPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isSuperAdmin && (
+            <div>
+              <Label className="mb-1.5 block">Send from</Label>
+              <Select value={fromAccount} onValueChange={setFromAccount}>
+                <SelectTrigger className="max-w-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SENDERS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label className="mb-1.5 block">Audience</Label>
             <Select value={audience} onValueChange={setAudience}>
