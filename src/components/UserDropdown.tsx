@@ -87,17 +87,17 @@ export function UserDropdown() {
         </DropdownMenuLabel>
 
         {/* Items */}
-        <DropdownMenuItem className="gap-2 h-9">
+        <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/profile")}>
           <User className="!size-5" />
           Profile
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="gap-2 h-9">
+        <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/settings")}>
           <Settings className="!size-5" />
           Settings
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="gap-2 h-9">
+        <DropdownMenuItem className="gap-2 h-9" onClick={() => navigate("/platform/dashboard")}>
           <LayoutDashboard className="!size-5" />
           Dashboard
         </DropdownMenuItem>

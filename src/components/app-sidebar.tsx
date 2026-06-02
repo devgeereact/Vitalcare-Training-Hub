@@ -97,6 +97,7 @@ const data = {
         { title: "1:1 Sessions", url: "/platform/one-to-one" },
         { title: "Cohorts & Teams", url: "/platform/cohorts" },
         { title: "Staff", url: "/platform/staff" },
+        { title: "User Management", url: "/platform/users" },
       ],
     },
     {

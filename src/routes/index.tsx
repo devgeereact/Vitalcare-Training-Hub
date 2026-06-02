@@ -56,6 +56,8 @@ import EmailComposerPage from "@/pages/platform/email/EmailComposerPage"
 import CohortDetailPage from "@/pages/platform/cohorts/CohortDetailPage"
 import IntegrationsPage from "@/pages/platform/settings/IntegrationsPage"
 import OneToOnePage from "@/pages/platform/one-to-one/OneToOnePage"
+import UserManagementPage from "@/pages/platform/people/UserManagementPage"
+import ProfilePage from "@/pages/platform/profile/ProfilePage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -562,6 +564,15 @@ export const router = createBrowserRouter (
             </RoleGuard>
           ),
         },
+        {
+          path: "users",
+          element: (
+            <RoleGuard roles={["super_admin"]}>
+              <UserManagementPage />
+            </RoleGuard>
+          ),
+        },
+        { path: "profile", element: <ProfilePage /> },
         {
           path: "cohorts/:id",
           element: (
