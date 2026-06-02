@@ -134,9 +134,38 @@ export function useCreateSession() {
       const start = new Date(v.starts_at)
       const end = new Date(v.ends_at)
       const patch: Partial<TrainingSession> = {}
+      const provider = v.meeting_provider ?? "google_meet"
+      const wantMeet = v.is_virtual && provider === "google_meet"
+      const duration = Math.max(
+        15,
+        Math.round((end.getTime() - start.getTime()) / 60000),
+      )
 
-      // Primary: Google Calendar event + Meet link (virtual) via OAuth.
-      let haveMeetLink = false
+      const createZoom = async () => {
+        try {
+          const { data: zoom, error: zErr } = await supabase.functions.invoke(
+            "zoom-create-meeting",
+            { body: { topic: v.title, start_time: start.toISOString(), duration } },
+          )
+          if (!zErr && zoom?.join_url) {
+            patch.zoom_meeting_id = zoom.id
+            patch.zoom_join_url = zoom.join_url
+            return true
+          }
+        } catch (zoomErr) {
+          console.error("[useCreateSession:zoom]", zoomErr)
+        }
+        return false
+      }
+
+      // Zoom chosen explicitly: create it first as the primary link.
+      let haveLink = false
+      if (v.is_virtual && provider === "zoom") {
+        haveLink = await createZoom()
+      }
+
+      // Google Calendar event always (keeps the calendar in sync), with a Meet
+      // link only when Google Meet is the chosen provider.
       try {
         const { data: g, error: gErr } = await supabase.functions.invoke(
           "gmeet-create-event",
@@ -146,8 +175,14 @@ export function useCreateSession() {
               description: v.description || "",
               start: start.toISOString(),
               end: end.toISOString(),
-              location: v.venue || (v.is_virtual ? "Online (Google Meet)" : ""),
-              withMeet: v.is_virtual,
+              location:
+                v.venue ||
+                (v.is_virtual
+                  ? provider === "zoom"
+                    ? "Online (Zoom)"
+                    : "Online (Google Meet)"
+                  : ""),
+              withMeet: wantMeet,
             },
           },
         )
@@ -155,28 +190,16 @@ export function useCreateSession() {
           patch.gcal_event_id = g.eventId
           if (g.meetUrl) {
             patch.meet_url = g.meetUrl
-            haveMeetLink = true
+            haveLink = true
           }
         }
       } catch (gErr) {
         console.error("[useCreateSession:gmeet]", gErr)
       }
 
-      // Backup: Zoom for virtual sessions when no Meet link was created.
-      if (v.is_virtual && !haveMeetLink) {
-        try {
-          const duration = Math.max(15, Math.round((end.getTime() - start.getTime()) / 60000))
-          const { data: zoom, error: zErr } = await supabase.functions.invoke(
-            "zoom-create-meeting",
-            { body: { topic: v.title, start_time: start.toISOString(), duration } },
-          )
-          if (!zErr && zoom?.join_url) {
-            patch.zoom_meeting_id = zoom.id
-            patch.zoom_join_url = zoom.join_url
-          }
-        } catch (zoomErr) {
-          console.error("[useCreateSession:zoom]", zoomErr)
-        }
+      // Backup: if a virtual session still has no link, fall back to Zoom.
+      if (v.is_virtual && !haveLink) {
+        await createZoom()
       }
 
       if (Object.keys(patch).length > 0) {

@@ -1,4 +1,15 @@
-import { Bell } from "lucide-react"
+import { Link } from "react-router-dom"
+import { formatDistanceToNow } from "date-fns"
+import {
+  Bell,
+  Info,
+  GraduationCap,
+  CalendarDays,
+  Award,
+  MessageSquare,
+  Megaphone,
+  Settings as SettingsIcon,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -8,81 +19,30 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
+import {
+  useNotifications,
+  useMarkNotification,
+} from "@/lib/queries/communication.queries"
+import type { NotificationType } from "@/types/database.types"
 
-type Notification = {
-  id: number
-  title: string
-  description: string
-  time: string
-  unread?: boolean
-  avatar?: string
-  color?: string
+const ICONS: Record<NotificationType, typeof Bell> = {
+  info: Info,
+  enrolment: GraduationCap,
+  session: CalendarDays,
+  certificate: Award,
+  message: MessageSquare,
+  announcement: Megaphone,
+  system: SettingsIcon,
 }
 
-const notifications: Notification[] = [
-  {
-    id: 1,
-    title: "New order placed",
-    description: "Order #1234 has been placed",
-    time: "2m ago",
-    unread: true,
-    color: "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-  },
-  {
-    id: 2,
-    title: "Payment received",
-    description: "₹4,500 received from client",
-    time: "1h ago",
-    color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
-  },
-  {
-    id: 3,
-    title: "New user registered",
-    description: "A new user joined your platform",
-    time: "3h ago",
-    color: "bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400",
-  },
-  {
-    id: 4,
-    title: "Password changed",
-    description: "A user updated their account password",
-    time: "1h ago",
-    color: "bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
-  },
-  {
-  id: 5,
-  title: "Subscription renewed",
-  description: "A user renewed their subscription plan",
-  time: "10m ago",
-  color: "bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400",
-},
-{
-  id: 6,
-  title: "Support ticket opened",
-  description: "A user submitted a new support request",
-  time: "5m ago",
-  color: "bg-cyan-100 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400",
-},
-{
-  id: 7,
-  title: "New review received",
-  description: "A customer left a 5-star review",
-  time: "20m ago",
-  color: "bg-lime-100 text-lime-600 dark:bg-lime-500/20 dark:text-lime-400",
-},
-{
-  id: 8,
-  title: "Server restarted",
-  description: "Production server was successfully restarted",
-  time: "45m ago",
-  color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400",
-},
-]
-
 export function NotificationDropdown() {
-  const unreadCount = notifications.filter(n => n.unread).length
+  const { user } = useAuth()
+  const { data } = useNotifications(user?.id)
+  const mark = useMarkNotification(user?.id)
+  const items = data ?? []
+  const unreadCount = items.filter((n) => !n.read_at).length
 
   return (
     <DropdownMenu>
@@ -92,76 +52,90 @@ export function NotificationDropdown() {
             variant="ghost"
             size="icon"
             className="rounded-full [&_svg]:size-5 h-10 w-10 p-0"
+            aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
           >
             <Bell />
           </Button>
-
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 min-w-4 rounded-full
-              bg-destructive px-1 text-[10px] font-medium
-              text-destructive-foreground flex items-center justify-center">
-              {unreadCount}
+            <span className="absolute -top-1 -right-1 h-4 min-w-4 rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground flex items-center justify-center">
+              {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </div>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent
-        align="end"
-        className="w-80 p-0 rounded-xl border shadow-xl"
-      >
+      <DropdownMenuContent align="end" className="w-80 p-0 rounded-xl border shadow-xl">
         <DropdownMenuLabel className="flex items-center justify-between px-4 py-3">
           <span>Notifications</span>
-          <span className="text-xs text-muted-foreground">
-            {unreadCount} unread
-          </span>
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              onClick={() => mark.mutate({ all: true })}
+              className="text-xs font-normal text-muted-foreground hover:text-foreground"
+            >
+              Mark all read
+            </button>
+          )}
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator />
 
-        <div className="h-80 overflow-y-auto">
-          <div className="flex flex-col">
-            {notifications.map((item) => (
-              <div
-                key={item.id}
-                className={cn(
-                  "flex gap-3 px-4 py-3 cursor-pointer transition-colors",
-                  item.unread
-                    ? "bg-muted/50 hover:bg-muted"
-                    : "hover:bg-muted/50"
-                )}
-              >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={item.avatar} />
-                  <AvatarFallback
+        <div className="max-h-80 overflow-y-auto">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+              <Bell className="size-6 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">You are all caught up.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              {items.slice(0, 8).map((item) => {
+                const Icon = ICONS[item.type] ?? Info
+                const inner = (
+                  <div
                     className={cn(
-                      "font-medium text-sm flex items-center justify-center",
-                      item.color
+                      "flex gap-3 px-4 py-3 transition-colors",
+                      item.read_at ? "hover:bg-muted/50" : "bg-muted/50 hover:bg-muted",
                     )}
                   >
-                    {item.title.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-sm font-medium leading-none">
-                    {item.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.description}
-                  </p>
-                  <span className="text-xs text-muted-foreground">
-                    {item.time}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-brand-navy">
+                      <Icon className="size-4" />
+                    </span>
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <p className="truncate text-sm font-medium leading-none">
+                        {item.title}
+                      </p>
+                      {item.body && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {item.body}
+                        </p>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(item.created_at), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                )
+                return item.link ? (
+                  <Link
+                    key={item.id}
+                    to={item.link}
+                    onClick={() => !item.read_at && mark.mutate({ id: item.id })}
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={item.id}>{inner}</div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        <div className="p-2 border-t">
-          <Button variant="ghost" className="w-full text-sm">
-            View all notifications
+        <div className="border-t p-2">
+          <Button asChild variant="ghost" className="w-full text-sm">
+            <Link to="/platform/notifications">View all notifications</Link>
           </Button>
         </div>
       </DropdownMenuContent>

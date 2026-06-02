@@ -3,7 +3,6 @@ import { AppSidebar } from "@/components/app-sidebar"
 import BottomTabBar from "@/components/platform/BottomTabBar"
 import React from "react"
 import { NotificationDropdown } from "@/components/notification-dropdown"
-import { AppLauncherDropdown } from "@/components/appLauncher-dropdown"
 
 import {
   Breadcrumb,
@@ -27,7 +26,6 @@ import Footer from "@/layouts/Footer"
 
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
-import { LanguageDropdown } from "@/components/language-dropdown"
 import { UserDropdown } from "@/components/UserDropdown"
 
 const CRUMB_LABELS: Record<string, string> = {
@@ -134,13 +132,8 @@ export default function AppLayout() {
                     <div className="flex items-center gap-1">
                         <GlobalSearch />
                         <ThemeToggle />
-                        <LanguageDropdown />
-                        <AppLauncherDropdown />
-                        <div className="relative hidden md:inline-flex">
+                        <div className="hidden md:inline-flex">
                             <NotificationDropdown />
-                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
-                                5
-                            </span>
                         </div>
                          <UserDropdown />
                     </div>

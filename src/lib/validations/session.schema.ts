@@ -12,6 +12,7 @@ export const sessionFormSchema = z
     capacity: z.coerce.number().min(0).max(100000).optional(),
     is_virtual: z.boolean(),
     is_public: z.boolean(),
+    meeting_provider: z.enum(["google_meet", "zoom"]).default("google_meet"),
   })
   .refine((d) => new Date(d.ends_at) > new Date(d.starts_at), {
     message: "End must be after start",

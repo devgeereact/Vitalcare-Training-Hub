@@ -60,6 +60,7 @@ const EMPTY: SessionFormValues = {
   capacity: 0,
   is_virtual: false,
   is_public: false,
+  meeting_provider: "google_meet",
 }
 
 export default function SessionFormPage() {
@@ -91,6 +92,7 @@ export default function SessionFormPage() {
         capacity: session.data.capacity ?? 0,
         is_virtual: session.data.is_virtual,
         is_public: session.data.is_public,
+        meeting_provider: session.data.zoom_join_url ? "zoom" : "google_meet",
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -292,7 +294,7 @@ export default function SessionFormPage() {
                       </FormControl>
                       <div>
                         <FormLabel>Virtual session</FormLabel>
-                        <FormDescription>Runs online (Zoom)</FormDescription>
+                        <FormDescription>Runs online with a meeting link</FormDescription>
                       </div>
                     </FormItem>
                   )}
@@ -313,6 +315,34 @@ export default function SessionFormPage() {
                   )}
                 />
               </div>
+
+              {form.watch("is_virtual") && (
+                <FormField
+                  control={form.control}
+                  name="meeting_provider"
+                  render={({ field }) => (
+                    <FormItem className="rounded-lg border border-border p-4">
+                      <FormLabel>Meeting provider</FormLabel>
+                      <FormDescription>
+                        The link is generated instantly when you save.
+                      </FormDescription>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger className="mt-2 max-w-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="google_meet">Google Meet</SelectItem>
+                          <SelectItem value="zoom">Zoom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <div className="flex justify-end gap-2 pt-2">
                 <Button asChild variant="outline" type="button">
                   <Link to="/platform/sessions">Cancel</Link>
