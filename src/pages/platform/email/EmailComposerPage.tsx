@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { toast } from "sonner"
-import { Mail, Loader2, Send } from "lucide-react"
+import { format } from "date-fns"
+import { Mail, Loader2, Send, Clock, X, CheckCircle2 } from "lucide-react"
 
 import {
   Card,
@@ -20,7 +21,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase/client"
+import { useUser } from "@/hooks/use-user"
+import {
+  useCampaigns,
+  useScheduleCampaign,
+  useCancelCampaign,
+} from "@/lib/queries/email.queries"
+import type { EmailCampaignStatus } from "@/types/database.types"
 import AiAssistButton from "@/components/ai/AiAssistButton"
 
 const AUDIENCES = [
@@ -29,15 +40,51 @@ const AUDIENCES = [
   { value: "all_staff", label: "All staff" },
 ] as const
 
+const STATUS_STYLE: Record<EmailCampaignStatus, string> = {
+  scheduled: "bg-primary/10 text-primary",
+  sending: "bg-warning/15 text-warning",
+  sent: "bg-success/15 text-success",
+  failed: "bg-destructive/15 text-destructive",
+  cancelled: "bg-muted text-muted-foreground",
+}
+
 export default function EmailComposerPage() {
+  const { profile } = useUser()
   const [audience, setAudience] = useState<string>("all_learners")
   const [subject, setSubject] = useState("")
   const [message, setMessage] = useState("")
   const [sending, setSending] = useState(false)
+  const [when, setWhen] = useState<"now" | "later">("now")
+  const [scheduledAt, setScheduledAt] = useState("")
+
+  const campaigns = useCampaigns()
+  const schedule = useScheduleCampaign()
+  const cancel = useCancelCampaign()
+
+  function reset() {
+    setSubject("")
+    setMessage("")
+    setScheduledAt("")
+  }
 
   async function send() {
     if (!subject.trim() || !message.trim()) {
       toast.error("Add a subject and a message.")
+      return
+    }
+    if (when === "later") {
+      if (!scheduledAt || new Date(scheduledAt) <= new Date()) {
+        toast.error("Choose a future date and time.")
+        return
+      }
+      if (!profile?.id) return
+      schedule
+        .mutateAsync({ subject, message, audience, scheduledAt, createdBy: profile.id })
+        .then(() => {
+          toast.success("Email scheduled")
+          reset()
+        })
+        .catch(() => toast.error("Could not schedule. Please try again."))
       return
     }
     setSending(true)
@@ -49,8 +96,7 @@ export default function EmailComposerPage() {
       toast.success("Email sent", {
         description: `Delivered to ${data?.sent ?? 0} of ${data?.total ?? 0} recipients.`,
       })
-      setSubject("")
-      setMessage("")
+      reset()
     } catch (err) {
       console.error("[send-email]", err)
       toast.error("Could not send", {
@@ -76,7 +122,8 @@ export default function EmailComposerPage() {
         <CardHeader>
           <CardTitle>Compose</CardTitle>
           <CardDescription>
-            Drip campaigns and scheduling are planned; this sends immediately.
+            Send now, or schedule for later. Scheduled emails are processed every
+            minute by the drip job.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -115,16 +162,102 @@ export default function EmailComposerPage() {
               placeholder="Write your message…"
             />
           </div>
-          <div className="flex justify-end">
-            <Button onClick={send} disabled={sending}>
-              {sending ? (
+          <div className="flex flex-wrap items-end justify-between gap-3 pt-1">
+            <div>
+              <Label className="mb-1.5 block">Delivery</Label>
+              <div className="flex rounded-lg border border-border p-0.5">
+                {(["now", "later"] as const).map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    onClick={() => setWhen(w)}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold",
+                      when === w
+                        ? "bg-brand-navy text-white"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {w === "now" ? "Send now" : "Schedule"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {when === "later" && (
+              <Input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                className="max-w-xs"
+              />
+            )}
+            <Button onClick={send} disabled={sending || schedule.isPending}>
+              {sending || schedule.isPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : when === "later" ? (
+                <Clock className="mr-2 size-4" />
               ) : (
                 <Send className="mr-2 size-4" />
               )}
-              Send email
+              {when === "later" ? "Schedule email" : "Send email"}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Campaigns */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Scheduled &amp; sent</CardTitle>
+          <CardDescription>Recent and upcoming email campaigns.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {campaigns.isLoading ? (
+            <div className="space-y-2 p-5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (campaigns.data?.length ?? 0) === 0 ? (
+            <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+              No campaigns yet.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {campaigns.data!.map((c) => (
+                <li key={c.id} className="flex items-center gap-3 px-5 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{c.subject}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {c.audience.replace("all_", "All ")} ·{" "}
+                      {c.status === "sent"
+                        ? `Sent ${format(new Date(c.sent_at ?? c.scheduled_at), "d MMM, HH:mm")} to ${c.sent_count}`
+                        : `For ${format(new Date(c.scheduled_at), "d MMM yyyy, HH:mm")}`}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className={STATUS_STYLE[c.status]}>
+                    {c.status === "sent" && <CheckCircle2 className="mr-1 size-3" />}
+                    {c.status}
+                  </Badge>
+                  {c.status === "scheduled" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-muted-foreground"
+                      onClick={() =>
+                        cancel
+                          .mutateAsync(c.id)
+                          .then(() => toast.success("Campaign cancelled"))
+                          .catch(() => toast.error("Could not cancel"))
+                      }
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 

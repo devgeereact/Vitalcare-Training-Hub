@@ -258,6 +258,27 @@ export type PushSubscription = {
   created_at: string
 }
 
+export type EmailCampaignStatus =
+  | "scheduled"
+  | "sending"
+  | "sent"
+  | "failed"
+  | "cancelled"
+
+export type EmailCampaign = {
+  id: string
+  subject: string
+  message: string
+  audience: string
+  scheduled_at: string
+  status: EmailCampaignStatus
+  sent_count: number
+  total_count: number
+  created_by: string | null
+  created_at: string
+  sent_at: string | null
+}
+
 export type SessionBooking = Timestamps & {
   id: string
   session_id: string
@@ -451,6 +472,12 @@ export type Database = {
         Insert: Partial<PushSubscription> &
           Pick<PushSubscription, "user_id" | "endpoint" | "p256dh" | "auth">
         Update: Partial<PushSubscription>
+        Relationships: []
+      }
+      email_campaigns: {
+        Row: EmailCampaign
+        Insert: Partial<EmailCampaign> & Pick<EmailCampaign, "subject" | "message">
+        Update: Partial<EmailCampaign>
         Relationships: []
       }
     }

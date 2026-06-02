@@ -25,6 +25,7 @@ import {
   useMyCourses,
   useEnrolSelf,
 } from "@/lib/queries/courses.queries"
+import CourseDiscussion from "@/components/platform/CourseDiscussion"
 
 export default function CourseOverviewPage() {
   const { id = "" } = useParams()
@@ -173,6 +174,8 @@ export default function CourseOverviewPage() {
           )}
         </CardContent>
       </Card>
+
+      <CourseDiscussion courseId={id} />
     </div>
   )
 }
