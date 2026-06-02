@@ -1,6 +1,7 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
-import { Users, AlertCircle, Search, UserPlus } from "lucide-react"
+import * as XLSX from "xlsx"
+import { saveAs } from "file-saver"
+import { Users, AlertCircle, Search, UserPlus, Download } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useAllUsers } from "@/lib/queries/users.queries"
+import { useAuth } from "@/hooks/use-auth"
+import NewAccountDialog from "@/components/people/NewAccountDialog"
 import ContactDetailDialog from "@/components/platform/ContactDetailDialog"
 import type { Profile, UserRole } from "@/types/database.types"
 
@@ -34,13 +37,36 @@ function name(p: Profile) {
   )
 }
 
+function exportUsers(users: Profile[]): void {
+  const rows = users.map((u) => ({
+    Name: name(u),
+    Email: u.email,
+    Role: u.role.replace("_", " "),
+    Phone: u.phone ?? "",
+    Joined: u.created_at ? new Date(u.created_at).toLocaleDateString("en-GB") : "",
+  }))
+  const sheet = XLSX.utils.json_to_sheet(rows, {
+    header: ["Name", "Email", "Role", "Phone", "Joined"],
+  })
+  const book = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(book, sheet, "Users")
+  const buffer = XLSX.write(book, { bookType: "xlsx", type: "array" })
+  saveAs(
+    new Blob([buffer], { type: "application/octet-stream" }),
+    `vitalcare-users-${users.length}.xlsx`,
+  )
+}
+
 export default function UserManagementPage() {
   const { data, isLoading, isError, refetch } = useAllUsers()
+  const { role: currentRole } = useAuth()
+  const isAdmin = currentRole === "admin" || currentRole === "super_admin"
   const [q, setQ] = useState("")
   const [role, setRole] = useState<UserRole | "all">("all")
   const [selected, setSelected] = useState<Profile | null>(null)
 
-  const filtered = (data ?? []).filter((u) => {
+  const users = data ?? []
+  const filtered = users.filter((u) => {
     const matchesRole = role === "all" || u.role === role
     const hay = `${name(u)} ${u.email}`.toLowerCase()
     return matchesRole && hay.includes(q.toLowerCase())
@@ -56,11 +82,22 @@ export default function UserManagementPage() {
             courses or get in touch.
           </p>
         </div>
-        <Button asChild>
-          <Link to="/platform/learners/new">
-            <UserPlus className="mr-2 size-4" /> Create account
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => exportUsers(users)}
+            disabled={users.length === 0}
+          >
+            <Download className="mr-2 size-4" /> Export
+          </Button>
+          {isAdmin && (
+            <NewAccountDialog>
+              <Button>
+                <UserPlus className="mr-2 size-4" /> New account
+              </Button>
+            </NewAccountDialog>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

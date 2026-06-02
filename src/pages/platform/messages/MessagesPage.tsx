@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
-import { formatDistanceToNow, format } from "date-fns"
+import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
 import {
   MessageSquare,
@@ -9,8 +9,6 @@ import {
   ArrowLeft,
   Video,
   Loader2,
-  Check,
-  CheckCheck,
   Search,
   Paperclip,
   X,
@@ -44,6 +42,7 @@ import {
 } from "@/lib/queries/communication.queries"
 import EmojiPicker from "@/components/communication/EmojiPicker"
 import AiReplyButton from "@/components/communication/AiReplyButton"
+import { ChatMessageList } from "@/components/communication/ChatMessages"
 
 const CHAT_BUCKET = "course-media"
 
@@ -55,13 +54,6 @@ interface PendingAttachment {
 
 function isImage(type: string | null): boolean {
   return !!type && type.startsWith("image/")
-}
-
-/** Format a timestamp as HH:mm, returning "" for missing/invalid values. */
-function timeLabel(value: string | null | undefined): string {
-  if (!value) return ""
-  const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? "" : format(d, "HH:mm")
 }
 
 /** Relative time label, safe against missing/invalid timestamps. */
@@ -199,11 +191,16 @@ function ThreadView({
         />
       </div>
 
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-2/3" />
-          ))
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                className={cn("h-10 w-2/3", i % 2 === 0 ? "ml-auto" : "")}
+              />
+            ))}
+          </div>
         ) : isError ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <AlertCircle className="size-7 text-destructive" />
@@ -212,82 +209,21 @@ function ThreadView({
               Retry
             </Button>
           </div>
+        ) : (data?.length ?? 0) === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+              <MessageSquare className="size-6" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              No messages yet. Say hello to start the conversation.
+            </p>
+          </div>
         ) : (
-          (data ?? []).map((m) => {
-            const mine = m.sender_id === userId
-            return (
-              <div
-                key={m.id}
-                className={cn(
-                  "flex items-end gap-2",
-                  mine ? "justify-end" : "justify-start",
-                )}
-              >
-                {!mine && (
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-[11px] font-semibold text-brand-navy">
-                    {otherName.slice(0, 1).toUpperCase()}
-                  </span>
-                )}
-                <div
-                  className={cn(
-                    "max-w-[80%] min-w-0 overflow-hidden px-3.5 py-2.5 text-sm shadow-sm sm:max-w-[75%]",
-                    mine
-                      ? "rounded-2xl rounded-br-md bg-brand-navy text-white"
-                      : "rounded-2xl rounded-bl-md border border-border bg-muted text-foreground",
-                  )}
-                >
-                  {m.attachment_url && (
-                    <div className="mb-1.5">
-                      {isImage(m.attachment_type) ? (
-                        <a href={m.attachment_url} target="_blank" rel="noopener noreferrer">
-                          <img
-                            src={m.attachment_url}
-                            alt={m.attachment_name ?? "attachment"}
-                            className="max-h-48 max-w-full rounded-lg object-cover"
-                            loading="lazy"
-                          />
-                        </a>
-                      ) : (
-                        <a
-                          href={m.attachment_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cn(
-                            "flex min-w-0 items-center gap-2 rounded-lg px-2.5 py-2 text-xs underline-offset-2 hover:underline",
-                            mine ? "bg-white/15" : "bg-background",
-                          )}
-                        >
-                          <FileText className="size-4 shrink-0" />
-                          <span className="min-w-0 truncate">
-                            {m.attachment_name ?? "Attachment"}
-                          </span>
-                        </a>
-                      )}
-                    </div>
-                  )}
-                  {m.body && (
-                    <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                      {m.body}
-                    </p>
-                  )}
-                  <p
-                    className={cn(
-                      "mt-1 flex items-center justify-end gap-1 text-[10px]",
-                      mine ? "text-white/60" : "text-muted-foreground",
-                    )}
-                  >
-                    {timeLabel(m.created_at)}
-                    {mine &&
-                      (m.read_at ? (
-                        <CheckCheck className="size-3.5 text-sky-300" />
-                      ) : (
-                        <Check className="size-3.5" />
-                      ))}
-                  </p>
-                </div>
-              </div>
-            )
-          })
+          <ChatMessageList
+            messages={data ?? []}
+            userId={userId}
+            otherName={otherName}
+          />
         )}
         <div ref={endRef} />
       </div>

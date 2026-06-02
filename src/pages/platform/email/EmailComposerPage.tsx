@@ -19,6 +19,8 @@ import {
   Reply,
   Forward,
   Megaphone,
+  Sparkles,
+  Check,
 } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
@@ -49,6 +51,11 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -78,6 +85,7 @@ import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import MailSidebar from "@/components/email/MailSidebar"
 import MailBody from "@/components/email/MailBody"
 import { cleanSnippet, mailPlainText, parseMailBody } from "@/lib/email/mime"
+import { sendChat } from "@/lib/queries/ai.queries"
 
 const AUDIENCES = [
   { value: "all_learners", label: "All learners" },
@@ -168,6 +176,38 @@ function buildForwardPrefill(mail: MailRow): ComposePrefill {
     subject: /^fwd:/i.test(subject) ? subject : `Fwd: ${subject}`,
     body: quoteOriginal(mail),
   }
+}
+
+/** Reply prefill where the body starts with an AI draft, then the quoted original. */
+function buildAiReplyPrefill(mail: MailRow, draft: string): ComposePrefill {
+  const base = buildReplyPrefill(mail)
+  return { ...base, body: `${draft.trim()}${base.body}` }
+}
+
+/* Vitalcare brand voice for an email reply: authoritative, approachable,
+ * evidence-led, human. UK English. No em-dashes. No banned words. */
+const EMAIL_TONE = [
+  "You draft email replies for Vitalcare Training Hub, a UK healthcare training provider.",
+  "Voice: authoritative, approachable, evidence-led, human. Write in UK English.",
+  "Rules: never use em-dashes; use commas, colons or brackets instead.",
+  "Avoid these words: delve, tapestry, seamless, leverage, holistic, comprehensive, bespoke, streamline, facilitate, empower, world-class.",
+  "Be concise and practical. No preamble, no subject line, no quoted original. Return only the reply body.",
+].join(" ")
+
+/** Build the AI prompt to draft a reply to a received message. */
+function buildAiReplyPrompt(mail: MailRow, instruction: string): string {
+  const original = mailPlainText(parseMailBody(mail.body_html ?? mail.body_text ?? mail.snippet))
+  const who = mail.from_name || mail.from_addr || "the sender"
+  return [
+    EMAIL_TONE,
+    `You are replying to ${who}.`,
+    mail.subject ? `Subject: ${mail.subject}` : "",
+    original ? `Their message:\n${original.slice(0, 4000)}` : "",
+    instruction.trim() ? `What we want to say: ${instruction.trim()}` : "",
+    "Write the reply now.",
+  ]
+    .filter(Boolean)
+    .join("\n\n")
 }
 
 export default function EmailComposerPage() {
@@ -261,169 +301,109 @@ export default function EmailComposerPage() {
         </div>
 
         <Card className="overflow-hidden">
-          <div className="grid lg:grid-cols-[minmax(0,360px)_1fr]">
-            {/* List pane */}
-            <div className={cn("border-r border-border", selected && "hidden lg:block")}>
-              {list.isLoading ? (
-                <div className="space-y-2 p-4">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-14 w-full" />
-                  ))}
-                </div>
-              ) : list.isError ? (
-                <div className="flex flex-col items-center gap-3 py-14 text-center">
-                  <AlertCircle className="size-8 text-destructive" />
-                  <p className="text-sm text-muted-foreground">
-                    Could not load this folder.
-                  </p>
-                  <Button variant="outline" size="sm" onClick={() => list.refetch()}>
-                    Retry
-                  </Button>
-                </div>
-              ) : (list.data?.length ?? 0) === 0 ? (
-                <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-                  <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                    <InboxIcon className="size-6" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {folder === "inbox"
-                      ? "Inbox empty. Click Sync now to pull your latest mail."
-                      : folder === "draft"
-                        ? "No drafts saved."
-                        : `Nothing in ${FOLDER_TITLE[folder].toLowerCase()}.`}
-                  </p>
-                </div>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {list.data!.map((m) => (
-                    <li key={m.id}>
-                      <button
-                        type="button"
-                        onClick={() => openMessage(m)}
-                        className={cn(
-                          "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold",
-                          !m.seen && m.folder === "inbox" && "bg-muted/40",
-                          selected?.id === m.id && "bg-muted",
-                        )}
-                      >
-                        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-xs font-semibold text-brand-navy">
-                          {initials(m.from_name, m.from_addr || m.to_addr)}
+          {list.isLoading ? (
+            <div className="space-y-2 p-4">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : list.isError ? (
+            <div className="flex flex-col items-center gap-3 py-16 text-center">
+              <AlertCircle className="size-8 text-destructive" />
+              <p className="text-sm text-muted-foreground">
+                Could not load this folder.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => list.refetch()}>
+                Retry
+              </Button>
+            </div>
+          ) : (list.data?.length ?? 0) === 0 ? (
+            <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+              <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                <InboxIcon className="size-6" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {folder === "inbox"
+                  ? "Inbox empty. Click Sync now to pull your latest mail."
+                  : folder === "draft"
+                    ? "No drafts saved."
+                    : `Nothing in ${FOLDER_TITLE[folder].toLowerCase()}.`}
+              </p>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {list.data!.map((m) => (
+                <li key={m.id}>
+                  <button
+                    type="button"
+                    onClick={() => openMessage(m)}
+                    className={cn(
+                      "flex w-full items-start gap-4 px-4 py-3.5 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-gold sm:px-5",
+                      !m.seen && m.folder === "inbox" && "bg-brand-navy/[0.03]",
+                    )}
+                  >
+                    {!m.seen && m.folder === "inbox" ? (
+                      <span
+                        aria-hidden
+                        className="mt-2 size-2 shrink-0 rounded-full bg-brand-gold"
+                      />
+                    ) : (
+                      <span aria-hidden className="mt-2 size-2 shrink-0" />
+                    )}
+                    <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-navy/10 text-xs font-semibold text-brand-navy">
+                      {initials(m.from_name, m.from_addr || m.to_addr)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center justify-between gap-2">
+                        <span
+                          className={cn(
+                            "truncate text-sm text-foreground",
+                            !m.seen && m.folder === "inbox" && "font-semibold",
+                          )}
+                        >
+                          {folder === "sent" || folder === "draft"
+                            ? `To: ${m.to_addr || "(no recipient)"}`
+                            : m.from_name || m.from_addr || "Unknown sender"}
                         </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="flex items-center justify-between gap-2">
+                        <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                          {m.important && (
+                            <Star className="size-3.5 fill-brand-gold text-brand-gold" />
+                          )}
+                          {safeDate(m.received_at)
+                            ? formatDistanceToNow(safeDate(m.received_at)!, {
+                                addSuffix: true,
+                              })
+                            : ""}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-foreground">
+                        {m.has_attachments && (
+                          <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+                        )}
+                        {m.subject || "(no subject)"}
+                      </span>
+                      <span className="mt-0.5 flex items-center gap-2">
+                        <span className="block flex-1 truncate text-xs text-muted-foreground">
+                          {cleanSnippet(m.body_text || m.body_html || m.snippet)}
+                        </span>
+                        {categoryMeta(m.category) && (
+                          <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
                             <span
                               className={cn(
-                                "truncate text-sm",
-                                !m.seen && m.folder === "inbox" && "font-semibold",
+                                "size-2 rounded-full",
+                                categoryMeta(m.category)!.dot,
                               )}
-                            >
-                              {folder === "sent" || folder === "draft"
-                                ? `To: ${m.to_addr || "(no recipient)"}`
-                                : m.from_name || m.from_addr || "Unknown sender"}
-                            </span>
-                            <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                              {m.important && (
-                                <Star className="size-3 fill-brand-gold text-brand-gold" />
-                              )}
-                              {safeDate(m.received_at)
-                                ? formatDistanceToNow(safeDate(m.received_at)!, {
-                                    addSuffix: true,
-                                  })
-                                : ""}
-                            </span>
+                            />
+                            {categoryMeta(m.category)!.label}
                           </span>
-                          <span className="flex items-center gap-1 truncate text-sm">
-                            {m.has_attachments && (
-                              <Paperclip className="size-3 shrink-0 text-muted-foreground" />
-                            )}
-                            {m.subject || "(no subject)"}
-                          </span>
-                          <span className="flex items-center gap-2">
-                            <span className="block flex-1 truncate text-xs text-muted-foreground">
-                              {cleanSnippet(m.body_text || m.body_html || m.snippet)}
-                            </span>
-                            {categoryMeta(m.category) && (
-                              <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
-                                <span
-                                  className={cn(
-                                    "size-2 rounded-full",
-                                    categoryMeta(m.category)!.dot,
-                                  )}
-                                />
-                                {categoryMeta(m.category)!.label}
-                              </span>
-                            )}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Detail pane */}
-            <div className={cn(selected ? "block" : "hidden lg:block")}>
-              {selected ? (
-                <MailDetail
-                  key={selected.id}
-                  mail={selected}
-                  onBack={() => setSelected(null)}
-                  onReply={() => openCompose(buildReplyPrefill(selected))}
-                  onForward={() => openCompose(buildForwardPrefill(selected))}
-                  onToggleImportant={() =>
-                    toggleImportant.mutate(
-                      { id: selected.id, important: !selected.important },
-                      {
-                        onSuccess: () =>
-                          setSelected({ ...selected, important: !selected.important }),
-                      },
-                    )
-                  }
-                  onSetCategory={(c) =>
-                    setCat.mutate(
-                      { id: selected.id, category: c },
-                      { onSuccess: () => setSelected({ ...selected, category: c }) },
-                    )
-                  }
-                  onTrash={() =>
-                    trash.mutate(selected.id, {
-                      onSuccess: () => {
-                        toast.success("Moved to Trash")
-                        setSelected(null)
-                      },
-                    })
-                  }
-                  onRestore={() =>
-                    restore.mutate(
-                      { id: selected.id, isDraft: selected.is_draft },
-                      {
-                        onSuccess: () => {
-                          toast.success("Restored")
-                          setSelected(null)
-                        },
-                      },
-                    )
-                  }
-                  onDeleteForever={() =>
-                    deleteForever.mutate(selected.id, {
-                      onSuccess: () => {
-                        toast.success("Deleted permanently")
-                        setSelected(null)
-                      },
-                    })
-                  }
-                />
-              ) : (
-                <div className="flex h-full min-h-[420px] flex-col items-center justify-center gap-2 p-6 text-center">
-                  <Mail className="size-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Select a message to read it here.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+                        )}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
 
         <p className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -431,6 +411,64 @@ export default function EmailComposerPage() {
           account. Broadcasts send via Resend (3,000 per month on the free tier).
         </p>
       </div>
+
+      <MailReaderDialog
+        mail={selected}
+        onClose={() => setSelected(null)}
+        onReply={(m) => {
+          setSelected(null)
+          openCompose(buildReplyPrefill(m))
+        }}
+        onForward={(m) => {
+          setSelected(null)
+          openCompose(buildForwardPrefill(m))
+        }}
+        onAiReply={(m, draft) => {
+          setSelected(null)
+          openCompose(buildAiReplyPrefill(m, draft))
+        }}
+        onToggleImportant={(m) =>
+          toggleImportant.mutate(
+            { id: m.id, important: !m.important },
+            {
+              onSuccess: () => setSelected({ ...m, important: !m.important }),
+            },
+          )
+        }
+        onSetCategory={(m, c) =>
+          setCat.mutate(
+            { id: m.id, category: c },
+            { onSuccess: () => setSelected({ ...m, category: c }) },
+          )
+        }
+        onTrash={(m) =>
+          trash.mutate(m.id, {
+            onSuccess: () => {
+              toast.success("Moved to Trash")
+              setSelected(null)
+            },
+          })
+        }
+        onRestore={(m) =>
+          restore.mutate(
+            { id: m.id, isDraft: m.is_draft },
+            {
+              onSuccess: () => {
+                toast.success("Restored")
+                setSelected(null)
+              },
+            },
+          )
+        }
+        onDeleteForever={(m) =>
+          deleteForever.mutate(m.id, {
+            onSuccess: () => {
+              toast.success("Deleted permanently")
+              setSelected(null)
+            },
+          })
+        }
+      />
 
       <ComposeDialog
         open={composeOpen}
@@ -452,170 +490,303 @@ export default function EmailComposerPage() {
   )
 }
 
-/* ----------------------------------------------------------- mail detail -- */
+/* ------------------------------------------------------ mail reader popup -- */
 
-function MailDetail({
+/** Inline popover that drafts an email reply in the Vitalcare tone, then hands
+ *  the accepted draft up so the parent can open the compose dialog prefilled.
+ *  Degrades gracefully with a toast if the ai-chat function is not deployed. */
+function AiReplyPopover({
   mail,
-  onBack,
+  onUse,
+}: {
+  mail: MailRow
+  onUse: (draft: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [instruction, setInstruction] = useState("")
+  const [draft, setDraft] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  async function generate(): Promise<void> {
+    setLoading(true)
+    setDraft("")
+    try {
+      const reply = await sendChat([
+        { role: "user", content: buildAiReplyPrompt(mail, instruction) },
+      ])
+      setDraft(reply.trim())
+    } catch (err) {
+      toast.error("AI unavailable", {
+        description: err instanceof Error ? err.message : "Try again later.",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+        >
+          <Sparkles className="mr-2 size-4 text-brand-gold" /> AI reply
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[min(22rem,calc(100vw-2rem))] space-y-3">
+        <div>
+          <p className="text-sm font-medium">AI reply</p>
+          <p className="text-xs text-muted-foreground">
+            Drafts a reply in the Vitalcare tone. Review before sending.
+          </p>
+        </div>
+        <Textarea
+          rows={2}
+          value={instruction}
+          onChange={(e) => setInstruction(e.target.value)}
+          placeholder="Optional: what should the reply cover?"
+        />
+        <Button size="sm" onClick={generate} disabled={loading} className="w-full">
+          {loading ? (
+            <Loader2 className="mr-1.5 size-4 animate-spin" />
+          ) : draft ? (
+            <RefreshCw className="mr-1.5 size-4" />
+          ) : (
+            <Sparkles className="mr-1.5 size-4" />
+          )}
+          {loading ? "Drafting…" : draft ? "Regenerate" : "Draft reply"}
+        </Button>
+
+        {draft && (
+          <div className="space-y-2">
+            <Textarea
+              rows={6}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              className="text-sm"
+            />
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                onUse(draft)
+                setOpen(false)
+                setDraft("")
+                setInstruction("")
+              }}
+            >
+              <Check className="mr-1.5 size-4" /> Use this reply
+            </Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function MailReaderDialog({
+  mail,
+  onClose,
   onReply,
   onForward,
+  onAiReply,
   onToggleImportant,
   onSetCategory,
   onTrash,
   onRestore,
   onDeleteForever,
 }: {
-  mail: MailRow
-  onBack: () => void
-  onReply: () => void
-  onForward: () => void
-  onToggleImportant: () => void
-  onSetCategory: (c: MailCategory | null) => void
-  onTrash: () => void
-  onRestore: () => void
-  onDeleteForever: () => void
+  mail: MailRow | null
+  onClose: () => void
+  onReply: (m: MailRow) => void
+  onForward: (m: MailRow) => void
+  onAiReply: (m: MailRow, draft: string) => void
+  onToggleImportant: (m: MailRow) => void
+  onSetCategory: (m: MailRow, c: MailCategory | null) => void
+  onTrash: (m: MailRow) => void
+  onRestore: (m: MailRow) => void
+  onDeleteForever: (m: MailRow) => void
 }) {
-  const receivedAt = safeDate(mail.received_at)
-  const canReply = !!mail.from_addr && mail.folder !== "trash"
-  const detailCategory = categoryMeta(mail.category)
-  const attachments = Array.isArray(mail.attachments) ? mail.attachments : []
+  const receivedAt = mail ? safeDate(mail.received_at) : null
+  const canReply = !!mail && !!mail.from_addr && mail.folder !== "trash"
+  const detailCategory = mail ? categoryMeta(mail.category) : null
+  const attachments = mail && Array.isArray(mail.attachments) ? mail.attachments : []
+
   return (
-    <div className="space-y-4 p-5">
-      <div className="flex items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" className="-ml-2 lg:hidden" onClick={onBack}>
-          Back
-        </Button>
-        <div className="ml-auto flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            title={mail.important ? "Remove from Important" : "Mark Important"}
-            onClick={onToggleImportant}
-            className="focus-visible:ring-2 focus-visible:ring-brand-gold"
-          >
-            <Star
-              className={cn(
-                "size-4",
-                mail.important ? "fill-brand-gold text-brand-gold" : "text-muted-foreground",
+    <Dialog open={!!mail} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl lg:max-w-3xl">
+        {mail && (
+          <>
+            <DialogHeader className="space-y-3 border-b border-border px-5 py-4 sm:px-6">
+              <div className="flex items-start gap-2">
+                <DialogTitle className="min-w-0 flex-1 pr-2 font-display text-xl leading-snug text-foreground sm:text-2xl">
+                  {mail.subject || "(no subject)"}
+                </DialogTitle>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title={mail.important ? "Remove from Important" : "Mark Important"}
+                    onClick={() => onToggleImportant(mail)}
+                    className="focus-visible:ring-2 focus-visible:ring-brand-gold"
+                  >
+                    <Star
+                      className={cn(
+                        "size-4",
+                        mail.important
+                          ? "fill-brand-gold text-brand-gold"
+                          : "text-muted-foreground",
+                      )}
+                    />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Label"
+                        className="focus-visible:ring-2 focus-visible:ring-brand-gold"
+                      >
+                        <Tag className="size-4 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Category</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {CATEGORY_KEYS.map((k) => (
+                        <DropdownMenuItem key={k} onClick={() => onSetCategory(mail, k)}>
+                          <span
+                            className={cn("mr-2 size-2.5 rounded-full", CATEGORY_META[k].dot)}
+                          />
+                          {CATEGORY_META[k].label}
+                          {mail.category === k && (
+                            <CheckCircle2 className="ml-auto size-3.5" />
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => onSetCategory(mail, null)}>
+                        Clear label
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  {mail.folder === "trash" ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Restore"
+                        onClick={() => onRestore(mail)}
+                      >
+                        <RotateCcw className="size-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Delete permanently"
+                        onClick={() => onDeleteForever(mail)}
+                      >
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Move to Trash"
+                      onClick={() => onTrash(mail)}
+                    >
+                      <Trash2 className="size-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 text-left">
+                <Avatar className="size-11 shrink-0">
+                  <AvatarFallback className="bg-brand-navy/10 text-sm font-semibold text-brand-navy">
+                    {initials(mail.from_name, mail.from_addr || mail.to_addr)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {mail.from_name || mail.from_addr || "Unknown sender"}
+                  </p>
+                  <DialogDescription className="truncate text-xs text-muted-foreground">
+                    {mail.from_addr || (mail.to_addr ? `To: ${mail.to_addr}` : "")}
+                    {mail.to_addr && mail.from_addr ? ` · To: ${mail.to_addr}` : ""}
+                  </DialogDescription>
+                  {receivedAt && (
+                    <p className="text-xs text-muted-foreground">
+                      {format(receivedAt, "EEE d MMM yyyy, HH:mm")}
+                    </p>
+                  )}
+                  {(mail.is_draft || detailCategory) && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {mail.is_draft && <Badge variant="secondary">Draft</Badge>}
+                      {detailCategory && (
+                        <Badge variant="secondary" className="gap-1">
+                          <span
+                            className={cn("size-2 rounded-full", detailCategory.dot)}
+                          />
+                          {detailCategory.label}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+              <MailBody raw={mail.body_html || mail.body_text || mail.snippet} />
+
+              {attachments.length > 0 && (
+                <div className="mt-4 space-y-1.5 rounded-lg border border-border p-3">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Attachments ({attachments.length})
+                  </p>
+                  {attachments.map((a, i) => (
+                    <a
+                      key={i}
+                      href={a.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <Paperclip className="size-3.5" /> {a.name}
+                    </a>
+                  ))}
+                </div>
               )}
-            />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Label"
-                className="focus-visible:ring-2 focus-visible:ring-brand-gold"
-              >
-                <Tag className="size-4 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Category</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {CATEGORY_KEYS.map((k) => (
-                <DropdownMenuItem key={k} onClick={() => onSetCategory(k)}>
-                  <span className={cn("mr-2 size-2.5 rounded-full", CATEGORY_META[k].dot)} />
-                  {CATEGORY_META[k].label}
-                  {mail.category === k && <CheckCircle2 className="ml-auto size-3.5" />}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onSetCategory(null)}>
-                Clear label
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {mail.folder === "trash" ? (
-            <>
-              <Button variant="ghost" size="icon" title="Restore" onClick={onRestore}>
-                <RotateCcw className="size-4 text-muted-foreground" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                title="Delete permanently"
-                onClick={onDeleteForever}
-              >
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
-            </>
-          ) : (
-            <Button variant="ghost" size="icon" title="Move to Trash" onClick={onTrash}>
-              <Trash2 className="size-4 text-muted-foreground" />
-            </Button>
-          )}
-        </div>
-      </div>
+            </div>
 
-      <div className="flex items-start gap-3">
-        <Avatar className="size-11 shrink-0">
-          <AvatarFallback className="bg-brand-navy/10 text-sm font-semibold text-brand-navy">
-            {initials(mail.from_name, mail.from_addr || mail.to_addr)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-display text-xl text-foreground">
-            {mail.subject || "(no subject)"}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {mail.from_name ? `${mail.from_name} · ` : ""}
-            {mail.from_addr || (mail.to_addr ? `To: ${mail.to_addr}` : "")}
-            {receivedAt ? ` · ${format(receivedAt, "EEE d MMM yyyy, HH:mm")}` : ""}
-          </p>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {mail.is_draft && <Badge variant="secondary">Draft</Badge>}
-            {detailCategory && (
-              <Badge variant="secondary" className="gap-1">
-                <span className={cn("size-2 rounded-full", detailCategory.dot)} />
-                {detailCategory.label}
-              </Badge>
+            {mail.folder !== "trash" && (
+              <DialogFooter className="flex-row flex-wrap gap-2 border-t border-border px-5 py-4 sm:justify-start sm:px-6">
+                <Button
+                  onClick={() => onReply(mail)}
+                  disabled={!canReply}
+                  className="bg-brand-navy text-white hover:bg-brand-navy-dark focus-visible:ring-2 focus-visible:ring-brand-gold"
+                >
+                  <Reply className="mr-2 size-4" /> Reply
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => onForward(mail)}
+                  className="focus-visible:ring-2 focus-visible:ring-brand-gold"
+                >
+                  <Forward className="mr-2 size-4" /> Forward
+                </Button>
+                {canReply && (
+                  <AiReplyPopover mail={mail} onUse={(draft) => onAiReply(mail, draft)} />
+                )}
+              </DialogFooter>
             )}
-          </div>
-        </div>
-      </div>
-
-      <MailBody raw={mail.body_html || mail.body_text || mail.snippet} />
-
-      {attachments.length > 0 && (
-        <div className="space-y-1.5 rounded-lg border border-border p-3">
-          <p className="text-xs font-medium text-muted-foreground">
-            Attachments ({attachments.length})
-          </p>
-          {attachments.map((a, i) => (
-            <a
-              key={i}
-              href={a.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-primary hover:underline"
-            >
-              <Paperclip className="size-3.5" /> {a.name}
-            </a>
-          ))}
-        </div>
-      )}
-
-      {mail.folder !== "trash" && (
-        <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-          <Button
-            onClick={onReply}
-            disabled={!canReply}
-            className="bg-brand-navy text-white hover:bg-brand-navy-dark focus-visible:ring-2 focus-visible:ring-brand-gold"
-          >
-            <Reply className="mr-2 size-4" /> Reply
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onForward}
-            className="focus-visible:ring-2 focus-visible:ring-brand-gold"
-          >
-            <Forward className="mr-2 size-4" /> Forward
-          </Button>
-        </div>
-      )}
-    </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   )
 }
 

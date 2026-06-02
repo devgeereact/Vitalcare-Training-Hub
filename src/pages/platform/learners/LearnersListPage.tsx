@@ -1,13 +1,11 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
-import { UserPlus, Upload, Users, AlertCircle, Search, Mail } from "lucide-react"
+import { Users, AlertCircle, Search, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLearners } from "@/lib/queries/learners.queries"
 import ContactDetailById from "@/components/platform/ContactDetailById"
-import ImportLearnersDialog from "./ImportLearnersDialog"
 
 export default function LearnersListPage() {
   const { data, isLoading, isError, refetch } = useLearners()
@@ -28,18 +26,6 @@ export default function LearnersListPage() {
           <p className="mt-1 text-muted-foreground">
             Manage everyone enrolled on your training programmes.
           </p>
-        </div>
-        <div className="flex gap-2">
-          <ImportLearnersDialog>
-            <Button variant="outline">
-              <Upload className="mr-2 size-4" /> Import
-            </Button>
-          </ImportLearnersDialog>
-          <Button asChild>
-            <Link to="/platform/learners/new">
-              <UserPlus className="mr-2 size-4" /> Add learner
-            </Link>
-          </Button>
         </div>
       </div>
 
@@ -80,11 +66,9 @@ export default function LearnersListPage() {
               <Users className="size-6" />
             </div>
             <p className="text-sm text-muted-foreground">
-              No learners yet. Add your first learner or import a list.
+              No learners yet. New accounts are created from the All accounts
+              page.
             </p>
-            <Button asChild size="sm">
-              <Link to="/platform/learners/new">Add learner</Link>
-            </Button>
           </CardContent>
         </Card>
       ) : filtered.length === 0 ? (

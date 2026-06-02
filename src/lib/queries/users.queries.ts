@@ -26,6 +26,21 @@ export function useProfileById(id: string | null) {
   })
 }
 
+/** Look up a profile id by email. Used after creating an account to set a non-learner role. */
+export async function getProfileIdByEmail(email: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", email.trim().toLowerCase())
+    .is("deleted_at", null)
+    .maybeSingle()
+  if (error) {
+    console.error("[getProfileIdByEmail]", error)
+    throw error
+  }
+  return data?.id ?? null
+}
+
 export function useAllUsers() {
   return useQuery({
     queryKey: usersKeys.list(),
