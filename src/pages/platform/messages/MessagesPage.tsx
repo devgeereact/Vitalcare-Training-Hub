@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { formatDistanceToNow, format } from "date-fns"
 import { toast } from "sonner"
-import { MessageSquare, AlertCircle, Send, ArrowLeft, Video, Loader2 } from "lucide-react"
+import { MessageSquare, AlertCircle, Send, ArrowLeft, Video, Loader2, Check, CheckCheck } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -26,6 +27,7 @@ import {
   useThreads,
   useThread,
   useSendMessage,
+  useMarkThreadRead,
 } from "@/lib/queries/communication.queries"
 
 function ThreadView({
@@ -41,12 +43,51 @@ function ThreadView({
 }) {
   const { data, isLoading, isError, refetch } = useThread(userId, otherId)
   const send = useSendMessage(userId)
+  const markRead = useMarkThreadRead(userId)
+  const qc = useQueryClient()
   const [draft, setDraft] = useState("")
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [data?.length])
+
+  // Mark incoming messages read whenever the thread updates.
+  useEffect(() => {
+    if (userId && (data ?? []).some((m) => m.sender_id === otherId && !m.read_at)) {
+      markRead.mutate(otherId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, otherId, userId])
+
+  // Realtime: live new messages + read receipts for this conversation.
+  useEffect(() => {
+    if (!userId) return
+    const channel = supabase
+      .channel(`messages:${userId}:${otherId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "messages" },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as {
+            sender_id?: string
+            recipient_id?: string
+          }
+          const involved =
+            (row.sender_id === userId && row.recipient_id === otherId) ||
+            (row.sender_id === otherId && row.recipient_id === userId)
+          if (involved) {
+            refetch()
+            qc.invalidateQueries({ queryKey: ["messages", "threads", userId] })
+          }
+        },
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, otherId])
 
   function submit() {
     const body = draft.trim()
@@ -105,11 +146,17 @@ function ThreadView({
                   <p className="whitespace-pre-wrap">{m.body}</p>
                   <p
                     className={cn(
-                      "mt-1 text-[10px]",
+                      "mt-1 flex items-center justify-end gap-1 text-[10px]",
                       mine ? "text-white/60" : "text-muted-foreground",
                     )}
                   >
                     {format(new Date(m.created_at), "HH:mm")}
+                    {mine &&
+                      (m.read_at ? (
+                        <CheckCheck className="size-3.5 text-sky-300" />
+                      ) : (
+                        <Check className="size-3.5" />
+                      ))}
                   </p>
                 </div>
               </div>

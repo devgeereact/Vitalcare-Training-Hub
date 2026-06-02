@@ -149,6 +149,30 @@ export function useThread(userId: string | undefined, otherId: string) {
   })
 }
 
+/** Mark all incoming messages from `otherId` as read. */
+export function useMarkThreadRead(userId: string | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (otherId: string) => {
+      if (!userId) return
+      const { error } = await supabase
+        .from("messages")
+        .update({ read_at: new Date().toISOString() })
+        .eq("recipient_id", userId)
+        .eq("sender_id", otherId)
+        .is("read_at", null)
+      if (error) {
+        console.error("[useMarkThreadRead]", error)
+        throw error
+      }
+    },
+    onSuccess: (_d, otherId) => {
+      qc.invalidateQueries({ queryKey: commKeys.thread(userId ?? "anon", otherId) })
+      qc.invalidateQueries({ queryKey: commKeys.threads(userId ?? "anon") })
+    },
+  })
+}
+
 export function useSendMessage(userId: string | undefined) {
   const qc = useQueryClient()
   return useMutation({

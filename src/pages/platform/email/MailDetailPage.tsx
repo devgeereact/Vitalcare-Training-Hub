@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import type { MailMessage } from "@/types/database.types"
 
 /** Best-effort clean text from a stored raw body. */
@@ -178,6 +179,20 @@ export default function MailDetailPage() {
               <div>
                 <Label className="mb-1.5 block text-xs">Subject</Label>
                 <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
+              </div>
+              <div className="flex justify-end">
+                <AiFieldsButton
+                  subject="a professional email reply"
+                  context={`Replying to: ${data.subject}\nFrom: ${data.from_name || data.from_addr}\nTheir message:\n${(data.body_text || data.snippet || "").slice(0, 800)}`}
+                  fields={[
+                    { key: "subject", label: "Subject", format: "text" },
+                    { key: "message", label: "Reply", format: "text" },
+                  ]}
+                  onApply={(v) => {
+                    if (v.subject) setSubject(v.subject)
+                    if (v.message) setReply(v.message)
+                  }}
+                />
               </div>
               <Textarea
                 rows={8}
