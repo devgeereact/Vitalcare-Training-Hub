@@ -25,6 +25,15 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
+// ─── Role-based nav visibility ───────────────────────────────────────────────
+// Undefined roles on an entry = visible to every signed-in user (incl. learner).
+const STAFF = ["super_admin", "admin", "manager", "trainer", "content_editor"]
+const ADMINS = ["super_admin", "admin"]
+const MGMT = ["super_admin", "admin", "manager"]
+const MGMT_T = ["super_admin", "admin", "manager", "trainer"]
+const CONTENT = ["super_admin", "admin", "trainer", "content_editor"]
+const SUPER = ["super_admin"]
+
 // Vitalcare Training Hub — platform navigation.
 // All URLs are absolute under /platform. Modules not yet built resolve to the
 // platform catch-all (a branded "in development" notice) until later phases.
@@ -42,7 +51,7 @@ const data = {
       isActive: true,
       items: [
         { title: "Dashboard", url: "/platform/dashboard" },
-        { title: "Analytics", url: "/platform/analytics" },
+        { title: "Analytics", url: "/platform/analytics", roles: MGMT_T },
       ],
     },
     {
@@ -52,13 +61,13 @@ const data = {
       items: [
         { title: "Courses", url: "/platform/courses" },
         { title: "Learning Paths", url: "/platform/courses/paths" },
-        { title: "Course Builder", url: "/platform/courses/builder" },
-        { title: "Quiz Builder", url: "/platform/assessments/builder" },
-        { title: "Assessment Results", url: "/platform/assessments/results" },
+        { title: "Course Builder", url: "/platform/courses/builder", roles: CONTENT },
+        { title: "Quiz Builder", url: "/platform/assessments/builder", roles: CONTENT },
+        { title: "Assessment Results", url: "/platform/assessments/results", roles: MGMT_T },
         { title: "Resource Library", url: "/platform/library" },
         { title: "Virtual Training", url: "/platform/virtual" },
         { title: "1:1 Sessions", url: "/platform/one-to-one" },
-        { title: "Enrolments", url: "/platform/enrolments" },
+        { title: "Enrolments", url: "/platform/enrolments", roles: MGMT_T },
       ],
     },
     {
@@ -72,8 +81,8 @@ const data = {
       icon: ClipboardCheck,
       items: [
         { title: "Sessions", url: "/platform/sessions" },
-        { title: "Trainer Timetable", url: "/platform/timetable" },
-        { title: "Attendance Log", url: "/platform/attendance" },
+        { title: "Trainer Timetable", url: "/platform/timetable", roles: MGMT_T },
+        { title: "Attendance Log", url: "/platform/attendance", roles: MGMT_T },
         { title: "Holidays", url: "/platform/holidays" },
       ],
     },
@@ -84,7 +93,7 @@ const data = {
       items: [
         { title: "Certificates", url: "/platform/certificates" },
         { title: "Verification", url: "/platform/certificates/verify" },
-        { title: "Templates", url: "/platform/certificates/templates" },
+        { title: "Templates", url: "/platform/certificates/templates", roles: CONTENT },
       ],
     },
     {
@@ -92,10 +101,10 @@ const data = {
       url: "#",
       icon: Users,
       items: [
-        { title: "All Accounts", url: "/platform/users" },
-        { title: "Learners", url: "/platform/learners" },
-        { title: "Trainers", url: "/platform/trainers" },
-        { title: "Cohorts & Teams", url: "/platform/cohorts" },
+        { title: "All Accounts", url: "/platform/users", roles: ADMINS },
+        { title: "Learners", url: "/platform/learners", roles: MGMT_T },
+        { title: "Trainers", url: "/platform/trainers", roles: MGMT },
+        { title: "Cohorts & Teams", url: "/platform/cohorts", roles: MGMT },
       ],
     },
     {
@@ -103,7 +112,7 @@ const data = {
       url: "#",
       icon: MessagesSquare,
       items: [
-        { title: "Email", url: "/platform/email" },
+        { title: "Email", url: "/platform/email", roles: STAFF },
         { title: "Chat", url: "/platform/messages" },
         { title: "Announcements", url: "/platform/announcements" },
         { title: "Notifications", url: "/platform/notifications" },
@@ -118,27 +127,28 @@ const data = {
       icon: ShoppingCart,
       items: [
         { title: "Catalogue", url: "/platform/store" },
-        { title: "Orders", url: "/platform/store/orders" },
-        { title: "Coupons", url: "/platform/store/coupons" },
+        { title: "Orders", url: "/platform/store/orders", roles: MGMT },
+        { title: "Coupons", url: "/platform/store/coupons", roles: MGMT },
       ],
     },
     {
       title: "AI Assistant",
       url: "/platform/ai",
       icon: Sparkles,
+      roles: ADMINS,
     },
     {
       title: "Organisation",
       url: "#",
       icon: Building2,
       items: [
-        { title: "Departments", url: "/platform/departments" },
-        { title: "Staff", url: "/platform/staff" },
-        { title: "Plan", url: "/platform/payments" },
-        { title: "Invoices", url: "/platform/invoices" },
-        { title: "Payroll", url: "/platform/payroll" },
-        { title: "File Manager", url: "/platform/files" },
-        { title: "Audit Log", url: "/platform/audit" },
+        { title: "Departments", url: "/platform/departments", roles: MGMT },
+        { title: "Staff", url: "/platform/staff", roles: MGMT },
+        { title: "Plan", url: "/platform/payments", roles: ADMINS },
+        { title: "Invoices", url: "/platform/invoices", roles: MGMT },
+        { title: "Payroll", url: "/platform/payroll", roles: STAFF },
+        { title: "File Manager", url: "/platform/files", roles: STAFF },
+        { title: "Audit Log", url: "/platform/audit", roles: SUPER },
       ],
     },
     {
@@ -147,7 +157,7 @@ const data = {
       icon: Settings,
       items: [
         { title: "General", url: "/platform/settings" },
-        { title: "Integrations", url: "/platform/settings/integrations" },
+        { title: "Integrations", url: "/platform/settings/integrations", roles: ADMINS },
         { title: "Password", url: "/platform/account/password" },
       ],
     },
@@ -159,12 +169,39 @@ const data = {
   ],
 }
 
+type RawNavItem = {
+  title: string
+  url: string
+  icon?: typeof Gauge
+  isActive?: boolean
+  roles?: string[]
+  items?: RawNavItem[]
+}
+
+/** Drop nav entries the current role may not see; hide groups left empty. */
+function navForRole(items: RawNavItem[], role: string | null): RawNavItem[] {
+  const allowed = (it: RawNavItem) => !it.roles || (role !== null && it.roles.includes(role))
+  const out: RawNavItem[] = []
+  for (const group of items) {
+    if (!allowed(group)) continue
+    if (group.items && group.items.length > 0) {
+      const children = group.items.filter(allowed)
+      if (children.length === 0) continue
+      out.push({ ...group, items: children })
+    } else {
+      out.push(group)
+    }
+  }
+  return out
+}
+
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   onHoverChange?: (value: boolean) => void
 }
 
 export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
-  const { profile } = useUser()
+  const { profile, role } = useUser()
+  const navItems = navForRole(data.navMain as RawNavItem[], role)
   const currentUser = {
     name:
       profile?.full_name ||
@@ -198,7 +235,7 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
         </SidebarHeader>
 
         <SidebarContent>
-          <NavMain items={data.navMain} />
+          <NavMain items={navItems} />
         </SidebarContent>
 
         <SidebarFooter className="border-t border-sidebar-border h-16 justify-center">

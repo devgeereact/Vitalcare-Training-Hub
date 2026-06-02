@@ -24,6 +24,8 @@ type MenuItem = {
   url: string
   icon?: LucideIcon
   items?: MenuItem[]
+  /** Roles allowed to see this entry. Undefined = visible to every signed-in user. */
+  roles?: string[]
 }
 
 export function NavMain({ items }: { items: MenuItem[] }) {

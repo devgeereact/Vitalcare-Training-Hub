@@ -814,7 +814,8 @@ function LearnerDashboard({
 // ─── Role router ─────────────────────────────────────────────────────────────
 
 export default function DashboardPage(): JSX.Element {
-  const { profile, role, isAdmin, isTrainer, loading } = useUser()
+  const { profile, role, isAdmin, isTrainer, isManager, isContentEditor, loading } =
+    useUser()
 
   if (loading) {
     return (
@@ -837,8 +838,9 @@ export default function DashboardPage(): JSX.Element {
     profile?.first_name?.trim() || profile?.full_name?.trim().split(" ")[0] || ""
   const roleLabel = role ? (ROLE_LABEL[role] ?? "") : ""
 
-  if (isAdmin) return <AdminDashboard name={firstName} roleLabel={roleLabel} />
-  if (isTrainer && profile)
+  // Managers get the org-wide admin view; content editors get the trainer view.
+  if (isAdmin || isManager) return <AdminDashboard name={firstName} roleLabel={roleLabel} />
+  if ((isTrainer || isContentEditor) && profile)
     return (
       <TrainerDashboard
         trainerId={profile.id}
