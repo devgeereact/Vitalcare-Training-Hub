@@ -36,6 +36,7 @@ export function useIdle({
 }: UseIdleOptions): { idle: boolean; reset: () => void } {
   const [idle, setIdle] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // eslint-disable-next-line react-hooks/purity -- ref seed; effects keep it current
   const lastActivityRef = useRef<number>(Date.now())
   const debounceRef = useRef<number>(0)
 

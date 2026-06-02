@@ -41,6 +41,7 @@ const IdleLockContext = createContext<IdleLockContextValue | undefined>(
 )
 
 /** Programmatically lock the session, e.g. from a "Lock now" menu item. */
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-located with its provider
 export function useIdleLock(): IdleLockContextValue {
   const context = useContext(IdleLockContext)
   if (context === undefined) {
@@ -120,12 +121,14 @@ export function IdleLockProvider({
 
   // Lock when the idle hook reports inactivity.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lock() reacts to idle signal
     if (idle && authenticated && !locked) lock()
   }, [idle, authenticated, locked, lock])
 
   // If the user signs out, clear any persisted lock.
   useEffect(() => {
     if (!authenticated) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clear lock on sign-out
       setLocked(false)
       persistLock(false)
     }
