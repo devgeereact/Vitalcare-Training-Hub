@@ -77,6 +77,70 @@ export async function getSessions(): Promise<SessionRow[]> {
 export function useSessions() {
   return useQuery({ queryKey: sessionsKeys.list(), queryFn: getSessions })
 }
+
+// ─── Timetable (weekly grid for one trainer) ─────────────────────────────────
+export interface TimetableEntry {
+  id: string
+  title: string
+  courseTitle: string | null
+  venue: string
+  isVirtual: boolean
+  startsAt: string
+  endsAt: string
+  /** 0 = Monday … 6 = Sunday */
+  weekday: number
+}
+
+export async function getTimetable(
+  trainerId: string,
+  fromISO: string,
+  toISO: string,
+): Promise<TimetableEntry[]> {
+  const { data, error } = await supabase
+    .from("training_sessions")
+    .select("id, title, course_id, venue, is_virtual, starts_at, ends_at")
+    .eq("trainer_id", trainerId)
+    .is("deleted_at", null)
+    .gte("starts_at", fromISO)
+    .lte("starts_at", toISO)
+    .order("starts_at", { ascending: true })
+  if (error) {
+    console.error("[getTimetable]", error)
+    throw error
+  }
+  if (!data || data.length === 0) return []
+
+  const courseIds = [...new Set(data.map((d) => d.course_id).filter(Boolean))] as string[]
+  const { data: courses } = courseIds.length
+    ? await supabase.from("courses").select("id, title").in("id", courseIds)
+    : { data: [] as { id: string; title: string }[] }
+  const titleById = new Map((courses ?? []).map((c) => [c.id, c.title]))
+
+  return data.map((s) => {
+    const d = new Date(s.starts_at)
+    // JS getDay: 0=Sun..6=Sat → remap to 0=Mon..6=Sun
+    const weekday = (d.getDay() + 6) % 7
+    return {
+      id: s.id,
+      title: s.title,
+      courseTitle: s.course_id ? titleById.get(s.course_id) ?? null : null,
+      venue: s.venue ?? "",
+      isVirtual: s.is_virtual,
+      startsAt: s.starts_at,
+      endsAt: s.ends_at,
+      weekday,
+    }
+  })
+}
+
+export function useTimetable(trainerId: string, fromISO: string, toISO: string) {
+  return useQuery({
+    queryKey: [...sessionsKeys.all, "timetable", trainerId, fromISO],
+    queryFn: () => getTimetable(trainerId, fromISO, toISO),
+    enabled: !!trainerId,
+  })
+}
+
 export function useCalendarSessions() {
   return useQuery({ queryKey: sessionsKeys.calendar(), queryFn: getSessions })
 }

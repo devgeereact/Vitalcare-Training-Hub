@@ -61,6 +61,7 @@ import ProfilePage from "@/pages/platform/profile/ProfilePage"
 import InboxPage from "@/pages/platform/email/InboxPage"
 import MailDetailPage from "@/pages/platform/email/MailDetailPage"
 import MySessionsPage from "@/pages/platform/sessions/MySessionsPage"
+import TrainerTimetablePage from "@/pages/platform/sessions/TrainerTimetablePage"
 import PasswordSettingsPage from "@/pages/platform/account/PasswordSettingsPage"
 import InvoicesPage from "@/pages/platform/invoices/InvoicesPage"
 import FileManagerPage2 from "@/pages/platform/files/FileManagerPage"
@@ -332,6 +333,14 @@ export const router = createBrowserRouter (
         // 📅 SESSIONS & ATTENDANCE
         { path: "calendar", element: <PlatformCalendarPage /> },
         { path: "my-sessions", element: <MySessionsPage /> },
+        {
+          path: "timetable",
+          element: (
+            <RoleGuard roles={["admin", "super_admin", "trainer"]}>
+              <TrainerTimetablePage />
+            </RoleGuard>
+          ),
+        },
         { path: "sessions/:id/checkin", element: <CheckInPage /> },
         {
           path: "sessions",

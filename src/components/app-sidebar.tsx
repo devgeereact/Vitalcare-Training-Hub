@@ -75,6 +75,7 @@ const data = {
         { title: "Calendar", url: "/platform/calendar" },
         { title: "My Sessions", url: "/platform/my-sessions" },
         { title: "Sessions", url: "/platform/sessions" },
+        { title: "Trainer Timetable", url: "/platform/timetable" },
         { title: "Attendance Log", url: "/platform/attendance" },
         { title: "Holidays", url: "/platform/holidays" },
       ],
