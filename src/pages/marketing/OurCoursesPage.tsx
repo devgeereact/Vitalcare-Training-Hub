@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import {
@@ -14,11 +14,14 @@ import { BannerBand } from "@/components/marketing/BannerBand"
 import { CategoryGrid } from "@/components/marketing/CategoryGrid"
 import { CTABand } from "@/components/marketing/CTABand"
 import { CourseCard } from "@/components/courses/CourseCard"
+import { Pagination } from "@/components/marketing/Pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { COURSE_CATEGORIES, TOTAL_COURSE_COUNT } from "@/data/courses"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
 
 const ALL = "all" as const
+
+const PAGE_SIZE = 12
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=70"
@@ -65,6 +68,22 @@ export default function OurCoursesPage(): React.ReactElement {
     if (activeSlug === ALL) return list
     return list.filter((c) => c.categorySlug === activeSlug)
   }, [courses.data, activeSlug])
+
+  const [page, setPage] = useState(1)
+
+  const pageCount = Math.max(1, Math.ceil(visibleCourses.length / PAGE_SIZE))
+
+  // Reset to the first page whenever the filter changes or the live data
+  // reshapes (so we never land on a now-empty page).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset paging on filter/data change
+    setPage(1)
+  }, [activeSlug, visibleCourses.length])
+
+  const pagedCourses = useMemo(
+    () => visibleCourses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [visibleCourses, page],
+  )
 
   const fadeUp = {
     hidden: { opacity: 0, y: reduce ? 0 : 24 },
@@ -219,31 +238,41 @@ export default function OurCoursesPage(): React.ReactElement {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {visibleCourses.map((course, i) => (
-                  <motion.div
-                    key={course.id}
-                    variants={fadeUp}
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: true, margin: "-60px" }}
-                    transition={{
-                      duration: 0.45,
-                      delay: reduce ? 0 : Math.min(i, 7) * 0.05,
-                    }}
-                  >
-                    <CourseCard
-                      title={course.title}
-                      href={`/our-courses/course/${course.slug}`}
-                      categoryName={course.categoryName}
-                      cpdHours={course.cpdHours}
-                      durationMins={course.durationMins}
-                      cstf={course.cstf}
-                      thumbnailUrl={course.thumbnailUrl}
-                    />
-                  </motion.div>
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {pagedCourses.map((course, i) => (
+                    <motion.div
+                      key={course.id}
+                      variants={fadeUp}
+                      initial="hidden"
+                      whileInView="show"
+                      viewport={{ once: true, margin: "-60px" }}
+                      transition={{
+                        duration: 0.45,
+                        delay: reduce ? 0 : Math.min(i, 7) * 0.05,
+                      }}
+                    >
+                      <CourseCard
+                        title={course.title}
+                        href={`/our-courses/course/${course.slug}`}
+                        categoryName={course.categoryName}
+                        cpdHours={course.cpdHours}
+                        durationMins={course.durationMins}
+                        cstf={course.cstf}
+                        thumbnailUrl={course.thumbnailUrl}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+
+                <Pagination
+                  page={page}
+                  pageCount={pageCount}
+                  onPageChange={setPage}
+                  label="Courses pagination"
+                  className="mt-12"
+                />
+              </>
             )}
           </div>
         </div>

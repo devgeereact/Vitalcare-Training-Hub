@@ -1,56 +1,66 @@
 import { Link } from "react-router-dom"
 import { motion, useReducedMotion, type Variants } from "framer-motion"
 import {
-  Target,
   ShieldCheck,
-  BadgeCheck,
+  ScrollText,
+  HeartHandshake,
   ArrowRight,
   Mail,
-  Quote,
+  BadgeCheck,
+  BookOpen,
+  MapPin,
+  Phone,
 } from "lucide-react"
-import { PageHero, type HeroStat } from "@/components/marketing/PageHero"
+import { PageHero } from "@/components/marketing/PageHero"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { CTABand } from "@/components/marketing/CTABand"
-import { LEADERSHIP, COMPANY, ACCREDITATION } from "@/lib/constants"
-
-const TEAM_IMAGE =
-  "https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=1400&q=70"
-const CARE_IMAGE =
-  "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1400&q=70"
-
-const HERO_STATS: HeroStat[] = [
-  { value: "2024", label: "Founded in London" },
-  { value: "RN", label: "Clinical oversight" },
-]
-
-const CREDENTIALS = [
-  { label: "Company number", value: COMPANY.companyNumber },
-  { label: "Founded", value: COMPANY.founded },
-  { label: "NHS framework", value: ACCREDITATION.nhsFramework },
-  { label: "Accreditation", value: ACCREDITATION.cpd },
-] as const
-
-const PRINCIPLES = [
-  {
-    icon: Target,
-    title: "Evidence first",
-    body: "Training that maps cleanly to the standards providers answer to, with records governance teams can produce at inspection.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Clinical credibility",
-    body: "Every course is overseen by a registered nurse, so content stays aligned to current practice.",
-  },
-  {
-    icon: BadgeCheck,
-    title: "Verifiable on completion",
-    body: "Certificates are verifiable at vitalcare.uk/verify, so completion is simple to share and check.",
-  },
-] as const
+import { LEADERSHIP, COMPANY } from "@/lib/constants"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+
+interface Founder {
+  name: string
+  role: string
+  email: string
+  credentials?: string
+  bio: string
+}
+
+const FOUNDERS: Founder[] = [
+  {
+    name: "Harni Muharami, RN MSc",
+    role: "Co-Founder and Clinical Director",
+    email: LEADERSHIP.clinicalDirector.email,
+    credentials: "RN, MSc, active NMC registrant",
+    bio: "A Registered Nurse with a Master of Science degree and more than a decade of NHS experience spanning acute care, infection prevention and control, and clinical leadership. She designed the clinical content of every Vitalcare course and oversees all course content, trainer standards, and quality assurance. She holds current NMC registration and continues to practise.",
+  },
+  {
+    name: "Gideon Akinlotan",
+    role: "Founder and CEO",
+    email: LEADERSHIP.ceo.email,
+    bio: "Brings operational, strategic and digital expertise to Vitalcare Training Hub. He built Vitalcare with infrastructure clinical providers typically lack: fast certificate issuance with unique verification IDs, a clean booking experience, clear pricing, and the systems that let an NHS L&D manager demonstrate compliance evidence. As CEO he oversees operations, partnerships and organisational strategy.",
+  },
+]
+
+const VALUES = [
+  {
+    icon: ShieldCheck,
+    title: "Clinical Accuracy Above All",
+    body: "Every module is written and reviewed by an active clinical practitioner, checked against current guidelines: Resuscitation Council UK, the Care Act 2014, and WHO hand hygiene.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Honest Accountability",
+    body: "We issue certificates only to candidates who demonstrate competence. If someone does not meet the standard we say so and offer a resit.",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Accessible by Design",
+    body: "Fair prices, a simple booking process, and in-house delivery for organisations of all sizes. A 12-person care home deserves the same quality as an NHS trust.",
+  },
+] as const
 
 export default function AboutUsPage() {
   const reduce = useReducedMotion()
@@ -72,18 +82,15 @@ export default function AboutUsPage() {
     <>
       <PageHero
         eyebrow="About us"
-        title="Healthcare training with clinical credibility"
-        description="Vitalcare Training Hub was founded in May 2024 in south-east London to give healthcare providers training they can trust and evidence."
-        imageUrl={TEAM_IMAGE}
-        imageAlt="Healthcare professionals collaborating in a training session"
-        stats={HERO_STATS}
+        title="About Vitalcare Training Hub"
+        description="Mandatory healthcare training, delivered by people who still practise, mapped to the frameworks CQC inspectors look for, and documented to hold up under scrutiny."
       >
         <div className="flex flex-wrap gap-4">
           <Link
             to="/our-courses"
             className={`group inline-flex items-center gap-2 rounded-md bg-brand-gold px-7 py-3.5 text-sm font-semibold text-brand-navy shadow-sm transition-colors hover:bg-brand-gold-light ${FOCUS} focus-visible:ring-offset-brand-navy`}
           >
-            Explore courses
+            Explore Our Courses
             <ArrowRight
               className="size-4 transition-transform group-hover:translate-x-0.5"
               aria-hidden="true"
@@ -93,71 +100,121 @@ export default function AboutUsPage() {
             to="/contact-us"
             className="inline-flex items-center rounded-md border border-white/70 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy"
           >
-            Talk to us
+            Book In-House Training
           </Link>
         </div>
       </PageHero>
 
-      {/* Story */}
+      {/* Why We Exist */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <div>
-            <SectionHeading
-              eyebrow="Our story"
-              title="Built to close the gap between training and evidence"
-            />
-            <div className="mt-6 space-y-5 text-base leading-relaxed text-muted-foreground">
-              <p className="max-w-[60ch]">
-                We started Vitalcare because too much healthcare training was
-                hard to evidence and disconnected from current clinical
-                practice. Care providers were paying for courses that did not
-                map cleanly to the standards they answer to, and chasing paper
-                certificates at inspection.
-              </p>
-              <p className="max-w-[60ch]">
-                From our base at {COMPANY.address.line1}, {COMPANY.address.city},
-                we build CSTF-aligned, CPD-accredited training for NHS Trusts,
-                care homes, GP practices and individual professionals. Every
-                course is overseen by a registered nurse, and every certificate
-                is verifiable online.
-              </p>
-            </div>
-            <div className="mt-8 inline-flex items-start gap-3 rounded-2xl border border-border bg-brand-navy/5 p-5 text-sm text-brand-navy">
-              <ShieldCheck
-                className="mt-0.5 size-5 shrink-0 text-brand-gold"
-                aria-hidden="true"
-              />
-              <p className="max-w-[44ch]">
-                Clinical content is overseen by{" "}
-                {LEADERSHIP.clinicalDirector.name}, our{" "}
-                {LEADERSHIP.clinicalDirector.role}.
-              </p>
-            </div>
+        <SectionHeading
+          eyebrow="Why we exist"
+          title="A question neither of our founders could stop asking"
+        />
+        <div className="mt-8 grid gap-12 lg:grid-cols-3">
+          <div className="space-y-5 text-base leading-relaxed text-muted-foreground lg:col-span-2">
+            <p className="max-w-[65ch]">
+              Vitalcare Training Hub started with a question that neither of our
+              founders could stop asking: why is mandatory healthcare training so
+              often treated as a box to tick rather than a skill to build? Both
+              Harni and Gideon had seen what happens when training is rushed,
+              outsourced to providers who have never worked a shift, or delivered
+              in formats that nobody retains.
+            </p>
+            <p className="max-w-[65ch]">
+              Harni had watched staff freeze in situations where a solid BLS
+              drill would have made the difference. Gideon had seen organisations
+              scramble before CQC inspections, trying to backfill training
+              records for staff who had sat through sessions that taught them
+              almost nothing.
+            </p>
+            <p className="max-w-[65ch]">
+              We built Vitalcare Training Hub to offer something different:
+              training delivered by people who still practise, mapped to the
+              frameworks that CQC inspectors look for, and documented in a way
+              that holds up under scrutiny.
+            </p>
           </div>
 
+          <aside className="rounded-2xl border border-border bg-brand-navy/5 p-7">
+            <span className="flex size-11 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
+              <MapPin className="size-6" aria-hidden="true" />
+            </span>
+            <h3 className="mt-5 text-base font-semibold text-brand-navy">
+              Where we work
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              We are based in South East London, SE13. We deliver across Greater
+              London and are available for in-house delivery at your premises.
+            </p>
+            <p className="mt-4 text-sm font-medium text-brand-navy">
+              {COMPANY.address.line1}, {COMPANY.address.city}{" "}
+              {COMPANY.address.postcode}
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      {/* Founders */}
+      <section className="bg-muted/40">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+          <SectionHeading
+            eyebrow="Our founders"
+            title="An operational lead and a clinical lead"
+            subtitle="Vitalcare is run by people who have built training programmes and worked at the front line of care."
+          />
           <motion.div
-            initial={{ opacity: 0, y: reduce ? 0 : 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            variants={container}
+            initial="hidden"
+            whileInView="show"
             viewport={{ once: true, margin: "-80px" }}
-            transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-            className="relative"
+            className="mt-12 grid gap-6 lg:grid-cols-2"
           >
-            <div
-              className="pointer-events-none absolute -bottom-4 -left-4 hidden h-full w-full rounded-3xl border-2 border-brand-gold/50 sm:block"
-              aria-hidden="true"
-            />
-            <div className="relative overflow-hidden rounded-3xl shadow-xl ring-1 ring-black/5">
-              <img
-                src={CARE_IMAGE}
-                alt="A carer supporting a patient with compassion"
-                loading="lazy"
-                className="aspect-[4/3] w-full object-cover"
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-brand-navy/30 to-transparent"
-                aria-hidden="true"
-              />
-            </div>
+            {FOUNDERS.map((person) => (
+              <motion.figure
+                key={person.email}
+                variants={item}
+                className="flex flex-col rounded-2xl border border-border bg-white p-8 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1b2e6b] to-[#142054] font-display text-2xl text-white ring-1 ring-brand-gold/40">
+                    {person.name
+                      .replace(/,.*$/, "")
+                      .split(" ")
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join("")}
+                  </div>
+                  <div>
+                    <figcaption className="text-lg font-semibold text-brand-navy">
+                      {person.name}
+                    </figcaption>
+                    <p className="text-sm font-medium text-brand-gold">
+                      {person.role}
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-6 flex-1 text-sm leading-relaxed text-muted-foreground">
+                  {person.bio}
+                </p>
+                {person.credentials ? (
+                  <p className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-gold/[0.08] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-brand-navy">
+                    <BadgeCheck
+                      className="size-4 text-brand-gold"
+                      aria-hidden="true"
+                    />
+                    {person.credentials}
+                  </p>
+                ) : null}
+                <a
+                  href={`mailto:${person.email}`}
+                  className={`mt-6 inline-flex items-center gap-2 rounded text-sm font-medium text-brand-navy hover:text-brand-gold ${FOCUS}`}
+                >
+                  <Mail className="size-4 text-brand-gold" aria-hidden="true" />
+                  {person.email}
+                </a>
+              </motion.figure>
+            ))}
           </motion.div>
         </div>
       </section>
@@ -166,18 +223,18 @@ export default function AboutUsPage() {
       <BannerBand
         tone="navy"
         eyebrow="Our mission"
-        heading="Training providers can trust, deliver and evidence"
-        description="So staff are confident in their roles and patients receive safe care. That standard shapes every course we build and every certificate we issue."
-        buttonLabel="See our accreditation"
-        to="/resources/accreditations"
+        heading="Raising the standard of mandatory healthcare training"
+        description="To make evidence-based, clinically grounded courses accessible to every professional and every organisation in the UK, regardless of size."
+        buttonLabel="Explore Our Courses"
+        to="/our-courses"
       />
 
-      {/* Principles */}
+      {/* Values */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         <SectionHeading
-          eyebrow="What we stand by"
-          title="Three commitments behind every course"
-          subtitle="The principles that decide what we build and how we evidence it."
+          eyebrow="Our values"
+          title="Three principles behind every course"
+          subtitle="What decides the training we build and the certificates we issue."
         />
         <motion.div
           variants={container}
@@ -186,7 +243,7 @@ export default function AboutUsPage() {
           viewport={{ once: true, margin: "-80px" }}
           className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {PRINCIPLES.map(({ icon: Icon, title, body }) => (
+          {VALUES.map(({ icon: Icon, title, body }) => (
             <motion.div
               key={title}
               variants={item}
@@ -206,95 +263,196 @@ export default function AboutUsPage() {
         </motion.div>
       </section>
 
-      {/* Leadership */}
+      {/* CSTF Alignment */}
       <section className="bg-muted/40">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-          <SectionHeading
-            eyebrow="Leadership"
-            title="Founded by an operational and clinical team"
-            subtitle="Vitalcare is led by people who have run training programmes and worked at the front line of care."
-          />
-          <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            {[LEADERSHIP.ceo, LEADERSHIP.clinicalDirector].map((person) => (
-              <figure
-                key={person.email}
-                className="flex flex-col rounded-2xl border border-border bg-white p-8 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1b2e6b] to-[#142054] font-display text-2xl text-white ring-1 ring-brand-gold/40">
-                    {person.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .slice(0, 2)
-                      .join("")}
-                  </div>
-                  <div>
-                    <figcaption className="text-lg font-semibold text-brand-navy">
-                      {person.name}
-                    </figcaption>
-                    <p className="text-sm font-medium text-brand-gold">
-                      {person.role}
-                    </p>
-                  </div>
-                </div>
-                <Quote
-                  className="mt-6 size-7 text-brand-gold/70"
-                  aria-hidden="true"
-                />
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-                  {person.email === LEADERSHIP.ceo.email
-                    ? "Leads the direction of Vitalcare Training Hub, from the product to the partnerships we build with providers."
-                    : "Oversees clinical content as a registered nurse, keeping every course aligned to current practice."}
+          <div className="grid items-start gap-12 lg:grid-cols-2">
+            <div>
+              <SectionHeading
+                eyebrow="CSTF alignment"
+                title="Built on evidence CQC inspectors recognise"
+              />
+              <div className="mt-6 space-y-5 text-base leading-relaxed text-muted-foreground">
+                <p className="max-w-[60ch]">
+                  The NHS Core Skills Training Framework sets the national
+                  standard for mandatory training in health and social care, and
+                  CQC inspectors use it as a reference. All four Vitalcare
+                  courses are CSTF-aligned, so your training records are built on
+                  evidence CQC inspectors recognise.
                 </p>
-                <a
-                  href={`mailto:${person.email}`}
-                  className={`mt-6 inline-flex items-center gap-2 rounded text-sm font-medium text-brand-navy hover:text-brand-gold ${FOCUS}`}
-                >
-                  <Mail className="size-4 text-brand-gold" aria-hidden="true" />
-                  {person.email}
-                </a>
-              </figure>
-            ))}
+                <p className="max-w-[60ch]">
+                  Each course maps directly to the relevant CSTF subject area and
+                  is reviewed against the framework on a rolling 12-month cycle.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-brand-gold/30 bg-white p-8 shadow-sm">
+              <span className="flex size-12 items-center justify-center rounded-xl bg-brand-navy text-white">
+                <ShieldCheck className="size-6" aria-hidden="true" />
+              </span>
+              <dl className="mt-6 space-y-5">
+                <div>
+                  <dt className="text-sm text-muted-foreground">
+                    Framework
+                  </dt>
+                  <dd className="mt-1 font-display text-2xl text-brand-navy">
+                    CSTF-aligned
+                  </dd>
+                </div>
+                <div className="h-px bg-border" aria-hidden="true" />
+                <div>
+                  <dt className="text-sm text-muted-foreground">
+                    Review cycle
+                  </dt>
+                  <dd className="mt-1 font-display text-2xl text-brand-navy">
+                    Rolling 12 months
+                  </dd>
+                </div>
+                <div className="h-px bg-border" aria-hidden="true" />
+                <div>
+                  <dt className="text-sm text-muted-foreground">
+                    Verification
+                  </dt>
+                  <dd className="mt-1 font-display text-2xl text-brand-navy">
+                    vitalcare.uk/verify
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Credentials */}
+      {/* Publishing Imprint */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-        <SectionHeading
-          eyebrow="Credentials"
-          title="Registered, accredited and accountable"
-        />
-        <dl className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {CREDENTIALS.map((credential) => (
-            <div
-              key={credential.label}
-              className="rounded-2xl border border-border bg-white p-6 shadow-sm"
-            >
-              <dt className="text-sm text-muted-foreground">
-                {credential.label}
-              </dt>
-              <dd className="mt-1.5 font-display text-2xl text-brand-navy">
-                {credential.value}
-              </dd>
+        <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-sm">
+          <div className="grid gap-10 p-8 sm:p-12 lg:grid-cols-[auto,1fr] lg:items-center">
+            <span className="flex size-16 items-center justify-center rounded-2xl bg-brand-navy text-white">
+              <BookOpen className="size-8" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold">
+                <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
+                Our publishing imprint
+              </p>
+              <h2 className="mt-3 font-display text-3xl leading-tight text-brand-navy sm:text-4xl">
+                Reference texts and training support materials
+              </h2>
+              <p className="mt-5 max-w-[65ch] text-base leading-relaxed text-muted-foreground">
+                Vitalcare Training Hub maintains a publishing imprint producing
+                healthcare reference texts and training support materials,
+                written by Harni Muharami and Gideon Akinlotan, covering
+                infection prevention, safeguarding practice, and clinical
+                decision support.
+              </p>
             </div>
-          ))}
-        </dl>
-        <p className="mt-8 max-w-[70ch] text-sm leading-relaxed text-muted-foreground">
-          {COMPANY.legalName} is registered in {COMPANY.jurisdiction}, company
-          number {COMPANY.companyNumber}. Clinical oversight is provided by{" "}
-          {LEADERSHIP.clinicalDirector.name}.
-        </p>
-        <Link
-          to="/resources/accreditations"
-          className={`mt-6 inline-flex items-center gap-1.5 rounded text-sm font-semibold text-brand-navy underline-offset-4 hover:underline ${FOCUS}`}
-        >
-          Read about our accreditation
-          <ArrowRight className="size-4" aria-hidden="true" />
-        </Link>
+          </div>
+        </div>
       </section>
 
-      <CTABand />
+      {/* Work With Us */}
+      <section className="bg-muted/40">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div>
+              <SectionHeading
+                eyebrow="Work with us"
+                title="Open to organisations of all sizes"
+              />
+              <p className="mt-6 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
+                We are open to organisations of all sizes: NHS trusts, care
+                homes, GP practices, supported-living providers, and community
+                healthcare teams. We offer group bookings, in-house delivery, and
+                rolling contracts.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 text-sm">
+                <a
+                  href={`tel:${COMPANY.phone.replace(/\s/g, "")}`}
+                  className={`inline-flex items-center gap-3 rounded text-brand-navy hover:text-brand-gold ${FOCUS}`}
+                >
+                  <span className="flex size-9 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
+                    <Phone className="size-5" aria-hidden="true" />
+                  </span>
+                  {COMPANY.phone}
+                </a>
+                <a
+                  href={`mailto:${COMPANY.email}`}
+                  className={`inline-flex items-center gap-3 rounded text-brand-navy hover:text-brand-gold ${FOCUS}`}
+                >
+                  <span className="flex size-9 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
+                    <Mail className="size-5" aria-hidden="true" />
+                  </span>
+                  {COMPANY.email}
+                </a>
+              </div>
+              <p className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-brand-navy">
+                <ScrollText
+                  className="size-4 text-brand-gold"
+                  aria-hidden="true"
+                />
+                We will come back to you the same working day.
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link
+                  to="/contact-us"
+                  className={`group inline-flex items-center gap-2 rounded-md bg-brand-navy px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-navy-dark ${FOCUS}`}
+                >
+                  Book In-House Training
+                  <ArrowRight
+                    className="size-4 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </Link>
+                <Link
+                  to="/our-courses"
+                  className={`inline-flex items-center gap-2 rounded-md border border-brand-navy/20 px-7 py-3.5 text-sm font-semibold text-brand-navy transition-colors hover:bg-brand-navy/5 ${FOCUS}`}
+                >
+                  Explore Our Courses
+                </Link>
+              </div>
+            </div>
+
+            <motion.ul
+              variants={container}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-80px" }}
+              className="grid gap-4 sm:grid-cols-2"
+            >
+              {[
+                "NHS trusts",
+                "Care homes",
+                "GP practices",
+                "Supported-living providers",
+                "Community healthcare teams",
+                "Group bookings and rolling contracts",
+              ].map((label) => (
+                <motion.li
+                  key={label}
+                  variants={item}
+                  className="flex items-start gap-3 rounded-2xl border border-border bg-white p-5 shadow-sm"
+                >
+                  <BadgeCheck
+                    className="mt-0.5 size-5 shrink-0 text-brand-gold"
+                    aria-hidden="true"
+                  />
+                  <span className="text-sm font-medium text-brand-navy">
+                    {label}
+                  </span>
+                </motion.li>
+              ))}
+            </motion.ul>
+          </div>
+        </div>
+      </section>
+
+      <CTABand
+        heading="Bring clinically grounded training to your team"
+        buttonLabel="Book In-House Training"
+        to="/contact-us"
+      />
     </>
   )
 }

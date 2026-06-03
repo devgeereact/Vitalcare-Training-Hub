@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import {
@@ -11,10 +12,13 @@ import {
 import { PageHero } from "@/components/marketing/PageHero"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { CTABand } from "@/components/marketing/CTABand"
+import { Pagination } from "@/components/marketing/Pagination"
 import { usePublicEvents, type PublicEvent } from "@/lib/queries/public-events.queries"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+
+const PAGE_SIZE = 12
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -34,7 +38,7 @@ function formatTimeRange(startIso: string, endIso: string): string {
 
 function EventCard({ event }: { event: PublicEvent }): React.ReactElement {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-[transform,box-shadow,border-color] duration-200 will-change-transform hover:-translate-y-1 hover:border-brand-gold hover:shadow-md">
+    <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow transition-transform duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md">
       <div className="flex items-start gap-4 border-b border-border bg-brand-navy/[0.03] px-6 py-5">
         <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-[#1b2e6b] to-[#142054] text-white ring-1 ring-brand-gold/30">
           <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-brand-gold">
@@ -103,6 +107,21 @@ export default function EventsPage(): React.ReactElement {
   const reduce = useReducedMotion()
   const { data, isLoading, isError, refetch } = usePublicEvents()
 
+  const events = useMemo(() => data ?? [], [data])
+  const [page, setPage] = useState(1)
+  const pageCount = Math.max(1, Math.ceil(events.length / PAGE_SIZE))
+
+  // Reset to the first page whenever the underlying data reshapes.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset paging on data change
+    setPage(1)
+  }, [events.length])
+
+  const pagedEvents = useMemo(
+    () => events.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [events, page],
+  )
+
   return (
     <>
       <PageHero
@@ -167,23 +186,33 @@ export default function EventsPage(): React.ReactElement {
               </Link>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {data.map((event, i) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: reduce ? 0 : 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{
-                    duration: 0.45,
-                    delay: reduce ? 0 : Math.min(i, 5) * 0.06,
-                    ease: [0.21, 0.47, 0.32, 0.98],
-                  }}
-                >
-                  <EventCard event={event} />
-                </motion.div>
-              ))}
-            </div>
+            <>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {pagedEvents.map((event, i) => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: reduce ? 0 : 18 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{
+                      duration: 0.45,
+                      delay: reduce ? 0 : Math.min(i, 5) * 0.06,
+                      ease: [0.21, 0.47, 0.32, 0.98],
+                    }}
+                  >
+                    <EventCard event={event} />
+                  </motion.div>
+                ))}
+              </div>
+
+              <Pagination
+                page={page}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                label="Events pagination"
+                className="mt-12"
+              />
+            </>
           )}
         </div>
       </section>

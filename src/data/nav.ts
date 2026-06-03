@@ -10,29 +10,23 @@ export interface NavItem {
   children?: NavChild[]
 }
 
+/** Training Solutions sectors. Shown in the FOOTER (removed from the top nav). */
+export const TRAINING_SOLUTIONS: NavChild[] = [
+  { label: "NHS Trusts & Hospitals", href: "/training-solutions/nhs-trusts" },
+  { label: "Care Homes & Residential", href: "/training-solutions/care-homes" },
+  { label: "GP Practices & Primary Care", href: "/training-solutions/gp-practices" },
+  { label: "Individual Professionals", href: "/training-solutions/individual-professionals" },
+  { label: "Group & Corporate Packages", href: "/training-solutions/group-corporate" },
+]
+
 export const NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "About Us", href: "/about-us" },
   { label: "Our Courses", href: "/our-courses" },
   {
-    label: "Training Solutions",
-    children: [
-      { label: "NHS Trusts & Hospitals", href: "/training-solutions/nhs-trusts" },
-      { label: "Care Homes & Residential", href: "/training-solutions/care-homes" },
-      { label: "GP Practices & Primary Care", href: "/training-solutions/gp-practices" },
-      {
-        label: "Individual Professionals",
-        href: "/training-solutions/individual-professionals",
-      },
-      { label: "Group & Corporate Packages", href: "/training-solutions/group-corporate" },
-    ],
-  },
-  {
     label: "Resources",
     children: [
-      { label: "Learning Platform", href: "/platform" },
       { label: "Accreditations", href: "/resources/accreditations" },
-      { label: "Verify Certificate", href: "/resources/verify-certificate" },
       { label: "Blog", href: "/resources/blog" },
       { label: "Events", href: "/resources/events" },
     ],
