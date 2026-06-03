@@ -44,7 +44,7 @@ const ICONS: Record<string, LucideIcon> = {
  * Responsive grid of the course categories. Shows the first eight, then a
  * "Load more" button reveals the rest in the same scroll (no page change).
  */
-export function CategoryGrid({ initialCount = 8 }: { initialCount?: number }) {
+export function CategoryGrid({ initialCount = 9 }: { initialCount?: number }) {
   const [showAll, setShowAll] = useState(false)
   const visible = showAll
     ? COURSE_CATEGORIES
