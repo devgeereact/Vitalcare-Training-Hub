@@ -100,7 +100,7 @@ export default function VerifyCertPage(): React.ReactElement {
               <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
               Certificate check
             </p>
-            <h2 className="relative mt-3 font-display text-2xl text-white">
+            <h2 className="relative mt-3 font-sans font-semibold tracking-tight text-2xl text-white">
               Enter a verification code
             </h2>
           </div>
@@ -145,7 +145,7 @@ export default function VerifyCertPage(): React.ReactElement {
               <div className="flex items-center gap-3 border-b border-success/20 px-6 py-5">
                 <BadgeCheck className="size-9 shrink-0 text-success" />
                 <div>
-                  <p className="font-display text-2xl text-brand-navy">
+                  <p className="font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                     Valid certificate
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -176,7 +176,7 @@ export default function VerifyCertPage(): React.ReactElement {
               <div className="flex items-center gap-3 border-b border-warning/30 px-6 py-5">
                 <ShieldAlert className="size-9 shrink-0 text-warning" />
                 <div>
-                  <p className="font-display text-2xl text-brand-navy">
+                  <p className="font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                     Certificate expired
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -215,7 +215,7 @@ export default function VerifyCertPage(): React.ReactElement {
 
           {state.kind === "error" ? (
             <div className="rounded-2xl border border-destructive/30 bg-destructive/[0.04] p-8 text-center shadow-sm">
-              <p className="font-display text-xl text-brand-navy">
+              <p className="font-sans font-semibold tracking-tight text-xl text-brand-navy">
                 Verification is unavailable right now
               </p>
               <p className="mt-2 text-sm text-muted-foreground">

@@ -10,6 +10,9 @@ import {
   AlertCircle,
   ArrowRight,
   BadgeCheck,
+  Users,
+  ListChecks,
+  Check,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CTABand } from "@/components/marketing/CTABand"
@@ -75,7 +78,7 @@ export default function CourseDetailPage(): React.ReactElement {
     return (
       <section className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
         <AlertCircle className="mx-auto size-8 text-destructive" />
-        <h1 className="mt-3 font-display text-2xl text-brand-navy">
+        <h1 className="mt-3 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
           Could not load this course
         </h1>
         <p className="mt-2 text-muted-foreground">
@@ -98,7 +101,7 @@ export default function CourseDetailPage(): React.ReactElement {
   if (!c && !fallback) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
-        <h1 className="font-display text-3xl text-brand-navy">Course not found</h1>
+        <h1 className="font-sans font-semibold tracking-tight text-3xl text-brand-navy">Course not found</h1>
         <p className="mt-3 text-muted-foreground">
           That course does not exist or is not yet published. Browse the full
           catalogue instead.
@@ -166,7 +169,7 @@ export default function CourseDetailPage(): React.ReactElement {
             initial={{ opacity: 0, y: reduce ? 0 : 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.06 }}
-            className="mt-4 max-w-3xl font-display text-4xl leading-tight text-white lg:text-6xl"
+            className="mt-4 max-w-3xl font-sans font-semibold tracking-tight text-4xl leading-tight text-white lg:text-6xl"
           >
             {title}
           </motion.h1>
@@ -302,7 +305,7 @@ export default function CourseDetailPage(): React.ReactElement {
               </p>
               <div className="max-w-[65ch] space-y-4">
                 {summary ? (
-                  <p className="font-display text-2xl leading-snug text-brand-navy">
+                  <p className="font-sans font-semibold tracking-tight text-2xl leading-snug text-brand-navy">
                     {summary}
                   </p>
                 ) : null}
@@ -324,7 +327,7 @@ export default function CourseDetailPage(): React.ReactElement {
 
             {moduleCount > 0 && (
               <div>
-                <h2 className="font-display text-3xl text-brand-navy">
+                <h2 className="font-sans font-semibold tracking-tight text-3xl text-brand-navy">
                   What you will cover
                 </h2>
                 <ul className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -343,6 +346,89 @@ export default function CourseDetailPage(): React.ReactElement {
               </div>
             )}
 
+            {/* Course information: who it is for, what is included, assessment */}
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-2xl border border-border bg-white p-6 shadow-sm md:col-span-2">
+                <h2 className="flex items-center gap-3 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy">
+                    <Users className="size-5" aria-hidden />
+                  </span>
+                  Who it's for
+                </h2>
+                <p className="mt-4 max-w-[65ch] leading-relaxed text-muted-foreground">
+                  This course suits care and healthcare staff who need this
+                  subject for their role, whether you are completing statutory
+                  and mandatory training, refreshing an expiring certificate, or
+                  building your CPD portfolio. Teams can be enrolled together,
+                  with progress tracked centrally.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
+                <h2 className="flex items-center gap-3 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy">
+                    <ListChecks className="size-5" aria-hidden />
+                  </span>
+                  What's included
+                </h2>
+                <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-3">
+                    <Check
+                      className="mt-0.5 size-4 shrink-0 text-brand-gold"
+                      aria-hidden
+                    />
+                    <span>
+                      Self-paced online learning you can complete on any device
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Check
+                      className="mt-0.5 size-4 shrink-0 text-brand-gold"
+                      aria-hidden
+                    />
+                    <span>
+                      Content overseen by our Clinical Director, a registered
+                      nurse
+                    </span>
+                  </li>
+                  {cpdHours ? (
+                    <li className="flex items-start gap-3">
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-brand-gold"
+                        aria-hidden
+                      />
+                      <span>Logged CPD hours recorded against your record</span>
+                    </li>
+                  ) : null}
+                  <li className="flex items-start gap-3">
+                    <Check
+                      className="mt-0.5 size-4 shrink-0 text-brand-gold"
+                      aria-hidden
+                    />
+                    <span>
+                      A certificate on successful completion, verifiable online
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
+                <h2 className="flex items-center gap-3 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy">
+                    <BadgeCheck className="size-5" aria-hidden />
+                  </span>
+                  Assessment and certificate
+                </h2>
+                <p className="mt-4 leading-relaxed text-muted-foreground">
+                  Where a course includes an assessment, you need to demonstrate
+                  competence to pass. If you do not meet the standard the first
+                  time, we tell you why and you can resit. On passing, your
+                  certificate is issued and recorded against your name,
+                  verifiable at vitalcare.uk/verify.
+                </p>
+              </div>
+            </div>
+
             {/* Accreditation panel */}
             <div className="relative overflow-hidden rounded-2xl border border-brand-gold/30 bg-gradient-to-br from-brand-gold/10 to-transparent p-8">
               <div className="flex items-start gap-4">
@@ -350,7 +436,7 @@ export default function CourseDetailPage(): React.ReactElement {
                   <BadgeCheck className="size-6" aria-hidden />
                 </span>
                 <div>
-                  <h2 className="font-display text-2xl text-brand-navy">
+                  <h2 className="font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                     Accreditation and oversight
                   </h2>
                   <p className="mt-3 max-w-[60ch] leading-relaxed text-muted-foreground">

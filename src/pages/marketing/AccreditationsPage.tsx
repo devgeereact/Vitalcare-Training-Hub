@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { motion, useReducedMotion, type Variants } from "framer-motion"
 import {
   ShieldCheck,
@@ -5,12 +6,26 @@ import {
   ClipboardCheck,
   Stethoscope,
   Check,
+  Map,
+  UserCheck,
+  Layers,
+  CalendarCheck,
+  PenLine,
+  Archive,
+  FileText,
+  Hash,
+  Search,
+  ArrowRight,
 } from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { CTABand } from "@/components/marketing/CTABand"
-import { LEADERSHIP } from "@/lib/constants"
+import { LEADERSHIP, CREDENTIAL_PHRASE } from "@/lib/constants"
+import { img, imgAlt } from "@/data/marketing-images"
+
+const FOCUS =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
 
 const ITEMS = [
   {
@@ -53,6 +68,66 @@ const BADGE_MEANINGS = [
   },
 ] as const
 
+const CSTF_POINTS = [
+  {
+    icon: Map,
+    title: "Mapped to the framework",
+    body: "Each statutory and mandatory course is mapped to the Core Skills Training Framework subjects and learning outcomes, so completion can be evidenced against a recognised standard at inspection.",
+  },
+  {
+    icon: UserCheck,
+    title: "Overseen by a registered nurse",
+    body: `Clinical content is reviewed and overseen by ${LEADERSHIP.clinicalDirector.name}, our ${LEADERSHIP.clinicalDirector.role}, keeping every subject aligned to current practice.`,
+  },
+  {
+    icon: Layers,
+    title: "Recorded by staff group",
+    body: "Because the framework sets expectations by staff group, records are produced the same way, so managers can show the right training for the right roles.",
+  },
+] as const
+
+const REVIEW_STEPS = [
+  {
+    step: "01",
+    icon: CalendarCheck,
+    title: "Checked at least yearly",
+    body: "On a rolling 12-month cycle, content is checked against current guidance and updated whenever practice changes, rather than left to drift.",
+  },
+  {
+    step: "02",
+    icon: PenLine,
+    title: "Signed off clinically",
+    body: `Updates to clinical content are signed off by ${LEADERSHIP.clinicalDirector.name}, our Clinical Director and a registered nurse, before they reach learners.`,
+  },
+  {
+    step: "03",
+    icon: Archive,
+    title: "Versions retained for audit",
+    body: "Superseded versions are kept, so a certificate always reflects the content that was taught at the time and audit history stays intact.",
+  },
+] as const
+
+const VERIFY_STEPS = [
+  {
+    step: "01",
+    icon: FileText,
+    title: "Recorded against the learner",
+    body: "Every completion is recorded against the named learner, with the course, the result and the dates held on file.",
+  },
+  {
+    step: "02",
+    icon: Hash,
+    title: "A unique reference is issued",
+    body: "Each certificate carries its own reference, printed on the document, so it can be traced back to a single record.",
+  },
+  {
+    step: "03",
+    icon: Search,
+    title: "Anyone can confirm it",
+    body: "Enter the reference at vitalcare.uk/verify to confirm the course, the learner and the issue and expiry dates in seconds.",
+  },
+] as const
+
 export default function AccreditationsPage() {
   const reduce = useReducedMotion()
 
@@ -74,8 +149,12 @@ export default function AccreditationsPage() {
       <PageHero
         eyebrow="Accreditations"
         title="Standards you can evidence"
-        description="CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify. The marks behind our training explained in plain terms."
-      />
+        description="The marks behind our training, explained in plain terms: what they mean, how content stays current, and how anyone can confirm a certificate is genuine."
+        imageUrl={img("clinicalReview")}
+        imageAlt={imgAlt("clinicalReview")}
+      >
+        <p className="text-sm text-white/70">{CREDENTIAL_PHRASE}.</p>
+      </PageHero>
 
       {/* Accreditation pillars */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
@@ -95,7 +174,7 @@ export default function AccreditationsPage() {
             <motion.div
               key={title}
               variants={item}
-              className="flex flex-col rounded-2xl border border-border bg-white p-8 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
+              className="flex h-full flex-col rounded-2xl border border-border bg-white p-8 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
             >
               <span className="flex size-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
                 <Icon className="size-6" />
@@ -123,7 +202,7 @@ export default function AccreditationsPage() {
             {BADGE_MEANINGS.map((badge) => (
               <div
                 key={badge.badge}
-                className="flex flex-col rounded-2xl border border-border bg-white p-7 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
+                className="flex h-full flex-col rounded-2xl border border-border bg-white p-7 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
               >
                 <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-brand-navy px-3 py-1 text-xs font-semibold text-white">
                   <Check className="size-3 text-brand-gold" aria-hidden="true" />
@@ -135,6 +214,129 @@ export default function AccreditationsPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* How CSTF alignment works */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <SectionHeading
+          eyebrow="The detail"
+          title="How CSTF alignment works"
+          subtitle="What it means in practice for a manager who has to evidence training at inspection."
+        />
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          className="mt-12 grid gap-6 lg:grid-cols-3"
+        >
+          {CSTF_POINTS.map(({ icon: Icon, title, body }) => (
+            <motion.div
+              key={title}
+              variants={item}
+              className="flex h-full flex-col rounded-2xl border border-border bg-white p-8 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
+            >
+              <span className="flex size-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
+                <Icon className="size-6" aria-hidden="true" />
+              </span>
+              <h3 className="mt-5 text-lg font-semibold text-brand-navy">
+                {title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {body}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </section>
+
+      {/* Our review cycle */}
+      <section className="bg-muted/40">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+          <SectionHeading
+            eyebrow="Kept current"
+            title="Our review cycle"
+            subtitle="A rolling 12-month review keeps content matched to current guidance and ready for audit."
+          />
+          <motion.div
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            className="mt-12 grid gap-6 lg:grid-cols-3"
+          >
+            {REVIEW_STEPS.map(({ step, icon: Icon, title, body }) => (
+              <motion.div
+                key={step}
+                variants={item}
+                className="flex h-full flex-col rounded-2xl border border-border bg-white p-8 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="flex items-center gap-4">
+                  <span className="flex size-12 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy">
+                    <Icon className="size-6" aria-hidden="true" />
+                  </span>
+                  <span className="font-sans text-2xl font-semibold tracking-tight text-brand-gold">
+                    {step}
+                  </span>
+                </div>
+                <h3 className="mt-5 text-lg font-semibold text-brand-navy">
+                  {title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {body}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How verification works */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <SectionHeading
+          eyebrow="Verifiable by design"
+          title="How verification works"
+          subtitle="From completion to a certificate anyone can check, in three steps."
+        />
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          className="mt-12 grid gap-6 lg:grid-cols-3"
+        >
+          {VERIFY_STEPS.map(({ step, icon: Icon, title, body }) => (
+            <motion.div
+              key={step}
+              variants={item}
+              className="flex h-full flex-col rounded-2xl border border-border bg-white p-8 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
+            >
+              <div className="flex items-center gap-4">
+                <span className="flex size-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
+                  <Icon className="size-6" aria-hidden="true" />
+                </span>
+                <span className="font-sans text-2xl font-semibold tracking-tight text-brand-gold">
+                  {step}
+                </span>
+              </div>
+              <h3 className="mt-5 text-lg font-semibold text-brand-navy">
+                {title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {body}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
+        <div className="mt-12 flex justify-center">
+          <Link
+            to="/resources/verify-certificate"
+            className={`inline-flex items-center gap-2 rounded-2xl bg-brand-navy px-6 py-3 text-sm font-semibold text-white shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-0.5 hover:shadow-md ${FOCUS}`}
+          >
+            Verify a certificate
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
         </div>
       </section>
 

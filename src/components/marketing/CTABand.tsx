@@ -23,7 +23,7 @@ export function CTABand({
           aria-hidden="true"
         />
         <div className="relative flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <h2 className="max-w-2xl font-display text-3xl leading-tight text-white">
+          <h2 className="max-w-2xl font-sans font-semibold tracking-tight text-3xl leading-tight text-white">
             {heading}
           </h2>
           <Link

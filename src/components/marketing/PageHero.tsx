@@ -1,19 +1,20 @@
 import type { ReactNode } from "react"
 import { motion, useReducedMotion, type Variants } from "framer-motion"
 
-/** A floating glass stat card overlapping the hero image. */
+/** A small headline statistic shown beneath an image hero. */
 export interface HeroStat {
   value: string
   label: string
 }
 
 /**
- * Premium navy hero used across marketing pages.
+ * Interior page title banner.
  *
- * Backwards compatible: `title` is the only required prop. Interior pages keep
- * the original eyebrow / title / description / children signature. Passing an
- * `imageUrl` upgrades it to the full two-column flagship layout with a masked
- * photo frame, gold ring accent and optional floating stat cards.
+ * Calm navy band with a single soft glow and a gold hairline, clean DM Sans
+ * type and consistent rhythm on every page. `title` is the only required prop.
+ * Passing an `imageUrl` upgrades it to a balanced two-column layout with a
+ * refined photo frame and optional stat chips. The homepage uses its own hero;
+ * every other marketing page uses this for visual consistency.
  */
 export function PageHero({
   eyebrow,
@@ -37,15 +38,15 @@ export function PageHero({
   const container: Variants = {
     hidden: {},
     show: {
-      transition: { staggerChildren: reduce ? 0 : 0.09, delayChildren: 0.04 },
+      transition: { staggerChildren: reduce ? 0 : 0.08, delayChildren: 0.03 },
     },
   }
   const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 22 },
+    hidden: { opacity: 0, y: reduce ? 0 : 18 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.55, ease: [0.21, 0.47, 0.32, 0.98] },
+      transition: { duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] },
     },
   }
 
@@ -53,32 +54,13 @@ export function PageHero({
 
   return (
     <section className="relative overflow-hidden bg-brand-navy">
-      {/* Rich navy gradient base */}
+      {/* Calm navy gradient, one soft gold glow, gold hairline. No busy texture. */}
       <div
-        className="absolute inset-0 bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530]"
-        aria-hidden="true"
-      />
-      {/* Layered gold glows */}
-      <div
-        className="pointer-events-none absolute -right-32 -top-40 size-[30rem] rounded-full bg-brand-gold/20 blur-3xl"
+        className="absolute inset-0 bg-gradient-to-br from-[#1b2e6b] via-[#16265a] to-[#0f1b41]"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -bottom-40 -left-24 size-[26rem] rounded-full bg-brand-gold/10 blur-3xl"
-        aria-hidden="true"
-      />
-      {/* Subtle geometric grid texture */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-          maskImage:
-            "radial-gradient(ellipse at 30% 20%, black 0%, transparent 70%)",
-          WebkitMaskImage:
-            "radial-gradient(ellipse at 30% 20%, black 0%, transparent 70%)",
-        }}
+        className="pointer-events-none absolute -right-28 -top-32 size-[26rem] rounded-full bg-brand-gold/15 blur-3xl"
         aria-hidden="true"
       />
       <div
@@ -89,7 +71,7 @@ export function PageHero({
       <div
         className={
           hasImage
-            ? "relative mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-28"
+            ? "relative mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-24"
             : "relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
         }
       >
@@ -97,12 +79,12 @@ export function PageHero({
           variants={container}
           initial="hidden"
           animate="show"
-          className={hasImage ? "max-w-xl" : ""}
+          className={hasImage ? "max-w-xl" : "max-w-3xl"}
         >
           {eyebrow ? (
             <motion.p
               variants={item}
-              className="inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold"
+              className="inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.16em] text-brand-gold"
             >
               <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
               {eyebrow}
@@ -111,11 +93,7 @@ export function PageHero({
 
           <motion.h1
             variants={item}
-            className={
-              hasImage
-                ? "mt-4 font-display text-5xl leading-tight text-white sm:text-6xl lg:text-7xl"
-                : "mt-3 max-w-3xl font-display text-4xl leading-tight text-white lg:text-5xl"
-            }
+            className="mt-4 font-sans font-semibold tracking-tight text-4xl leading-[1.1] text-white sm:text-5xl"
           >
             {title}
           </motion.h1>
@@ -123,11 +101,7 @@ export function PageHero({
           {description ? (
             <motion.p
               variants={item}
-              className={
-                hasImage
-                  ? "mt-6 max-w-xl text-lg leading-relaxed text-white/80"
-                  : "mt-4 max-w-2xl text-lg leading-relaxed text-white/80"
-              }
+              className="mt-5 max-w-2xl text-lg leading-relaxed text-white/75"
             >
               {description}
             </motion.p>
@@ -142,45 +116,39 @@ export function PageHero({
 
         {hasImage ? (
           <motion.div
-            initial={{ opacity: 0, y: reduce ? 0 : 28, scale: reduce ? 1 : 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.7, ease: [0.21, 0.47, 0.32, 0.98], delay: 0.15 }}
+            initial={{ opacity: 0, y: reduce ? 0 : 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98], delay: 0.12 }}
             className="relative mx-auto w-full max-w-md lg:mx-0 lg:ml-auto lg:max-w-none"
           >
-            {/* Gold ring accent behind the frame */}
-            <div
-              className="pointer-events-none absolute -right-4 -top-4 hidden h-full w-full rounded-3xl border-2 border-brand-gold/60 sm:block"
-              aria-hidden="true"
-            />
-            <div className="relative overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10">
               <img
                 src={imageUrl}
                 alt={imageAlt}
                 loading="eager"
-                className="aspect-[4/5] w-full object-cover sm:aspect-[5/4] lg:aspect-[4/5]"
+                className="aspect-[5/4] w-full object-cover"
               />
               <div
-                className="absolute inset-0 bg-gradient-to-t from-brand-navy-dark/40 via-transparent to-transparent"
+                className="absolute inset-0 bg-gradient-to-t from-brand-navy-dark/30 via-transparent to-transparent"
                 aria-hidden="true"
               />
             </div>
 
-            {/* Floating glass stat cards */}
             {stats && stats.length > 0 ? (
-              <div className="absolute -bottom-6 -left-4 flex gap-3 sm:-left-8">
+              <div className="absolute -bottom-5 left-4 right-4 flex gap-3 sm:left-auto sm:right-6">
                 {stats.slice(0, 2).map((stat, i) => (
                   <motion.div
                     key={stat.label}
-                    initial={{ opacity: 0, y: reduce ? 0 : 16 }}
+                    initial={{ opacity: 0, y: reduce ? 0 : 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
-                      duration: 0.55,
-                      delay: 0.5 + i * 0.12,
+                      duration: 0.5,
+                      delay: 0.4 + i * 0.1,
                       ease: [0.21, 0.47, 0.32, 0.98],
                     }}
-                    className="rounded-2xl border border-white/20 bg-white/95 px-5 py-4 shadow-xl backdrop-blur"
+                    className="flex-1 rounded-xl border border-border bg-white/95 px-5 py-4 shadow-lg backdrop-blur sm:flex-none"
                   >
-                    <p className="font-display text-2xl leading-none text-brand-navy">
+                    <p className="font-sans text-2xl font-semibold leading-none tracking-tight text-brand-navy">
                       {stat.value}
                     </p>
                     <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">

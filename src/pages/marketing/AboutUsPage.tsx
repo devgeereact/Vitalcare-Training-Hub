@@ -177,7 +177,7 @@ export default function AboutUsPage() {
                 className="flex flex-col rounded-2xl border border-border bg-white p-8 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1b2e6b] to-[#142054] font-display text-2xl text-white ring-1 ring-brand-gold/40">
+                  <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1b2e6b] to-[#142054] font-sans font-semibold tracking-tight text-2xl text-white ring-1 ring-brand-gold/40">
                     {person.name
                       .replace(/,.*$/, "")
                       .split(" ")
@@ -296,7 +296,7 @@ export default function AboutUsPage() {
                   <dt className="text-sm text-muted-foreground">
                     Framework
                   </dt>
-                  <dd className="mt-1 font-display text-2xl text-brand-navy">
+                  <dd className="mt-1 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                     CSTF-aligned
                   </dd>
                 </div>
@@ -305,7 +305,7 @@ export default function AboutUsPage() {
                   <dt className="text-sm text-muted-foreground">
                     Review cycle
                   </dt>
-                  <dd className="mt-1 font-display text-2xl text-brand-navy">
+                  <dd className="mt-1 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                     Rolling 12 months
                   </dd>
                 </div>
@@ -314,7 +314,7 @@ export default function AboutUsPage() {
                   <dt className="text-sm text-muted-foreground">
                     Verification
                   </dt>
-                  <dd className="mt-1 font-display text-2xl text-brand-navy">
+                  <dd className="mt-1 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                     vitalcare.uk/verify
                   </dd>
                 </div>
@@ -336,7 +336,7 @@ export default function AboutUsPage() {
                 <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
                 Our publishing imprint
               </p>
-              <h2 className="mt-3 font-display text-3xl leading-tight text-brand-navy sm:text-4xl">
+              <h2 className="mt-3 font-sans font-semibold tracking-tight text-3xl leading-tight text-brand-navy sm:text-4xl">
                 Reference texts and training support materials
               </h2>
               <p className="mt-5 max-w-[65ch] text-base leading-relaxed text-muted-foreground">
@@ -391,7 +391,7 @@ export default function AboutUsPage() {
                   className="size-4 text-brand-gold"
                   aria-hidden="true"
                 />
-                We will come back to you the same working day.
+                We read every message and aim to reply within one working day.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-4">

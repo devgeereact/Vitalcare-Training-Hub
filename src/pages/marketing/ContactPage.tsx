@@ -100,7 +100,7 @@ export default function ContactPage(): React.ReactElement {
             <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
             Contact us
           </p>
-          <h1 className="mt-4 max-w-3xl font-display text-4xl leading-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="mt-4 max-w-3xl font-sans font-semibold tracking-tight text-4xl leading-tight text-white sm:text-5xl lg:text-6xl">
             Talk to the Vitalcare team
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/80">
@@ -123,7 +123,7 @@ export default function ContactPage(): React.ReactElement {
                 <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
                 Get in touch
               </p>
-              <h2 className="relative mt-3 font-display text-2xl text-white">
+              <h2 className="relative mt-3 font-sans font-semibold tracking-tight text-2xl text-white">
                 We answer training questions fast
               </h2>
               <p className="relative mt-2 text-sm leading-relaxed text-white/80">
@@ -173,7 +173,7 @@ export default function ContactPage(): React.ReactElement {
               <span className="flex size-9 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
                 <Clock className="size-5" />
               </span>
-              <h2 className="font-display text-xl text-brand-navy">
+              <h2 className="font-sans font-semibold tracking-tight text-xl text-brand-navy">
                 Office hours
               </h2>
             </div>
@@ -204,7 +204,7 @@ export default function ContactPage(): React.ReactElement {
         {/* Right: form */}
         <div className="lg:col-span-3">
           <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="font-display text-2xl text-brand-navy">
+            <h2 className="font-sans font-semibold tracking-tight text-2xl text-brand-navy">
               Send us a message
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">

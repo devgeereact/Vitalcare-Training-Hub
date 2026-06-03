@@ -18,14 +18,17 @@ import { StatsBar } from "@/components/marketing/StatsBar"
 import { CategoryGrid } from "@/components/marketing/CategoryGrid"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
-import { SECTORS } from "@/data/sectors"
+import { EventCard } from "@/components/marketing/EventCard"
+import { CourseCard } from "@/components/courses/CourseCard"
+import { Skeleton } from "@/components/ui/skeleton"
 import { TOTAL_COURSE_COUNT, COURSE_CATEGORIES } from "@/data/courses"
 import { LEADERSHIP } from "@/lib/constants"
+import { img, imgAlt } from "@/data/marketing-images"
+import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
+import { usePublicEvents } from "@/lib/queries/public-events.queries"
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1400&q=70"
-const LEARNING_IMAGE =
-  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=70"
+const FOCUS =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
 
 /** Short trust points shown beneath the hero CTAs. */
 const HERO_TRUST = [
@@ -110,9 +113,6 @@ const TESTIMONIALS = [
   },
 ] as const
 
-/** Sectors to feature on the home page (first four from the data source). */
-const FEATURED_SECTORS = SECTORS.slice(0, 4)
-
 /**
  * Flagship homepage hero. Clean, light editorial layout: an off-white canvas,
  * one strong typographic column, a single restrained accent and a calm image
@@ -161,7 +161,7 @@ function HomeHero() {
 
           <motion.h1
             variants={item}
-            className="mt-6 max-w-2xl font-display text-[2.75rem] leading-[1.05] text-brand-navy sm:text-6xl lg:text-[4rem]"
+            className="mt-6 max-w-2xl font-sans text-[2.75rem] font-semibold leading-[1.05] tracking-tight text-brand-navy sm:text-6xl lg:text-[4rem]"
           >
             Healthcare Training Built for Real Care Environments.
           </motion.h1>
@@ -178,7 +178,7 @@ function HomeHero() {
           <motion.div variants={item} className="mt-9 flex flex-wrap gap-3">
             <Link
               to="/our-courses"
-              className="group inline-flex items-center gap-2 rounded-md bg-brand-navy px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+              className={`group inline-flex items-center gap-2 rounded-md bg-brand-navy px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-navy-dark ${FOCUS}`}
             >
               Explore Our Courses
               <ArrowRight
@@ -188,7 +188,7 @@ function HomeHero() {
             </Link>
             <Link
               to="/contact-us"
-              className="inline-flex items-center rounded-md border border-brand-navy/15 bg-white px-7 py-3.5 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-navy/30 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+              className={`inline-flex items-center rounded-md border border-brand-navy/15 bg-white px-7 py-3.5 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-navy/30 hover:bg-muted ${FOCUS}`}
             >
               Get a Quote
             </Link>
@@ -229,8 +229,8 @@ function HomeHero() {
         >
           <div className="relative overflow-hidden rounded-2xl border border-border shadow-xl">
             <img
-              src={HERO_IMAGE}
-              alt="Healthcare professionals in a clinical training session"
+              src={img("consultation")}
+              alt={imgAlt("consultation")}
               loading="eager"
               className="aspect-[4/5] w-full object-cover sm:aspect-[5/4] lg:aspect-[4/5]"
             />
@@ -261,6 +261,119 @@ function HomeHero() {
   )
 }
 
+/** Live published courses, capped at eight, with a link to the full catalogue. */
+function FeaturedCourses() {
+  const reduce = useReducedMotion()
+  const { data, isLoading, isError } = usePublishedCourses()
+  const featured = (data ?? []).slice(0, 8)
+
+  // Keep the homepage clean: if nothing is live yet, the catalogue page and its
+  // category grid carry browsing, so this teaser simply steps aside.
+  if (!isLoading && (isError || featured.length === 0)) return null
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <SectionHeading
+        eyebrow="Available now"
+        title="Courses ready to book"
+        subtitle="A selection of published courses you can explore today, with CPD hours logged on every one."
+        action={
+          <Link
+            to="/our-courses"
+            className={`inline-flex items-center gap-1.5 text-sm font-semibold text-brand-navy underline-offset-4 hover:underline ${FOCUS}`}
+          >
+            View all courses
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
+        }
+      />
+
+      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {isLoading
+          ? Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-80 w-full rounded-2xl" />
+            ))
+          : featured.map((course, i) => (
+              <motion.div
+                key={course.id}
+                className="h-full"
+                initial={{ opacity: 0, y: reduce ? 0 : 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{
+                  duration: 0.45,
+                  delay: reduce ? 0 : Math.min(i, 7) * 0.05,
+                }}
+              >
+                <CourseCard
+                  className="h-full"
+                  title={course.title}
+                  href={`/our-courses/course/${course.slug}`}
+                  categoryName={course.categoryName}
+                  cpdHours={course.cpdHours}
+                  durationMins={course.durationMins}
+                  cstf={course.cstf}
+                  thumbnailUrl={course.thumbnailUrl}
+                />
+              </motion.div>
+            ))}
+      </div>
+    </section>
+  )
+}
+
+/** Upcoming public sessions, capped at three, with a link to all events. */
+function UpcomingEvents() {
+  const reduce = useReducedMotion()
+  const { data, isLoading, isError } = usePublicEvents()
+  const upcoming = (data ?? []).slice(0, 3)
+
+  if (!isLoading && (isError || upcoming.length === 0)) return null
+
+  return (
+    <section className="bg-muted/40">
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <SectionHeading
+          eyebrow="Events"
+          title="Upcoming training sessions"
+          subtitle="Live and online sessions open to book, with clinical oversight on every course."
+          action={
+            <Link
+              to="/resources/events"
+              className={`inline-flex items-center gap-1.5 text-sm font-semibold text-brand-navy underline-offset-4 hover:underline ${FOCUS}`}
+            >
+              View all events
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          }
+        />
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {isLoading
+            ? [0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-72 w-full rounded-2xl" />
+              ))
+            : upcoming.map((event, i) => (
+                <motion.div
+                  key={event.id}
+                  className="h-full"
+                  initial={{ opacity: 0, y: reduce ? 0 : 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{
+                    duration: 0.45,
+                    delay: reduce ? 0 : Math.min(i, 2) * 0.06,
+                  }}
+                >
+                  <EventCard event={event} />
+                </motion.div>
+              ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function HomePage() {
   return (
     <>
@@ -280,7 +393,7 @@ export default function HomePage() {
             <Link
               key={label}
               to={to}
-              className="group flex flex-col rounded-2xl border border-border bg-white p-6 shadow-sm transition-[transform,box-shadow,border-color] duration-200 will-change-transform hover:-translate-y-1 hover:border-brand-gold/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+              className={`group flex h-full flex-col rounded-2xl border border-border bg-white p-6 shadow-sm transition-[transform,box-shadow,border-color] duration-200 will-change-transform hover:-translate-y-1 hover:border-brand-gold/50 hover:shadow-md ${FOCUS}`}
             >
               <span className="flex size-12 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy transition-colors group-hover:bg-brand-gold/15 group-hover:text-brand-gold">
                 <Icon className="size-6" />
@@ -303,17 +416,20 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Featured live courses */}
+      <FeaturedCourses />
+
       {/* Course categories */}
       <section className="bg-muted/40">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
           <SectionHeading
             eyebrow="Course catalogue"
-            title="Course categories"
+            title="Browse by category"
             subtitle={`${COURSE_CATEGORIES.length} categories spanning statutory, mandatory, clinical and specialist training.`}
             action={
               <Link
                 to="/our-courses"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-navy underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+                className={`inline-flex items-center gap-1.5 text-sm font-semibold text-brand-navy underline-offset-4 hover:underline ${FOCUS}`}
               >
                 View all courses
                 <ArrowRight className="size-4" aria-hidden="true" />
@@ -336,126 +452,97 @@ export default function HomePage() {
         to="/resources/accreditations"
       />
 
-      {/* Training solutions by sector */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-        <SectionHeading
-          eyebrow="Training solutions"
-          title="Mapped to the standards you answer to"
-          subtitle="Training built for the way each part of the sector is inspected and governed."
-        />
-        <div className="mt-12 grid gap-6 sm:grid-cols-2">
-          {FEATURED_SECTORS.map((sector) => (
-            <Link
-              key={sector.slug}
-              to={`/training-solutions/${sector.slug}`}
-              className="group flex flex-col rounded-2xl border border-border bg-white p-7 shadow-sm transition-[transform,box-shadow,border-color] duration-200 will-change-transform hover:-translate-y-1 hover:border-brand-gold/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
-            >
-              <h3 className="text-lg font-semibold text-brand-navy">
-                {sector.name}
-              </h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {sector.headline}
-              </p>
-              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-gold">
-                See how we help
-                <ArrowRight
-                  className="size-4 transition-transform group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* Upcoming live events */}
+      <UpcomingEvents />
 
       {/* Why Vitalcare bento */}
-      <section className="bg-muted/40">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-          <SectionHeading
-            eyebrow="Why Vitalcare"
-            title="Clinical credibility, built in"
-            subtitle="The evidence and oversight that procurement and inspection teams look for, in one platform."
-          />
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {/* Feature image tile */}
-            <div className="relative overflow-hidden rounded-2xl shadow-sm lg:row-span-2">
-              <img
-                src={LEARNING_IMAGE}
-                alt="Healthcare staff completing online training"
-                loading="lazy"
-                className="h-full min-h-72 w-full object-cover"
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-brand-navy-dark/80 via-brand-navy/25 to-transparent"
-                aria-hidden="true"
-              />
-              <div className="absolute inset-x-0 bottom-0 p-6">
-                <p className="font-display text-2xl leading-tight text-white">
-                  Learning that fits around the shift
-                </p>
-                <p className="mt-2 text-sm text-white/80">
-                  Any device, at the learner's pace, with progress tracked
-                  centrally.
-                </p>
-              </div>
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <SectionHeading
+          eyebrow="Why Vitalcare"
+          title="Clinical credibility, built in"
+          subtitle="The evidence and oversight that procurement and inspection teams look for, in one platform."
+        />
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          {/* Feature image tile */}
+          <div className="relative overflow-hidden rounded-2xl shadow-sm lg:row-span-2">
+            <img
+              src={img("onlineLearning")}
+              alt={imgAlt("onlineLearning")}
+              loading="lazy"
+              className="h-full min-h-72 w-full object-cover"
+            />
+            <div
+              className="absolute inset-0 bg-gradient-to-t from-brand-navy-dark/80 via-brand-navy/25 to-transparent"
+              aria-hidden="true"
+            />
+            <div className="absolute inset-x-0 bottom-0 p-6">
+              <p className="font-sans text-2xl font-semibold leading-tight tracking-tight text-white">
+                Learning that fits around the shift
+              </p>
+              <p className="mt-2 text-sm text-white/80">
+                Any device, at the learner's pace, with progress tracked
+                centrally.
+              </p>
             </div>
-
-            {WHY.map(({ icon: Icon, title, body }) => (
-              <div
-                key={title}
-                className="rounded-2xl border border-border bg-white p-6 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
-              >
-                <span className="flex size-12 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy">
-                  <Icon className="size-6" />
-                </span>
-                <h3 className="mt-5 text-base font-semibold text-brand-navy">
-                  {title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {body}
-                </p>
-              </div>
-            ))}
           </div>
+
+          {WHY.map(({ icon: Icon, title, body }) => (
+            <div
+              key={title}
+              className="rounded-2xl border border-border bg-white p-6 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
+            >
+              <span className="flex size-12 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy">
+                <Icon className="size-6" />
+              </span>
+              <h3 className="mt-5 text-base font-semibold text-brand-navy">
+                {title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {body}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Credibility: role-attributed quotes + clinical sign-off */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-        <SectionHeading
-          eyebrow="In their words"
-          title="Built for the people who answer to inspection"
-          subtitle="How training leads describe working with Vitalcare."
-        />
-        <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          {TESTIMONIALS.map((item) => (
-            <figure
-              key={item.org}
-              className="flex flex-col rounded-2xl border border-border bg-white p-8 shadow-sm"
-            >
-              <Quote className="size-8 text-brand-gold" aria-hidden="true" />
-              <blockquote className="mt-5 text-lg leading-relaxed text-foreground">
-                {item.quote}
-              </blockquote>
-              <figcaption className="mt-6 text-sm font-semibold text-brand-navy">
-                {item.role}
-                <span className="font-normal text-muted-foreground">
-                  {" · "}
-                  {item.org}
-                </span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-        <div className="mt-8 flex items-start gap-3 rounded-2xl border border-border bg-brand-navy/5 p-6 text-sm text-brand-navy">
-          <ShieldCheck
-            className="mt-0.5 size-5 shrink-0 text-brand-gold"
-            aria-hidden="true"
+      <section className="bg-muted/40">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+          <SectionHeading
+            eyebrow="In their words"
+            title="Built for the people who answer to inspection"
+            subtitle="How training leads describe working with Vitalcare."
           />
-          <p>
-            Clinical content is overseen by {LEADERSHIP.clinicalDirector.name},
-            our {LEADERSHIP.clinicalDirector.role}.
-          </p>
+          <div className="mt-12 grid gap-6 lg:grid-cols-2">
+            {TESTIMONIALS.map((item) => (
+              <figure
+                key={item.org}
+                className="flex flex-col rounded-2xl border border-border bg-white p-8 shadow-sm"
+              >
+                <Quote className="size-8 text-brand-gold" aria-hidden="true" />
+                <blockquote className="mt-5 text-lg leading-relaxed text-foreground">
+                  {item.quote}
+                </blockquote>
+                <figcaption className="mt-6 text-sm font-semibold text-brand-navy">
+                  {item.role}
+                  <span className="font-normal text-muted-foreground">
+                    {" · "}
+                    {item.org}
+                  </span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <div className="mt-8 flex items-start gap-3 rounded-2xl border border-border bg-brand-navy/5 p-6 text-sm text-brand-navy">
+            <ShieldCheck
+              className="mt-0.5 size-5 shrink-0 text-brand-gold"
+              aria-hidden="true"
+            />
+            <p>
+              Clinical content is overseen by {LEADERSHIP.clinicalDirector.name},
+              our {LEADERSHIP.clinicalDirector.role}.
+            </p>
+          </div>
         </div>
       </section>
 

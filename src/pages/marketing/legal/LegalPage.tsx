@@ -89,7 +89,7 @@ export function LegalPage({
                   viewport={{ once: true, margin: "-60px" }}
                   className="scroll-mt-28 border-l-2 border-brand-gold/40 pl-6"
                 >
-                  <h2 className="flex items-baseline gap-3 font-display text-2xl leading-tight text-brand-navy sm:text-3xl">
+                  <h2 className="flex items-baseline gap-3 font-sans font-semibold tracking-tight text-2xl leading-tight text-brand-navy sm:text-3xl">
                     <span className="font-sans text-sm font-semibold tabular-nums text-brand-gold">
                       {String(index + 1).padStart(2, "0")}
                     </span>

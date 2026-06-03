@@ -25,7 +25,7 @@ export function StatsBar() {
                 : "text-center"
             }
           >
-            <p className="font-display text-4xl text-white lg:text-5xl">
+            <p className="font-sans font-semibold tracking-tight text-4xl text-white lg:text-5xl">
               {stat.value}
             </p>
             <p className="mt-1.5 text-sm font-medium uppercase tracking-wide text-brand-gold">

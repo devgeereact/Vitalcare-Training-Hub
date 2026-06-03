@@ -131,7 +131,7 @@ export function CourseCard({
           </div>
         ) : null}
 
-        <div className="mt-4 pt-1">
+        <div className="mt-auto pt-4">
           {onView ? (
             <button
               type="button"

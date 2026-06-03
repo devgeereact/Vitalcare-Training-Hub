@@ -18,13 +18,11 @@ import { Pagination } from "@/components/marketing/Pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { COURSE_CATEGORIES, TOTAL_COURSE_COUNT } from "@/data/courses"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
+import { img, imgAlt } from "@/data/marketing-images"
 
 const ALL = "all" as const
 
 const PAGE_SIZE = 12
-
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=70"
 
 const ASSURANCES = [
   {
@@ -96,8 +94,8 @@ export default function OurCoursesPage(): React.ReactElement {
         eyebrow="Our courses"
         title="Training across every area of care"
         description={`${TOTAL_COURSE_COUNT}+ courses across ${COURSE_CATEGORIES.length} categories, from statutory and mandatory training to clinical and specialist subjects.`}
-        imageUrl={HERO_IMAGE}
-        imageAlt="Healthcare professionals in a training session"
+        imageUrl={img("onlineLearning")}
+        imageAlt={imgAlt("onlineLearning")}
         stats={[
           { value: `${TOTAL_COURSE_COUNT}+`, label: "Courses" },
           { value: `${COURSE_CATEGORIES.length}`, label: "Categories" },
@@ -203,7 +201,7 @@ export default function OurCoursesPage(): React.ReactElement {
                   className="mx-auto size-8 text-destructive"
                   aria-hidden
                 />
-                <h3 className="mt-3 font-display text-2xl text-brand-navy">
+                <h3 className="mt-3 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                   Could not load courses
                 </h3>
                 <p className="mt-2 text-muted-foreground">
@@ -223,7 +221,7 @@ export default function OurCoursesPage(): React.ReactElement {
                   className="mx-auto size-8 text-brand-navy/40"
                   aria-hidden
                 />
-                <h3 className="mt-3 font-display text-2xl text-brand-navy">
+                <h3 className="mt-3 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                   More courses on the way
                 </h3>
                 <p className="mt-2 text-muted-foreground">
@@ -243,6 +241,7 @@ export default function OurCoursesPage(): React.ReactElement {
                   {pagedCourses.map((course, i) => (
                     <motion.div
                       key={course.id}
+                      className="h-full"
                       variants={fadeUp}
                       initial="hidden"
                       whileInView="show"
@@ -253,6 +252,7 @@ export default function OurCoursesPage(): React.ReactElement {
                       }}
                     >
                       <CourseCard
+                        className="h-full"
                         title={course.title}
                         href={`/our-courses/course/${course.slug}`}
                         categoryName={course.categoryName}

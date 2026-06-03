@@ -38,7 +38,7 @@ function EmptyState() {
       <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-navy/5 text-brand-navy">
         <BookOpen className="size-6" aria-hidden="true" />
       </span>
-      <h2 className="mt-4 font-display text-2xl text-brand-navy">
+      <h2 className="mt-4 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
         Insights are on the way
       </h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
@@ -78,7 +78,7 @@ export default function BlogPage() {
                 <p className="text-sm font-semibold uppercase tracking-wide text-brand-gold">
                   Latest
                 </p>
-                <h2 className="mt-2 font-display text-3xl text-brand-navy">
+                <h2 className="mt-2 font-sans font-semibold tracking-tight text-3xl text-brand-navy">
                   {featured.title}
                 </h2>
                 <div className="mt-3">
@@ -95,7 +95,7 @@ export default function BlogPage() {
             {/* Remaining posts */}
             {rest.length > 0 ? (
               <div>
-                <h2 className="font-display text-2xl text-brand-navy">
+                <h2 className="font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                   More insights
                 </h2>
                 <div className="mt-8 grid gap-6 sm:grid-cols-2">
@@ -105,7 +105,7 @@ export default function BlogPage() {
                       className="flex flex-col rounded-xl border border-border bg-white p-7"
                     >
                       <PostMeta post={post} />
-                      <h3 className="mt-3 font-display text-xl text-brand-navy">
+                      <h3 className="mt-3 font-sans font-semibold tracking-tight text-xl text-brand-navy">
                         {post.title}
                       </h3>
                       <p className="mt-3 text-sm text-muted-foreground">
@@ -124,7 +124,7 @@ export default function BlogPage() {
       <section className="bg-muted/40">
         <div className="mx-auto flex max-w-5xl flex-col items-start gap-4 px-4 py-12 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div>
-            <h2 className="font-display text-2xl text-brand-navy">
+            <h2 className="font-sans font-semibold tracking-tight text-2xl text-brand-navy">
               Want training guidance for your team?
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">

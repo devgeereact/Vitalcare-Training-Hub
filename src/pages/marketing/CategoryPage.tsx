@@ -8,20 +8,9 @@ import { BannerBand } from "@/components/marketing/BannerBand"
 import { CTABand } from "@/components/marketing/CTABand"
 import { CourseCard } from "@/components/courses/CourseCard"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getCategory } from "@/data/courses"
+import { COURSE_CATEGORIES, getCategory } from "@/data/courses"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
-
-const HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1400&q=70",
-  "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1400&q=70",
-  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=70",
-]
-
-/** Pick a stable hero image from the category id so it stays consistent. */
-function heroForCategory(id: string): string {
-  const n = Number.parseInt(id, 10) || 0
-  return HERO_IMAGES[n % HERO_IMAGES.length]
-}
+import { categoryHero, img, imgAlt } from "@/data/marketing-images"
 
 export default function CategoryPage(): React.ReactElement {
   const { categorySlug } = useParams<{ categorySlug: string }>()
@@ -37,7 +26,7 @@ export default function CategoryPage(): React.ReactElement {
   if (!category) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
-        <h1 className="font-display text-3xl text-brand-navy">
+        <h1 className="font-sans font-semibold tracking-tight text-3xl text-brand-navy">
           Category not found
         </h1>
         <p className="mt-3 text-muted-foreground">
@@ -58,14 +47,22 @@ export default function CategoryPage(): React.ReactElement {
     show: { opacity: 1, y: 0 },
   }
 
+  // Stable index from the category's position in the catalogue, so each
+  // category keeps a consistent hero from the curated image set.
+  const categoryIndex = Math.max(
+    0,
+    COURSE_CATEGORIES.findIndex((c) => c.slug === category.slug),
+  )
+  const heroKey = categoryHero(categoryIndex)
+
   return (
     <>
       <PageHero
         eyebrow="Course category"
         title={category.name}
         description={category.blurb}
-        imageUrl={heroForCategory(category.id)}
-        imageAlt={`${category.name} training`}
+        imageUrl={img(heroKey)}
+        imageAlt={imgAlt(heroKey)}
         stats={[{ value: `${category.count}`, label: "Courses" }]}
       >
         <p className="text-sm text-white/70">
@@ -73,6 +70,26 @@ export default function CategoryPage(): React.ReactElement {
           CPD-accredited.
         </p>
       </PageHero>
+
+      <section className="mx-auto max-w-3xl px-4 pt-16 sm:px-6 lg:px-8 lg:pt-24">
+        <SectionHeading
+          eyebrow="About this category"
+          title={`Training in ${category.name}`}
+        />
+        <div className="mt-6 space-y-4 text-base leading-relaxed text-muted-foreground">
+          <p>{category.blurb}</p>
+          <p>
+            Where the subject calls for it, these courses are CSTF-aligned and
+            mapped to current good practice, so the training stands up to
+            inspection and supports safe care.
+          </p>
+          <p>
+            Every completion carries logged CPD hours and produces a
+            certificate that managers and regulators can confirm at
+            vitalcare.uk/verify.
+          </p>
+        </div>
+      </section>
 
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         <SectionHeading
@@ -94,7 +111,7 @@ export default function CategoryPage(): React.ReactElement {
                 className="mx-auto size-8 text-destructive"
                 aria-hidden
               />
-              <h2 className="mt-3 font-display text-2xl text-brand-navy">
+              <h2 className="mt-3 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                 Could not load courses
               </h2>
               <p className="mt-2 text-muted-foreground">
@@ -114,7 +131,7 @@ export default function CategoryPage(): React.ReactElement {
                 className="mx-auto size-8 text-brand-navy/40"
                 aria-hidden
               />
-              <h2 className="mt-3 font-display text-2xl text-brand-navy">
+              <h2 className="mt-3 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
                 Courses coming soon
               </h2>
               <p className="mx-auto mt-2 max-w-xl text-muted-foreground">
@@ -134,6 +151,7 @@ export default function CategoryPage(): React.ReactElement {
               {categoryCourses.map((course, i) => (
                 <motion.div
                   key={course.id}
+                  className="h-full"
                   variants={fadeUp}
                   initial="hidden"
                   whileInView="show"
@@ -144,6 +162,7 @@ export default function CategoryPage(): React.ReactElement {
                   }}
                 >
                   <CourseCard
+                    className="h-full"
                     title={course.title}
                     href={`/our-courses/course/${course.slug}`}
                     categoryName={category.name}

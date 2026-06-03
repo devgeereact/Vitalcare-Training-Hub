@@ -86,18 +86,18 @@ export function Nav() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-0.5 lg:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {NAV_ITEMS.map((item) =>
             item.children ? (
               <DropdownMenu key={item.label}>
                 <DropdownMenuTrigger
                   className={cn(
-                    "group inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-navy/5 data-[state=open]:bg-brand-navy/5",
+                    "group inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-brand-navy/70 transition-colors hover:text-brand-navy data-[state=open]:text-brand-navy",
                     FOCUS,
                   )}
                 >
                   {item.label}
-                  <ChevronDown className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+                  <ChevronDown className="size-4 text-brand-navy/50 transition-transform group-data-[state=open]:rotate-180" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-64">
                   {item.children.map((child) => (
@@ -113,10 +113,10 @@ export function Nav() {
                 to={item.href ?? "/"}
                 aria-current={isActive(pathname, item.href) ? "page" : undefined}
                 className={cn(
-                  "relative rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "relative rounded-md px-3 py-2 text-sm font-medium transition-colors after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-brand-gold after:transition-transform after:duration-200",
                   isActive(pathname, item.href)
-                    ? "text-brand-navy after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-brand-gold"
-                    : "text-brand-navy/80 hover:bg-brand-navy/5 hover:text-brand-navy",
+                    ? "text-brand-navy after:scale-x-100"
+                    : "text-brand-navy/70 hover:text-brand-navy after:scale-x-0 hover:after:scale-x-100",
                   FOCUS,
                 )}
               >

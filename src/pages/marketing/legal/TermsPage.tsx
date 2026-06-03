@@ -22,7 +22,7 @@ export default function TermsPage() {
         {
           heading: "Acceptable use",
           paragraphs: [
-            "You agree not to misuse the service, share access improperly, or attempt to copy or resell course content. Certificates may only be issued for training genuinely completed.",
+            "You agree not to misuse the service, share access improperly, or attempt to copy or resell course content. Certificates may only be issued for training genuinely completed. Where a course includes an assessment, a certificate is issued only to a learner who demonstrates competence; if the standard is not met, we explain why and offer a resit.",
           ],
         },
         {

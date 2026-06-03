@@ -75,8 +75,8 @@ export function BannerBand({
           <h2
             className={
               isNavy
-                ? "mt-4 font-display text-3xl leading-tight text-white sm:text-4xl lg:text-5xl"
-                : "mt-4 font-display text-3xl leading-tight text-brand-navy sm:text-4xl lg:text-5xl"
+                ? "mt-4 font-sans font-semibold tracking-tight text-3xl leading-tight text-white sm:text-4xl lg:text-5xl"
+                : "mt-4 font-sans font-semibold tracking-tight text-3xl leading-tight text-brand-navy sm:text-4xl lg:text-5xl"
             }
           >
             {heading}

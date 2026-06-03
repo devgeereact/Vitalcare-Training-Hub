@@ -3,105 +3,41 @@ import { Link } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import {
   CalendarDays,
-  Clock,
-  MapPin,
-  Monitor,
-  GraduationCap,
   ArrowRight,
+  ShieldCheck,
+  BadgeCheck,
+  MonitorPlay,
 } from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
+import { EventCard } from "@/components/marketing/EventCard"
 import { CTABand } from "@/components/marketing/CTABand"
 import { Pagination } from "@/components/marketing/Pagination"
-import { usePublicEvents, type PublicEvent } from "@/lib/queries/public-events.queries"
+import { usePublicEvents } from "@/lib/queries/public-events.queries"
+import { img, imgAlt } from "@/data/marketing-images"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
 
 const PAGE_SIZE = 12
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })
-}
-
-function formatTimeRange(startIso: string, endIso: string): string {
-  const opts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" }
-  const start = new Date(startIso).toLocaleTimeString("en-GB", opts)
-  const end = new Date(endIso).toLocaleTimeString("en-GB", opts)
-  return `${start} to ${end}`
-}
-
-function EventCard({ event }: { event: PublicEvent }): React.ReactElement {
-  return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow transition-transform duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md">
-      <div className="flex items-start gap-4 border-b border-border bg-brand-navy/[0.03] px-6 py-5">
-        <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-[#1b2e6b] to-[#142054] text-white ring-1 ring-brand-gold/30">
-          <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-brand-gold">
-            {new Date(event.starts_at).toLocaleDateString("en-GB", {
-              month: "short",
-            })}
-          </span>
-          <span className="font-display text-2xl leading-tight">
-            {new Date(event.starts_at).getDate()}
-          </span>
-        </div>
-        <div className="min-w-0">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-gold/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-brand-navy">
-            {event.is_virtual ? "Online" : "In person"}
-          </span>
-          <h2 className="mt-1.5 font-display text-xl leading-tight text-brand-navy">
-            {event.title}
-          </h2>
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col gap-3 px-6 py-5">
-        <p className="flex items-center gap-2.5 text-sm text-foreground">
-          <CalendarDays className="size-4 shrink-0 text-brand-gold" />
-          {formatDate(event.starts_at)}
-        </p>
-        <p className="flex items-center gap-2.5 text-sm text-foreground">
-          <Clock className="size-4 shrink-0 text-brand-gold" />
-          {formatTimeRange(event.starts_at, event.ends_at)}
-        </p>
-        <p className="flex items-center gap-2.5 text-sm text-foreground">
-          {event.is_virtual ? (
-            <Monitor className="size-4 shrink-0 text-brand-gold" />
-          ) : (
-            <MapPin className="size-4 shrink-0 text-brand-gold" />
-          )}
-          {event.is_virtual ? "Live online session" : (event.venue ?? "In person")}
-        </p>
-        {event.course_title ? (
-          <p className="flex items-center gap-2.5 text-sm text-muted-foreground">
-            <GraduationCap className="size-4 shrink-0 text-brand-gold" />
-            {event.course_title}
-          </p>
-        ) : null}
-        {event.description ? (
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            {event.description}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="px-6 pb-6">
-        <Link
-          to="/contact-us"
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-navy px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark ${FOCUS}`}
-        >
-          Register interest
-          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      </div>
-    </article>
-  )
-}
+const WHAT_TO_EXPECT = [
+  {
+    icon: ShieldCheck,
+    title: "Clinical oversight",
+    body: "Every session is built on content overseen by our Clinical Director, a registered nurse.",
+  },
+  {
+    icon: MonitorPlay,
+    title: "Online or in person",
+    body: "Join live online from anywhere, or attend an in-person session at an arranged venue.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "A verifiable certificate",
+    body: "Complete the session and receive a CPD-accredited certificate, verifiable at vitalcare.uk/verify.",
+  },
+] as const
 
 export default function EventsPage(): React.ReactElement {
   const reduce = useReducedMotion()
@@ -128,7 +64,34 @@ export default function EventsPage(): React.ReactElement {
         eyebrow="Events"
         title="Upcoming training sessions"
         description="Live and online sessions open to book. New dates are added regularly, so check back or contact us to arrange training for your team."
-      />
+        imageUrl={img("clinicalTraining")}
+        imageAlt={imgAlt("clinicalTraining")}
+      >
+        <p className="text-sm text-white/70">
+          CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify.
+        </p>
+      </PageHero>
+
+      {/* What to expect */}
+      <section className="border-b border-border bg-white">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-12 sm:grid-cols-3 sm:px-6 lg:px-8">
+          {WHAT_TO_EXPECT.map((item) => (
+            <div key={item.title} className="flex items-start gap-4">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-gold">
+                <item.icon className="size-5" aria-hidden />
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-brand-navy">
+                  {item.title}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {item.body}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         <SectionHeading
@@ -149,7 +112,7 @@ export default function EventsPage(): React.ReactElement {
             </div>
           ) : isError ? (
             <div className="rounded-2xl border border-destructive/30 bg-destructive/[0.04] p-12 text-center shadow-sm">
-              <p className="font-display text-2xl text-brand-navy">
+              <p className="font-sans text-2xl font-semibold tracking-tight text-brand-navy">
                 Could not load events
               </p>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
@@ -169,7 +132,7 @@ export default function EventsPage(): React.ReactElement {
               <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-brand-gold/15">
                 <CalendarDays className="size-8 text-brand-navy" />
               </div>
-              <h2 className="mt-6 font-display text-2xl text-brand-navy">
+              <h2 className="mt-6 font-sans text-2xl font-semibold tracking-tight text-brand-navy">
                 No upcoming public events yet
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
@@ -191,6 +154,7 @@ export default function EventsPage(): React.ReactElement {
                 {pagedEvents.map((event, i) => (
                   <motion.div
                     key={event.id}
+                    className="h-full"
                     initial={{ opacity: 0, y: reduce ? 0 : 18 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-60px" }}
