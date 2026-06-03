@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback } from "react"
 import { useSearchParams } from "react-router-dom"
-import { BadgeCheck, ShieldAlert, ShieldX, Loader2, AlertTriangle } from "lucide-react"
+import {
+  BadgeCheck,
+  ShieldAlert,
+  ShieldX,
+  Loader2,
+  AlertTriangle,
+  Search,
+} from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -26,6 +33,9 @@ type State =
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+const FOCUS =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -34,12 +44,12 @@ function formatDate(iso: string): string {
   })
 }
 
-export default function VerifyCertPage() {
+export default function VerifyCertPage(): React.ReactElement {
   const [searchParams, setSearchParams] = useSearchParams()
   const [value, setValue] = useState(searchParams.get("id") ?? "")
   const [state, setState] = useState<State>({ kind: "idle" })
 
-  const verify = useCallback(async (uuid: string) => {
+  const verify = useCallback(async (uuid: string): Promise<void> => {
     const id = uuid.trim()
     if (!UUID_RE.test(id)) {
       setState({ kind: "invalid_input" })
@@ -65,7 +75,7 @@ export default function VerifyCertPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = (e: React.FormEvent): void => {
     e.preventDefault()
     setSearchParams(value.trim() ? { id: value.trim() } : {})
     void verify(value)
@@ -80,32 +90,44 @@ export default function VerifyCertPage() {
       />
 
       <section className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-        <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row">
-          <Input
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="Verification code (UUID)"
-            aria-label="Certificate verification code"
-            className="font-mono focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
-          />
-          <Button
-            type="submit"
-            disabled={state.kind === "loading"}
-            className="shrink-0 focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
-          >
-            {state.kind === "loading" ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              "Verify"
-            )}
-          </Button>
-        </form>
+        <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
+          <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="Verification code (UUID)"
+                aria-label="Certificate verification code"
+                className={`pl-9 font-mono ${FOCUS}`}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={state.kind === "loading"}
+              className={`shrink-0 ${FOCUS}`}
+            >
+              {state.kind === "loading" ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Checking
+                </>
+              ) : (
+                "Verify"
+              )}
+            </Button>
+          </form>
+          <p className="mt-3 text-xs text-muted-foreground">
+            The verification code is printed at the foot of every Vitalcare
+            certificate.
+          </p>
+        </div>
 
         <div className="mt-8">
           {state.kind === "found" && state.cert.is_valid ? (
-            <div className="overflow-hidden rounded-2xl border border-success/30 bg-success/[0.04]">
+            <div className="overflow-hidden rounded-2xl border border-success/30 bg-success/[0.04] shadow-sm">
               <div className="flex items-center gap-3 border-b border-success/20 px-6 py-5">
-                <BadgeCheck className="size-8 text-success" />
+                <BadgeCheck className="size-9 shrink-0 text-success" />
                 <div>
                   <p className="font-display text-2xl text-brand-navy">
                     Valid certificate
@@ -121,7 +143,10 @@ export default function VerifyCertPage() {
                 <Field label="CPD hours" value={`${state.cert.cpd_hours}`} />
                 <Field label="Issued" value={formatDate(state.cert.issued_at)} />
                 {state.cert.expires_at ? (
-                  <Field label="Expires" value={formatDate(state.cert.expires_at)} />
+                  <Field
+                    label="Expires"
+                    value={formatDate(state.cert.expires_at)}
+                  />
                 ) : (
                   <Field label="Expires" value="No expiry" />
                 )}
@@ -131,9 +156,9 @@ export default function VerifyCertPage() {
           ) : null}
 
           {state.kind === "found" && !state.cert.is_valid ? (
-            <div className="overflow-hidden rounded-2xl border border-warning/40 bg-warning/[0.05]">
+            <div className="overflow-hidden rounded-2xl border border-warning/40 bg-warning/[0.05] shadow-sm">
               <div className="flex items-center gap-3 border-b border-warning/30 px-6 py-5">
-                <ShieldAlert className="size-8 text-warning" />
+                <ShieldAlert className="size-9 shrink-0 text-warning" />
                 <div>
                   <p className="font-display text-2xl text-brand-navy">
                     Certificate expired
@@ -147,7 +172,10 @@ export default function VerifyCertPage() {
                 <Field label="Learner" value={state.cert.learner_name} />
                 <Field label="Course" value={state.cert.course_title} />
                 {state.cert.expires_at ? (
-                  <Field label="Expired on" value={formatDate(state.cert.expires_at)} />
+                  <Field
+                    label="Expired on"
+                    value={formatDate(state.cert.expires_at)}
+                  />
                 ) : null}
               </dl>
             </div>
@@ -170,8 +198,8 @@ export default function VerifyCertPage() {
           ) : null}
 
           {state.kind === "error" ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/[0.04] p-8 text-center">
-              <p className="font-semibold text-destructive">
+            <div className="rounded-2xl border border-destructive/30 bg-destructive/[0.04] p-8 text-center shadow-sm">
+              <p className="font-display text-xl text-brand-navy">
                 Verification is unavailable right now
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -193,9 +221,9 @@ function Notice({
   icon: React.ReactNode
   title: string
   body: string
-}) {
+}): React.ReactElement {
   return (
-    <div className="flex items-start gap-4 rounded-2xl border border-border bg-muted/30 p-6">
+    <div className="flex items-start gap-4 rounded-2xl border border-border bg-muted/30 p-6 shadow-sm">
       {icon}
       <div>
         <p className="font-semibold text-brand-navy">{title}</p>
@@ -213,7 +241,7 @@ function Field({
   label: string
   value: string
   mono?: boolean
-}) {
+}): React.ReactElement {
   return (
     <div className="min-w-0">
       <dt className="text-sm text-muted-foreground">{label}</dt>
