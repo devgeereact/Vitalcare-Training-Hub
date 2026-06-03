@@ -276,7 +276,7 @@ export default function OurCoursesPage(): React.ReactElement {
         description="From NHS Trusts to single sites and individual professionals, we shape the catalogue to the roles your people hold."
         buttonLabel="Explore solutions"
         to="/training-solutions/nhs-trusts"
-        tone="navy"
+        tone="gold"
       />
 
       <BannerBand

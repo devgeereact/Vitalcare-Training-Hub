@@ -6,6 +6,7 @@ import { Loader2, Mail, Phone, MapPin, Clock, ShieldCheck } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { PageHero } from "@/components/marketing/PageHero"
 import { supabase } from "@/lib/supabase/client"
 import { COMPANY } from "@/lib/constants"
 
@@ -61,54 +62,11 @@ export default function ContactPage(): React.ReactElement {
 
   return (
     <>
-      {/* Navy-grid banner hero */}
-      <section className="relative overflow-hidden bg-brand-navy">
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530]"
-          aria-hidden="true"
-        />
-        {/* Faint gold glows */}
-        <div
-          className="pointer-events-none absolute -right-32 -top-40 size-[30rem] rounded-full bg-brand-gold/20 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -bottom-40 -left-24 size-[24rem] rounded-full bg-brand-gold/10 blur-3xl"
-          aria-hidden="true"
-        />
-        {/* Subtle grid/dot texture */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-            maskImage:
-              "radial-gradient(ellipse at 30% 20%, black 0%, transparent 70%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse at 30% 20%, black 0%, transparent 70%)",
-          }}
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand-gold/50 to-transparent"
-          aria-hidden="true"
-        />
-
-        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-          <p className="inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold">
-            <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
-            Contact us
-          </p>
-          <h1 className="mt-4 max-w-3xl font-sans font-semibold tracking-tight text-4xl leading-tight text-white sm:text-5xl lg:text-6xl">
-            Talk to the Vitalcare team
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/80">
-            Tell us about your team and what you need. We will get back to you
-            quickly.
-          </p>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Contact us"
+        title="Talk to the Vitalcare team"
+        description="Tell us about your team and what you need. We will get back to you quickly."
+      />
 
       <section className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-5 lg:gap-12 lg:px-8 lg:py-28">
         {/* Left: company info */}

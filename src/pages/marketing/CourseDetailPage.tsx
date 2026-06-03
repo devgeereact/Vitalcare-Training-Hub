@@ -140,14 +140,14 @@ export default function CourseDetailPage(): React.ReactElement {
 
   return (
     <>
-      {/* Premium navy hero */}
+      {/* Navy hero, matched to the shared PageHero banner */}
       <section className="relative overflow-hidden bg-brand-navy">
         <div
-          className="absolute inset-0 bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530]"
+          className="absolute inset-0 bg-gradient-to-br from-[#1b2e6b] via-[#16265a] to-[#0f1b41]"
           aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute -right-32 -top-40 size-[28rem] rounded-full bg-brand-gold/20 blur-3xl"
+          className="pointer-events-none absolute -right-28 -top-32 size-[26rem] rounded-full bg-brand-gold/15 blur-3xl"
           aria-hidden="true"
         />
         <div

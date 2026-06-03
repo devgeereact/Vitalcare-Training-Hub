@@ -211,7 +211,7 @@ export default function TrainingSolutionPage(): React.ReactElement {
         description="190+ courses across fifteen categories, from statutory and mandatory training to clinical and specialist subjects."
         buttonLabel="All courses"
         to="/our-courses"
-        tone="navy"
+        tone="gold"
       />
 
       <BannerBand
