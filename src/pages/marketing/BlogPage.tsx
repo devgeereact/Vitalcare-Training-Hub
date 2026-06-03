@@ -1,8 +1,15 @@
+import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import { CalendarDays, UserRound, Mail, BookOpen } from "lucide-react"
+import { motion, useReducedMotion } from "framer-motion"
+import { CalendarDays, UserRound, Eye, BookOpen } from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
-import { BLOG_POSTS, type BlogPost } from "@/data/blog"
-import { COMPANY } from "@/lib/constants"
+import { SectionHeading } from "@/components/marketing/SectionHeading"
+import { BannerBand } from "@/components/marketing/BannerBand"
+import { Pagination } from "@/components/marketing/Pagination"
+import { Skeleton } from "@/components/ui/skeleton"
+import { usePublishedPosts, type PublicBlogPost } from "@/lib/queries/blog.queries"
+
+const PAGE_SIZE = 12
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -12,52 +19,65 @@ function formatDate(iso: string): string {
   })
 }
 
-/** Posts newest first. */
-const POSTS: BlogPost[] = [...BLOG_POSTS].sort(
-  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-)
-
-function PostMeta({ post }: { post: BlogPost }) {
+function PostCard({ post }: { post: PublicBlogPost }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-      <span className="inline-flex items-center gap-1.5">
-        <CalendarDays className="size-4 text-brand-gold" aria-hidden="true" />
-        {formatDate(post.date)}
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <UserRound className="size-4 text-brand-gold" aria-hidden="true" />
-        {post.author}
-      </span>
-    </div>
+    <Link
+      to={`/resources/blog/${post.slug}`}
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+    >
+      <div className="aspect-[16/9] w-full overflow-hidden bg-brand-navy/5">
+        {post.featureImageUrl ? (
+          <img
+            src={post.featureImageUrl}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-brand-navy/30">
+            <BookOpen className="size-8" aria-hidden />
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-6">
+        <h3 className="font-sans text-lg font-semibold leading-snug tracking-tight text-brand-navy">
+          {post.title}
+        </h3>
+        <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+          {post.excerpt}
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="size-3.5 text-brand-gold" aria-hidden />
+            {formatDate(post.publishedAt)}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <UserRound className="size-3.5 text-brand-gold" aria-hidden />
+            {post.authorName}
+          </span>
+          {post.views > 0 ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Eye className="size-3.5 text-brand-gold" aria-hidden />
+              {post.views}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </Link>
   )
 }
 
-function EmptyState() {
-  return (
-    <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-12 text-center">
-      <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-navy/5 text-brand-navy">
-        <BookOpen className="size-6" aria-hidden="true" />
-      </span>
-      <h2 className="mt-4 font-sans font-semibold tracking-tight text-2xl text-brand-navy">
-        Insights are on the way
-      </h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        We are preparing practical guidance for training leads in the NHS, care
-        homes and primary care. Check back soon.
-      </p>
-      <Link
-        to="/contact-us"
-        className="mt-6 inline-flex items-center gap-2 rounded-md bg-brand-navy px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
-      >
-        <Mail className="size-4" aria-hidden="true" />
-        Ask to be kept updated
-      </Link>
-    </div>
-  )
-}
+export default function BlogPage(): React.ReactElement {
+  const reduce = useReducedMotion()
+  const { data, isLoading } = usePublishedPosts()
+  const posts = useMemo(() => data ?? [], [data])
 
-export default function BlogPage() {
-  const [featured, ...rest] = POSTS
+  const featured = posts.slice(0, 4)
+  const rest = posts.slice(4)
+
+  const [page, setPage] = useState(1)
+  const pageCount = Math.max(1, Math.ceil(rest.length / PAGE_SIZE))
+  const paged = rest.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -67,80 +87,79 @@ export default function BlogPage() {
         description="Practical guidance for training leads in the NHS, care homes and primary care."
       />
 
-      <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-        {POSTS.length === 0 ? (
-          <EmptyState />
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        {isLoading ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-80 w-full rounded-2xl" />
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-14 text-center">
+            <BookOpen className="mx-auto size-8 text-brand-navy/40" aria-hidden />
+            <h2 className="mt-4 font-sans text-2xl font-semibold tracking-tight text-brand-navy">
+              Articles on the way
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              We are preparing guidance for training leads. Check back soon.
+            </p>
+          </div>
         ) : (
-          <div className="space-y-14">
-            {/* Featured latest post */}
-            {featured ? (
-              <article className="rounded-2xl border border-border bg-white p-8 sm:p-10">
-                <p className="text-sm font-semibold uppercase tracking-wide text-brand-gold">
-                  Latest
-                </p>
-                <h2 className="mt-2 font-sans font-semibold tracking-tight text-3xl text-brand-navy">
-                  {featured.title}
-                </h2>
-                <div className="mt-3">
-                  <PostMeta post={featured} />
-                </div>
-                <div className="mt-6 space-y-4 text-base leading-relaxed text-muted-foreground">
-                  {featured.body.split("\n\n").map((para, i) => (
-                    <p key={i}>{para}</p>
-                  ))}
-                </div>
-              </article>
-            ) : null}
+          <>
+            <SectionHeading eyebrow="Latest" title="Featured articles" />
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {featured.map((post, i) => (
+                <motion.div
+                  key={post.slug}
+                  className="h-full"
+                  initial={{ opacity: 0, y: reduce ? 0 : 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.45, delay: reduce ? 0 : i * 0.06 }}
+                >
+                  <PostCard post={post} />
+                </motion.div>
+              ))}
+            </div>
 
-            {/* Remaining posts */}
             {rest.length > 0 ? (
-              <div>
-                <h2 className="font-sans font-semibold tracking-tight text-2xl text-brand-navy">
-                  More insights
-                </h2>
-                <div className="mt-8 grid gap-6 sm:grid-cols-2">
-                  {rest.map((post) => (
-                    <article
+              <div className="mt-20">
+                <SectionHeading eyebrow="More reading" title="All articles" />
+                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {paged.map((post, i) => (
+                    <motion.div
                       key={post.slug}
-                      className="flex flex-col rounded-xl border border-border bg-white p-7"
+                      className="h-full"
+                      initial={{ opacity: 0, y: reduce ? 0 : 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-60px" }}
+                      transition={{ duration: 0.4, delay: reduce ? 0 : Math.min(i, 7) * 0.04 }}
                     >
-                      <PostMeta post={post} />
-                      <h3 className="mt-3 font-sans font-semibold tracking-tight text-xl text-brand-navy">
-                        {post.title}
-                      </h3>
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        {post.excerpt}
-                      </p>
-                    </article>
+                      <PostCard post={post} />
+                    </motion.div>
                   ))}
                 </div>
+                <Pagination
+                  page={page}
+                  pageCount={pageCount}
+                  onPageChange={setPage}
+                  label="Blog pagination"
+                  className="mt-12"
+                />
               </div>
             ) : null}
-          </div>
+          </>
         )}
       </section>
 
-      {/* Contact CTA band */}
-      <section className="bg-muted/40">
-        <div className="mx-auto flex max-w-5xl flex-col items-start gap-4 px-4 py-12 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div>
-            <h2 className="font-sans font-semibold tracking-tight text-2xl text-brand-navy">
-              Want training guidance for your team?
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Talk to us about CSTF-aligned, CPD-accredited training. Email{" "}
-              {COMPANY.email} or call {COMPANY.phone}.
-            </p>
-          </div>
-          <Link
-            to="/contact-us"
-            className="inline-flex shrink-0 items-center gap-2 rounded-md bg-brand-navy px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
-          >
-            <Mail className="size-4" aria-hidden="true" />
-            Contact us
-          </Link>
-        </div>
-      </section>
+      <BannerBand
+        tone="navy"
+        eyebrow="Get started"
+        heading="Training that earns inspection trust"
+        description="Talk to us about training for your team, online or in person, with records you can evidence."
+        buttonLabel="Talk to us"
+        to="/contact-us"
+      />
     </>
   )
 }

@@ -162,6 +162,7 @@ import TrainingSolutionPage from "@/pages/marketing/TrainingSolutionPage"
 import VerifyCertPage from "@/pages/marketing/VerifyCertPage"
 import AccreditationsPage from "@/pages/marketing/AccreditationsPage"
 import BlogPage from "@/pages/marketing/BlogPage"
+import BlogPostPage from "@/pages/marketing/BlogPostPage"
 import EventsPage from "@/pages/marketing/EventsPage"
 import ContactPage from "@/pages/marketing/ContactPage"
 import FAQLegalPage from "@/pages/marketing/legal/FAQPage"
@@ -186,6 +187,7 @@ export const router = createBrowserRouter (
         { path: "resources/verify-certificate", element: <VerifyCertPage /> },
         { path: "resources/accreditations", element: <AccreditationsPage /> },
         { path: "resources/blog", element: <BlogPage /> },
+        { path: "resources/blog/:slug", element: <BlogPostPage /> },
         { path: "resources/events", element: <EventsPage /> },
         { path: "contact-us", element: <ContactPage /> },
         { path: "faq", element: <FAQLegalPage /> },
