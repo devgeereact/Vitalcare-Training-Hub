@@ -71,17 +71,6 @@ function persistLock(value: boolean): void {
   }
 }
 
-function initials(name: string | null, email: string | null): string {
-  if (name) {
-    const parts = name.trim().split(/\s+/)
-    const first = parts[0]?.[0] ?? ""
-    const last = parts.length > 1 ? parts[parts.length - 1][0] : ""
-    return (first + last).toUpperCase() || "VC"
-  }
-  if (email) return email[0]?.toUpperCase() ?? "VC"
-  return "VC"
-}
-
 interface IdleLockProviderProps {
   children: ReactNode
 }
@@ -272,19 +261,15 @@ function LockScreen({
         className="w-full max-w-sm rounded-2xl border border-white/10 bg-white p-8 shadow-2xl"
       >
         <div className="mb-6 flex flex-col items-center text-center">
-          <img
-            src="/logos/logo-round-navy.svg"
-            alt="Vitalcare Training Hub"
-            width={56}
-            height={56}
-            className="mb-5 h-14 w-14"
-          />
-
           <div className="relative mb-4">
-            <Avatar className="h-16 w-16 border-2 border-[#d4a843]">
+            <Avatar className="h-20 w-20 border-2 border-[#d4a843]">
               {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
-              <AvatarFallback className="bg-[#1b2e6b] text-white">
-                {initials(name, email)}
+              <AvatarFallback className="bg-white p-2">
+                <img
+                  src="/logos/logo-round-navy.svg"
+                  alt="Vitalcare Training Hub"
+                  className="h-full w-full object-contain"
+                />
               </AvatarFallback>
             </Avatar>
             <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[#d4a843] text-[#1b2e6b] shadow">

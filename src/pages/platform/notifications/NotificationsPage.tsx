@@ -34,6 +34,7 @@ import {
   useNotifications,
   useMarkNotification,
 } from "@/lib/queries/communication.queries"
+import CommsShell from "@/components/communication/CommsShell"
 import { pushSupported, isPushEnabled, enablePush } from "@/lib/push"
 import type { Notification, NotificationType } from "@/types/database.types"
 
@@ -87,14 +88,9 @@ export default function NotificationsPage() {
   const [selected, setSelected] = useState<Notification | null>(null)
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl text-foreground">Notifications</h1>
-          <p className="mt-1 text-muted-foreground">
-            {unread > 0 ? `${unread} unread` : "You are all caught up."}
-          </p>
-        </div>
+    <CommsShell
+      subtitle={unread > 0 ? `${unread} unread` : "You are all caught up."}
+      action={
         <div className="flex gap-2">
           <PushToggle userId={user?.id} />
           {unread > 0 && (
@@ -108,8 +104,8 @@ export default function NotificationsPage() {
             </Button>
           )}
         </div>
-      </div>
-
+      }
+    >
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
@@ -222,6 +218,6 @@ export default function NotificationsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </CommsShell>
   )
 }
