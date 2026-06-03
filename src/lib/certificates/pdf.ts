@@ -41,8 +41,8 @@ function fmt(iso: string): string {
  */
 export function certVerificationRef(uuid: string): { short: string; full: string } {
   const clean = uuid.replace(/[^a-zA-Z0-9]/g, "").toUpperCase()
-  const tail = clean.slice(-4).padStart(4, "0")
-  return { short: `VC-${tail}`, full: uuid }
+  const code = clean.slice(-6).padStart(6, "0")
+  return { short: `VC-${code}`, full: uuid }
 }
 
 /**
@@ -127,6 +127,42 @@ async function rasterImage(url: string): Promise<{ dataUrl: string; ratio: numbe
 }
 
 /**
+ * Render the signatory name in the Dancing Script webfont to a transparent PNG,
+ * so the printed signature is cursive and matches the on-screen preview. The
+ * font is loaded by the app, so the canvas can use it directly.
+ */
+async function signaturePng(
+  text: string,
+): Promise<{ dataUrl: string; ratio: number }> {
+  const fontPx = 64
+  const font = `700 ${fontPx}px 'Dancing Script', cursive`
+  try {
+    await document.fonts.load(font, text)
+  } catch {
+    // Continue; if the font is unavailable the cursive fallback still draws.
+  }
+  const measure = document.createElement("canvas").getContext("2d")
+  if (!measure) throw new Error("Canvas 2D context unavailable")
+  measure.font = font
+  const textW = Math.ceil(measure.measureText(text).width)
+  const padX = 24
+  const w = textW + padX * 2
+  const h = Math.ceil(fontPx * 1.5)
+  const scale = 2
+  const canvas = document.createElement("canvas")
+  canvas.width = w * scale
+  canvas.height = h * scale
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Canvas 2D context unavailable")
+  ctx.scale(scale, scale)
+  ctx.font = font
+  ctx.fillStyle = "#1b2e6b"
+  ctx.textBaseline = "middle"
+  ctx.fillText(text, padX, h / 2)
+  return { dataUrl: canvas.toDataURL("image/png"), ratio: w / h }
+}
+
+/**
  * Generate and download an A4-landscape Vitalcare certificate, matching the
  * on-screen preview: a navy header band with the wordmark, a gold rule, a
  * centred body with the learner name between flanking rules, a three-column
@@ -146,17 +182,27 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
   doc.setFillColor(255, 255, 255)
   doc.rect(0, 0, W, H, "F")
 
-  // Navy header band.
-  const bandH = 42
+  // Margin for the gold border frame.
+  const M = 7
+
+  // Navy header band, inset to sit inside the frame.
+  const bandH = 36
   doc.setFillColor(nr, ng, nb)
-  doc.rect(0, 0, W, bandH, "F")
+  doc.rect(M, M, W - 2 * M, bandH, "F")
 
   // White wordmark, centred in the band, aspect preserved.
   try {
     const { dataUrl, ratio } = await rasterImage(LOGOS.horizontalWhite)
-    const logoH = 19
+    const logoH = 24
     const logoW = logoH * ratio
-    doc.addImage(dataUrl, "PNG", cx - logoW / 2, (bandH - logoH) / 2, logoW, logoH)
+    doc.addImage(
+      dataUrl,
+      "PNG",
+      cx - logoW / 2,
+      M + (bandH - logoH) / 2,
+      logoW,
+      logoH,
+    )
   } catch (err) {
     console.error("[downloadCertificatePdf:logo]", err)
   }
@@ -164,7 +210,7 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
   // Gold rule beneath the band.
   doc.setDrawColor(gr, gg, gb)
   doc.setLineWidth(1.1)
-  doc.line(24, bandH + 0.6, W - 24, bandH + 0.6)
+  doc.line(24, M + bandH + 0.6, W - 24, M + bandH + 0.6)
 
   // Title.
   doc.setFont("times", "bold")
@@ -247,14 +293,22 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
     doc.text(fmt(data.expiresAt), 30, 165)
   }
 
-  // Centre: signature. (Preview uses a Dancing Script webfont; jsPDF uses Times
-  // italic as the closest pen-signature approximation.)
+  // Centre: signature, rendered from the Dancing Script webfont so it is
+  // cursive and matches the preview.
   const signName = data.signatoryName?.trim() || LEADERSHIP.clinicalDirector.name
   const signRole = data.signatoryRole?.trim() || LEADERSHIP.clinicalDirector.role
-  doc.setFont("times", "italic")
-  doc.setFontSize(19)
-  doc.setTextColor(nr, ng, nb)
-  doc.text(signName, cx, 150, { align: "center" })
+  try {
+    const sig = await signaturePng(signName)
+    const sigH = 12
+    const sigW = Math.min(sigH * sig.ratio, 72)
+    doc.addImage(sig.dataUrl, "PNG", cx - sigW / 2, 140, sigW, sigH)
+  } catch (err) {
+    console.error("[downloadCertificatePdf:signature]", err)
+    doc.setFont("times", "italic")
+    doc.setFontSize(19)
+    doc.setTextColor(nr, ng, nb)
+    doc.text(signName, cx, 151, { align: "center" })
+  }
   doc.setDrawColor(ink, ink, ink)
   doc.setLineWidth(0.4)
   doc.line(cx - 34, 153, cx + 34, 153)
@@ -286,23 +340,20 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
   doc.setFont("helvetica", "bold")
   doc.setFontSize(7.5)
   doc.setTextColor(nr, ng, nb)
-  doc.text("VERIFICATION ID", codeRight, 147, { align: "right", charSpace: 0.6 })
-  doc.setFontSize(12)
+  doc.text("VERIFICATION CODE", codeRight, 147, { align: "right", charSpace: 0.6 })
+  doc.setFontSize(13)
   doc.text(ref.short, codeRight, 153, { align: "right" })
   doc.setFont("times", "italic")
   doc.setFontSize(8)
   doc.setTextColor(grey, grey, grey)
-  doc.text("Scan to verify", codeRight, 158, { align: "right" })
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(6.5)
-  doc.text(data.verificationUuid, codeRight, 162, { align: "right" })
+  doc.text("Scan the code to verify", codeRight, 158, { align: "right" })
 
-  // Company bar.
+  // Company bar, inset to sit inside the frame.
   doc.setFillColor(246, 247, 251)
-  doc.rect(0, H - 20, W, 20, "F")
+  doc.rect(M, H - M - 18, W - 2 * M, 18, "F")
   doc.setDrawColor(225, 228, 236)
   doc.setLineWidth(0.3)
-  doc.line(0, H - 20, W, H - 20)
+  doc.line(M, H - M - 18, W - M, H - M - 18)
   doc.setFont("times", "normal")
   doc.setFontSize(9)
   doc.setTextColor(grey, grey, grey)
@@ -310,9 +361,17 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
     data.footerText?.trim() ||
       `${COMPANY.legalName} · Company No. ${COMPANY.companyNumber} · Verify at ${COMPANY.website}/verify`,
     cx,
-    H - 8,
+    H - M - 6,
     { align: "center" },
   )
+
+  // Gold border frame with a thin navy keyline, drawn last so it sits on top.
+  doc.setDrawColor(gr, gg, gb)
+  doc.setLineWidth(2.4)
+  doc.rect(M, M, W - 2 * M, H - 2 * M)
+  doc.setDrawColor(nr, ng, nb)
+  doc.setLineWidth(0.4)
+  doc.rect(M + 2.4, M + 2.4, W - 2 * M - 4.8, H - 2 * M - 4.8)
 
   doc.save(`vitalcare-certificate-${data.verificationUuid.slice(0, 8)}.pdf`)
 }

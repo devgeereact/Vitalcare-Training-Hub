@@ -59,12 +59,22 @@ export function CertificatePreview({
         className,
       )}
     >
+      {/* Gold border frame with a thin navy keyline */}
+      <div
+        className="pointer-events-none absolute inset-[1.4%] z-20 rounded-[2px] border-[2.5px] border-brand-gold"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-[2.3%] z-20 rounded-[2px] border border-brand-navy/40"
+        aria-hidden
+      />
+
       {/* Navy header band with the white wordmark */}
-      <div className="flex h-[20%] items-center justify-center bg-brand-navy px-[6%]">
+      <div className="flex h-[22%] items-center justify-center bg-brand-navy px-[6%]">
         <img
           src={LOGOS.horizontalWhite}
           alt="Vitalcare Training Hub"
-          className="h-[clamp(1.6rem,5.5vw,3.4rem)] w-auto"
+          className="h-[clamp(2rem,7vw,4.4rem)] w-auto"
         />
       </div>
       {/* Gold rule */}
@@ -150,15 +160,12 @@ export function CertificatePreview({
           {/* Right: verification + QR */}
           <div className="flex items-start justify-end gap-[5%]">
             <div className="min-w-0 text-right">
-              <p className={label}>Verification ID</p>
-              <p className="text-[clamp(0.5rem,1.2vw,0.8rem)] font-semibold text-brand-navy">
+              <p className={label}>Verification code</p>
+              <p className="text-[clamp(0.55rem,1.4vw,0.9rem)] font-semibold text-brand-navy">
                 {ref.short}
               </p>
               <p className="font-display text-[clamp(0.42rem,0.95vw,0.62rem)] italic text-muted-foreground">
-                Scan to verify
-              </p>
-              <p className="break-all text-[clamp(0.36rem,0.8vw,0.52rem)] leading-tight text-muted-foreground">
-                {v.verificationUuid}
+                Scan the code to verify
               </p>
             </div>
             <div className="shrink-0 rounded-[2px] bg-white p-[2px] ring-1 ring-brand-navy/15">
