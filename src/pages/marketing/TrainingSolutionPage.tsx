@@ -4,10 +4,8 @@ import { Check, ArrowRight, AlertTriangle, ShieldCheck } from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { BannerBand } from "@/components/marketing/BannerBand"
-import { CTABand } from "@/components/marketing/CTABand"
 import { getSector } from "@/data/sectors"
 import { getCategory } from "@/data/courses"
-import { img, imgAlt, SECTOR_IMAGE } from "@/data/marketing-images"
 
 export default function TrainingSolutionPage(): React.ReactElement {
   const { sector: sectorSlug } = useParams<{ sector: string }>()
@@ -48,12 +46,6 @@ export default function TrainingSolutionPage(): React.ReactElement {
         eyebrow="Training solutions"
         title={sector.headline}
         description={sector.intro}
-        imageUrl={img(SECTOR_IMAGE[sector.slug] ?? "clinicalTraining")}
-        imageAlt={imgAlt(SECTOR_IMAGE[sector.slug] ?? "clinicalTraining")}
-        stats={[
-          { value: `${categories.length}`, label: "Core categories" },
-          { value: "CSTF", label: "Aligned" },
-        ]}
       >
         <p className="text-sm text-white/70">
           CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify.
@@ -222,8 +214,13 @@ export default function TrainingSolutionPage(): React.ReactElement {
         tone="navy"
       />
 
-      <CTABand
-        heading={`Bring Vitalcare training to your ${sector.name.toLowerCase()}`}
+      <BannerBand
+        tone="navy"
+        eyebrow="Get started"
+        heading="Bring this to your service"
+        description="Set up your team, assign role-based learning and evidence compliance from day one."
+        buttonLabel="Talk to us"
+        to="/contact-us"
       />
     </>
   )

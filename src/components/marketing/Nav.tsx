@@ -45,6 +45,7 @@ export function Nav() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resolve portal container after mount
     setPortalTarget(document.body)
   }, [])
 

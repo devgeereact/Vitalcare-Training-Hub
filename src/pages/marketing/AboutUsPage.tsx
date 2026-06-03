@@ -14,7 +14,6 @@ import {
 import { PageHero } from "@/components/marketing/PageHero"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
-import { CTABand } from "@/components/marketing/CTABand"
 import { LEADERSHIP, COMPANY } from "@/lib/constants"
 
 const FOCUS =
@@ -448,9 +447,12 @@ export default function AboutUsPage() {
         </div>
       </section>
 
-      <CTABand
-        heading="Bring clinically grounded training to your team"
-        buttonLabel="Book In-House Training"
+      <BannerBand
+        tone="navy"
+        eyebrow="Work with us"
+        heading="Bring trusted training to your team"
+        description="Set up your organisation, enrol your staff and evidence compliance from day one."
+        buttonLabel="Contact us"
         to="/contact-us"
       />
     </>

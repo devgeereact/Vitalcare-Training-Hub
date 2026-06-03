@@ -12,6 +12,7 @@ import {
   Quote,
   CalendarClock,
   LineChart,
+  Users,
   Check,
 } from "lucide-react"
 import { StatsBar } from "@/components/marketing/StatsBar"
@@ -95,6 +96,11 @@ const WHY = [
     icon: BadgeCheck,
     title: "CPD-accredited catalogue",
     body: `${TOTAL_COURSE_COUNT}+ courses across ${COURSE_CATEGORIES.length} categories, from statutory mandatory to specialist clinical care.`,
+  },
+  {
+    icon: Users,
+    title: "Role-based learning paths",
+    body: "Assign the right courses to each role and staff group, so people train on what their job needs and nothing it does not.",
   },
 ] as const
 

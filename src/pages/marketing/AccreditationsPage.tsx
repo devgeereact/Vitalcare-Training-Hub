@@ -20,9 +20,7 @@ import {
 import { PageHero } from "@/components/marketing/PageHero"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
-import { CTABand } from "@/components/marketing/CTABand"
 import { LEADERSHIP, CREDENTIAL_PHRASE } from "@/lib/constants"
-import { img, imgAlt } from "@/data/marketing-images"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
@@ -150,8 +148,6 @@ export default function AccreditationsPage() {
         eyebrow="Accreditations"
         title="Standards you can evidence"
         description="The marks behind our training, explained in plain terms: what they mean, how content stays current, and how anyone can confirm a certificate is genuine."
-        imageUrl={img("clinicalReview")}
-        imageAlt={imgAlt("clinicalReview")}
       >
         <p className="text-sm text-white/70">{CREDENTIAL_PHRASE}.</p>
       </PageHero>
@@ -345,12 +341,10 @@ export default function AccreditationsPage() {
         tone="gold"
         eyebrow="Verifiable by design"
         heading="Confirm a certificate in seconds"
-        description="Enter a certificate reference to check completion, the course and the date awarded. Genuine, in date and ready for inspection."
+        description="Enter a certificate reference to check completion, the course and the date awarded."
         buttonLabel="Verify a certificate"
         to="/resources/verify-certificate"
       />
-
-      <CTABand />
     </>
   )
 }

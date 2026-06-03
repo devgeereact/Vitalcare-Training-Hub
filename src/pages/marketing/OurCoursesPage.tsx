@@ -12,13 +12,11 @@ import { PageHero } from "@/components/marketing/PageHero"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { CategoryGrid } from "@/components/marketing/CategoryGrid"
-import { CTABand } from "@/components/marketing/CTABand"
 import { CourseCard } from "@/components/courses/CourseCard"
 import { Pagination } from "@/components/marketing/Pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { COURSE_CATEGORIES, TOTAL_COURSE_COUNT } from "@/data/courses"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
-import { img, imgAlt } from "@/data/marketing-images"
 
 const ALL = "all" as const
 
@@ -94,12 +92,6 @@ export default function OurCoursesPage(): React.ReactElement {
         eyebrow="Our courses"
         title="Training across every area of care"
         description={`${TOTAL_COURSE_COUNT}+ courses across ${COURSE_CATEGORIES.length} categories, from statutory and mandatory training to clinical and specialist subjects.`}
-        imageUrl={img("onlineLearning")}
-        imageAlt={imgAlt("onlineLearning")}
-        stats={[
-          { value: `${TOTAL_COURSE_COUNT}+`, label: "Courses" },
-          { value: `${COURSE_CATEGORIES.length}`, label: "Categories" },
-        ]}
       >
         <p className="text-sm text-white/70">
           CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify.
@@ -287,7 +279,14 @@ export default function OurCoursesPage(): React.ReactElement {
         tone="navy"
       />
 
-      <CTABand />
+      <BannerBand
+        tone="navy"
+        eyebrow="Get a quote"
+        heading="Bring this training to your team"
+        description="Tell us your roles and numbers and we will put together a package and a price."
+        buttonLabel="Contact us"
+        to="/contact-us"
+      />
     </>
   )
 }

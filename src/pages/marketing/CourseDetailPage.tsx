@@ -15,7 +15,7 @@ import {
   Check,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CTABand } from "@/components/marketing/CTABand"
+import { BannerBand } from "@/components/marketing/BannerBand"
 import { formatCourseDuration } from "@/lib/utils"
 import { driveImageUrl } from "@/lib/drive-image"
 import {
@@ -451,7 +451,14 @@ export default function CourseDetailPage(): React.ReactElement {
         </div>
       </section>
 
-      <CTABand heading="Bring this training to your team" />
+      <BannerBand
+        tone="navy"
+        eyebrow="Get started"
+        heading="Enrol your team on this course"
+        description="Book this course for your team, online or in person, with records you can evidence."
+        buttonLabel="Get a quote"
+        to="/contact-us"
+      />
     </>
   )
 }

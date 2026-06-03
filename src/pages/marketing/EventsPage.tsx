@@ -11,10 +11,9 @@ import {
 import { PageHero } from "@/components/marketing/PageHero"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { EventCard } from "@/components/marketing/EventCard"
-import { CTABand } from "@/components/marketing/CTABand"
+import { BannerBand } from "@/components/marketing/BannerBand"
 import { Pagination } from "@/components/marketing/Pagination"
 import { usePublicEvents } from "@/lib/queries/public-events.queries"
-import { img, imgAlt } from "@/data/marketing-images"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
@@ -64,8 +63,6 @@ export default function EventsPage(): React.ReactElement {
         eyebrow="Events"
         title="Upcoming training sessions"
         description="Live and online sessions open to book. New dates are added regularly, so check back or contact us to arrange training for your team."
-        imageUrl={img("clinicalTraining")}
-        imageAlt={imgAlt("clinicalTraining")}
       >
         <p className="text-sm text-white/70">
           CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify.
@@ -181,7 +178,14 @@ export default function EventsPage(): React.ReactElement {
         </div>
       </section>
 
-      <CTABand />
+      <BannerBand
+        tone="navy"
+        eyebrow="For your team"
+        heading="Need a session for your team?"
+        description="We arrange live and online training around your rota, online or at your site."
+        buttonLabel="Arrange training"
+        to="/contact-us"
+      />
     </>
   )
 }

@@ -5,12 +5,10 @@ import { AlertCircle, BookOpen, ShieldCheck } from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { BannerBand } from "@/components/marketing/BannerBand"
-import { CTABand } from "@/components/marketing/CTABand"
 import { CourseCard } from "@/components/courses/CourseCard"
 import { Skeleton } from "@/components/ui/skeleton"
-import { COURSE_CATEGORIES, getCategory } from "@/data/courses"
+import { getCategory } from "@/data/courses"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
-import { categoryHero, img, imgAlt } from "@/data/marketing-images"
 
 export default function CategoryPage(): React.ReactElement {
   const { categorySlug } = useParams<{ categorySlug: string }>()
@@ -47,22 +45,12 @@ export default function CategoryPage(): React.ReactElement {
     show: { opacity: 1, y: 0 },
   }
 
-  // Stable index from the category's position in the catalogue, so each
-  // category keeps a consistent hero from the curated image set.
-  const categoryIndex = Math.max(
-    0,
-    COURSE_CATEGORIES.findIndex((c) => c.slug === category.slug),
-  )
-  const heroKey = categoryHero(categoryIndex)
-
   return (
     <>
       <PageHero
         eyebrow="Course category"
         title={category.name}
         description={category.blurb}
-        imageUrl={img(heroKey)}
-        imageAlt={imgAlt(heroKey)}
         stats={[{ value: `${category.count}`, label: "Courses" }]}
       >
         <p className="text-sm text-white/70">
@@ -193,7 +181,14 @@ export default function CategoryPage(): React.ReactElement {
         tone="gold"
       />
 
-      <CTABand />
+      <BannerBand
+        tone="navy"
+        eyebrow="Get started"
+        heading="Talk to us about this training"
+        description="We will help you choose the right courses for your team and the standards you answer to."
+        buttonLabel="Contact us"
+        to="/contact-us"
+      />
     </>
   )
 }
