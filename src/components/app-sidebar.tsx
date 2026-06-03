@@ -33,7 +33,7 @@ const STAFF = ["super_admin", "admin", "manager", "trainer", "content_editor"]
 const ADMINS = ["super_admin", "admin"]
 const MGMT = ["super_admin", "admin", "manager"]
 const MGMT_T = ["super_admin", "admin", "manager", "trainer"]
-const CONTENT = ["super_admin", "admin", "trainer", "content_editor"]
+const CONTENT = ["super_admin", "admin", "manager", "trainer", "content_editor"]
 const SUPER = ["super_admin"]
 
 // Vitalcare Training Hub — platform navigation.

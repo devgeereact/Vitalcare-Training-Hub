@@ -285,7 +285,7 @@ export const router = createBrowserRouter (
         {
           path: "courses/builder",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <CourseBuilderPage />
             </RoleGuard>
           ),
@@ -293,7 +293,7 @@ export const router = createBrowserRouter (
         {
           path: "courses/builder/:id",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <CourseBuilderPage />
             </RoleGuard>
           ),
@@ -304,7 +304,7 @@ export const router = createBrowserRouter (
         {
           path: "assessments/builder",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <QuizListPage />
             </RoleGuard>
           ),
@@ -312,7 +312,7 @@ export const router = createBrowserRouter (
         {
           path: "assessments/builder/:id",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <QuizBuilderPage />
             </RoleGuard>
           ),
@@ -358,7 +358,7 @@ export const router = createBrowserRouter (
         {
           path: "certificates/templates",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "trainer", "content_editor"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
               <CertTemplatesPage />
             </RoleGuard>
           ),
