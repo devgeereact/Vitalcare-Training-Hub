@@ -53,113 +53,6 @@ export function certVerifyUrl(uuid: string): string {
   return `https://${COMPANY.website}/verify?id=${uuid}`
 }
 
-/**
- * Rasterise the verification QR code to a PNG data URL for embedding in the
- * jsPDF certificate. The same QRCodeSVG component renders on screen, so the
- * printed and on-screen QR codes are identical. Browser-only (uses Image and
- * canvas); the certificate is always generated client-side.
- */
-export async function certQrPngDataUrl(uuid: string, sizePx = 256): Promise<string> {
-  const [nr, ng, nb] = rgb(BRAND.navy)
-  const fg = `rgb(${nr},${ng},${nb})`
-  const svg = renderToStaticMarkup(
-    createElement(QRCodeSVG, {
-      value: certVerifyUrl(uuid),
-      size: sizePx,
-      level: "M",
-      bgColor: "#ffffff",
-      fgColor: fg,
-      marginSize: 2,
-    }),
-  )
-  return svgStringToPng(svg, sizePx, "#ffffff")
-}
-
-/** Load an image source, rejecting if it fails to decode. */
-function loadImage(src: string, w: number, h: number): Promise<HTMLImageElement> {
-  const img = new Image()
-  img.width = w
-  img.height = h
-  const done = new Promise<HTMLImageElement>((resolve, reject) => {
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error("Failed to load image"))
-  })
-  img.src = src
-  return done
-}
-
-/**
- * Rasterise an inline SVG string to a PNG data URL at the given square size.
- * `bg` is optional; omit to keep transparency (used for the seal so its ribbon
- * tails do not sit on a white box).
- */
-async function svgStringToPng(
-  svg: string,
-  sizePx: number,
-  bg?: string,
-): Promise<string> {
-  const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
-  const img = await loadImage(svgUrl, sizePx, sizePx)
-  const canvas = document.createElement("canvas")
-  canvas.width = sizePx
-  canvas.height = sizePx
-  const ctx = canvas.getContext("2d")
-  if (!ctx) throw new Error("Canvas 2D context unavailable")
-  if (bg) {
-    ctx.fillStyle = bg
-    ctx.fillRect(0, 0, sizePx, sizePx)
-  }
-  ctx.drawImage(img, 0, 0, sizePx, sizePx)
-  return canvas.toDataURL("image/png")
-}
-
-/** Rasterise a same-origin image URL (the round logo SVG) to a PNG data URL. */
-async function urlToPng(url: string, sizePx = 256): Promise<string> {
-  const img = await loadImage(url, sizePx, sizePx)
-  const canvas = document.createElement("canvas")
-  canvas.width = sizePx
-  canvas.height = sizePx
-  const ctx = canvas.getContext("2d")
-  if (!ctx) throw new Error("Canvas 2D context unavailable")
-  ctx.drawImage(img, 0, 0, sizePx, sizePx)
-  return canvas.toDataURL("image/png")
-}
-
-/**
- * The gold medallion seal as an SVG string, matching the on-screen GoldSeal in
- * CertificatePreview so the printed and previewed seals are the same.
- */
-function sealSvgMarkup(): string {
-  const teeth = Array.from({ length: 48 }, (_, i) => {
-    const a = (i / 48) * Math.PI * 2
-    const cx = (60 + Math.cos(a) * 54.5).toFixed(2)
-    const cy = (60 + Math.sin(a) * 54.5).toFixed(2)
-    return `<circle cx="${cx}" cy="${cy}" r="2.4" fill="#c79a38"/>`
-  }).join("")
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
-    <defs>
-      <radialGradient id="sf" cx="50%" cy="38%" r="70%">
-        <stop offset="0%" stop-color="#e8c26a"/>
-        <stop offset="55%" stop-color="#d4a843"/>
-        <stop offset="100%" stop-color="#a9842f"/>
-      </radialGradient>
-      <linearGradient id="sr" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#22387f"/>
-        <stop offset="100%" stop-color="#142054"/>
-      </linearGradient>
-    </defs>
-    <path d="M44 96 L34 118 L48 110 L52 120 L60 98 Z" fill="url(#sr)"/>
-    <path d="M76 96 L86 118 L72 110 L68 120 L60 98 Z" fill="url(#sr)"/>
-    ${teeth}
-    <circle cx="60" cy="60" r="52" fill="url(#sf)"/>
-    <circle cx="60" cy="60" r="46" fill="none" stroke="#fff6e0" stroke-opacity="0.55" stroke-width="0.8"/>
-    <circle cx="60" cy="60" r="40" fill="none" stroke="#8c6b22" stroke-width="0.5" stroke-dasharray="1 2"/>
-    <circle cx="60" cy="60" r="35" fill="none" stroke="#fff6e0" stroke-opacity="0.6" stroke-width="0.7"/>
-    <text x="60" y="58" text-anchor="middle" dominant-baseline="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="#142054">VC</text>
-    <text x="60" y="78" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="6.5" letter-spacing="1.5" fill="#142054" fill-opacity="0.85">VERIFIED</text>
-  </svg>`
-}
-
 /** RGB triplet for a hex colour, used by jsPDF's numeric draw/text setters. */
 function rgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "")
@@ -170,202 +63,254 @@ function rgb(hex: string): [number, number, number] {
   ]
 }
 
-/** Draw a decorative corner flourish anchored at (x, y) towards (sx, sy). */
-function drawCorner(doc: jsPDF, x: number, y: number, sx: number, sy: number): void {
-  const [gr, gg, gb] = rgb(BRAND.gold)
-  doc.setDrawColor(gr, gg, gb)
-  doc.setLineWidth(0.7)
-  doc.line(x, y, x + 16 * sx, y)
-  doc.line(x, y, x, y + 16 * sy)
-  doc.setFillColor(gr, gg, gb)
-  doc.circle(x + 4 * sx, y + 4 * sy, 0.9, "F")
+/** Load an image source, rejecting if it fails to decode. */
+function loadImage(src: string): Promise<HTMLImageElement> {
+  const img = new Image()
+  const done = new Promise<HTMLImageElement>((resolve, reject) => {
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error("Failed to load image"))
+  })
+  img.src = src
+  return done
 }
 
-/** Generate and download an A4-landscape Vitalcare certificate. */
+/**
+ * Rasterise the verification QR code to a PNG data URL. The same QRCodeSVG
+ * component renders on screen, so the printed and on-screen codes match. The
+ * SVG is forced to carry an xmlns so it decodes as an <img> for the canvas.
+ */
+export async function certQrPngDataUrl(uuid: string, sizePx = 320): Promise<string> {
+  const [nr, ng, nb] = rgb(BRAND.navy)
+  const fg = `rgb(${nr},${ng},${nb})`
+  let svg = renderToStaticMarkup(
+    createElement(QRCodeSVG, {
+      value: certVerifyUrl(uuid),
+      size: sizePx,
+      level: "M",
+      bgColor: "#ffffff",
+      fgColor: fg,
+      marginSize: 2,
+    }),
+  )
+  if (!svg.includes("xmlns")) {
+    svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
+  }
+  const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  const img = await loadImage(svgUrl)
+  const canvas = document.createElement("canvas")
+  canvas.width = sizePx
+  canvas.height = sizePx
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Canvas 2D context unavailable")
+  ctx.fillStyle = "#ffffff"
+  ctx.fillRect(0, 0, sizePx, sizePx)
+  ctx.drawImage(img, 0, 0, sizePx, sizePx)
+  return canvas.toDataURL("image/png")
+}
+
+/**
+ * Rasterise a same-origin image URL (the logo SVG) to a transparent PNG,
+ * preserving its aspect ratio so it is never stretched.
+ */
+async function rasterImage(url: string): Promise<{ dataUrl: string; ratio: number }> {
+  const img = await loadImage(url)
+  const w = img.naturalWidth || 300
+  const h = img.naturalHeight || 100
+  const scale = 3
+  const canvas = document.createElement("canvas")
+  canvas.width = Math.round(w * scale)
+  canvas.height = Math.round(h * scale)
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Canvas 2D context unavailable")
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+  return { dataUrl: canvas.toDataURL("image/png"), ratio: w / h }
+}
+
+/**
+ * Generate and download an A4-landscape Vitalcare certificate, matching the
+ * on-screen preview: a navy header band with the wordmark, a gold rule, a
+ * centred body with the learner name between flanking rules, a three-column
+ * footer (dates, signature, verification with QR) and a company bar.
+ */
 export async function downloadCertificatePdf(data: CertificatePdfData): Promise<void> {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
   const W = 297
   const H = 210
+  const cx = W / 2
   const [nr, ng, nb] = rgb(BRAND.navy)
   const [gr, gg, gb] = rgb(BRAND.gold)
+  const grey = 110
+  const ink = 51
 
-  // Warm paper tint.
-  doc.setFillColor(253, 252, 247)
+  // Page.
+  doc.setFillColor(255, 255, 255)
   doc.rect(0, 0, W, H, "F")
 
-  // Outer gold frame.
-  doc.setDrawColor(gr, gg, gb)
-  doc.setLineWidth(2.2)
-  doc.rect(9, 9, W - 18, H - 18)
-  // Thin navy keyline.
-  doc.setDrawColor(nr, ng, nb)
-  doc.setLineWidth(0.5)
-  doc.rect(13, 13, W - 26, H - 26)
-  // Hairline gold inner rule.
-  doc.setDrawColor(gr, gg, gb)
-  doc.setLineWidth(0.3)
-  doc.rect(15, 15, W - 30, H - 30)
+  // Navy header band.
+  const bandH = 42
+  doc.setFillColor(nr, ng, nb)
+  doc.rect(0, 0, W, bandH, "F")
 
-  // Corner flourishes (inside the frame).
-  drawCorner(doc, 19, 19, 1, 1)
-  drawCorner(doc, W - 19, 19, -1, 1)
-  drawCorner(doc, 19, H - 19, 1, -1)
-  drawCorner(doc, W - 19, H - 19, -1, -1)
-
-  // Crest: the round Vitalcare logo, top centre (matches the on-screen
-  // preview). If it fails to rasterise the certificate still renders.
-  const logoSize = 16
+  // White wordmark, centred in the band, aspect preserved.
   try {
-    const logoPng = await urlToPng(LOGOS.roundNavy, 256)
-    doc.addImage(logoPng, "PNG", W / 2 - logoSize / 2, 18, logoSize, logoSize)
+    const { dataUrl, ratio } = await rasterImage(LOGOS.horizontalWhite)
+    const logoH = 19
+    const logoW = logoH * ratio
+    doc.addImage(dataUrl, "PNG", cx - logoW / 2, (bandH - logoH) / 2, logoW, logoH)
   } catch (err) {
     console.error("[downloadCertificatePdf:logo]", err)
   }
 
-  // Heading.
+  // Gold rule beneath the band.
+  doc.setDrawColor(gr, gg, gb)
+  doc.setLineWidth(1.1)
+  doc.line(24, bandH + 0.6, W - 24, bandH + 0.6)
+
+  // Title.
+  doc.setFont("times", "bold")
+  doc.setFontSize(27)
   doc.setTextColor(nr, ng, nb)
-  doc.setFont("times", "normal")
-  doc.setFontSize(32)
-  doc.text(data.titleText?.trim() || "Certificate of Completion", W / 2, 48, {
+  doc.text(data.titleText?.trim() || "Certificate of Completion", cx, 62, {
     align: "center",
   })
 
-  // Gold divider under the title.
-  doc.setDrawColor(gr, gg, gb)
-  doc.setLineWidth(0.6)
-  doc.line(W / 2 - 26, 53, W / 2 - 4, 53)
-  doc.line(W / 2 + 4, 53, W / 2 + 26, 53)
-  doc.setFillColor(gr, gg, gb)
-  doc.rect(W / 2 - 1.3, 51.7, 2.6, 2.6, "F")
+  // Intro.
+  doc.setFont("times", "italic")
+  doc.setFontSize(12.5)
+  doc.setTextColor(grey, grey, grey)
+  doc.text(data.introText?.trim() || "This is to certify that", cx, 72, {
+    align: "center",
+  })
 
-  // Recital: intro line.
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(11)
-  doc.setTextColor(110, 110, 110)
-  doc.text(
-    (data.introText?.trim() || "This is to certify that").toUpperCase(),
-    W / 2,
-    62,
-    { align: "center", charSpace: 1.4 },
-  )
-
-  // Learner name (hero).
+  // Learner name with flanking rules.
   doc.setFont("times", "bold")
-  doc.setFontSize(38)
+  doc.setFontSize(30)
   doc.setTextColor(nr, ng, nb)
-  doc.text(data.learnerName, W / 2, 80, { align: "center" })
+  const nameY = 88
+  doc.text(data.learnerName, cx, nameY, { align: "center" })
+  const nameW = doc.getTextWidth(data.learnerName)
+  const ruleY = nameY - 3
+  doc.setDrawColor(150, 160, 185)
+  doc.setLineWidth(0.5)
+  const gap = nameW / 2 + 8
+  if (cx - gap > 40) doc.line(40, ruleY, cx - gap, ruleY)
+  if (cx + gap < W - 40) doc.line(cx + gap, ruleY, W - 40, ruleY)
 
-  // Gold underline beneath the name.
-  doc.setDrawColor(gr, gg, gb)
-  doc.setLineWidth(0.8)
-  doc.line(W / 2 - 55, 86, W / 2 + 55, 86)
+  // Completion line.
+  doc.setFont("times", "italic")
+  doc.setFontSize(12.5)
+  doc.setTextColor(grey, grey, grey)
+  doc.text(data.completionText?.trim() || "has successfully completed", cx, 101, {
+    align: "center",
+  })
 
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(11)
-  doc.setTextColor(110, 110, 110)
-  doc.text(
-    (data.completionText?.trim() || "has successfully completed").toUpperCase(),
-    W / 2,
-    99,
-    { align: "center", charSpace: 1.4 },
-  )
-
+  // Course.
   doc.setFont("times", "bold")
-  doc.setFontSize(20)
+  doc.setFontSize(17)
   doc.setTextColor(nr, ng, nb)
-  doc.text(data.courseTitle, W / 2, 112, { align: "center", maxWidth: W - 90 })
+  doc.text(data.courseTitle, cx, 110, { align: "center", maxWidth: W - 100 })
 
-  // Issue date line (no CPD hours).
-  doc.setFont("helvetica", "normal")
+  // Framework / accreditation.
+  doc.setFont("times", "italic")
   doc.setFontSize(11)
-  doc.setTextColor(110, 110, 110)
-  // ASCII separators dodge jsPDF's limited Unicode handling in standard fonts.
-  const metaParts = [`Issued ${fmt(data.issuedAt)}`]
-  if (data.expiresAt) metaParts.push(`Valid to ${fmt(data.expiresAt)}`)
-  doc.text(metaParts.join("   -   "), W / 2, 124, { align: "center" })
-
-  // Accreditation line.
-  doc.setFontSize(9)
-  doc.setTextColor(nr, ng, nb)
+  doc.setTextColor(grey, grey, grey)
   doc.text(
-    data.accreditationLine?.trim() ||
-      "CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify",
-    W / 2,
-    130,
+    data.accreditationLine?.trim() || "CSTF-aligned, CPD-accredited",
+    cx,
+    118,
     { align: "center" },
   )
 
-  // Central seal, rasterised from the same SVG used on screen so the printed
-  // and previewed medallions match. 30mm square places the circle centre at
-  // y158, with the ribbon tails below.
-  const sealSize = 30
-  try {
-    const sealPng = await svgStringToPng(sealSvgMarkup(), 320)
-    doc.addImage(sealPng, "PNG", W / 2 - sealSize / 2, 143, sealSize, sealSize)
-  } catch (err) {
-    console.error("[downloadCertificatePdf:seal]", err)
+  // Gold divider.
+  doc.setDrawColor(gr, gg, gb)
+  doc.setLineWidth(0.5)
+  doc.line(48, 127, W - 48, 127)
+
+  // ── Three-column footer ──
+  // Left: dates.
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(7.5)
+  doc.setTextColor(nr, ng, nb)
+  doc.text("ISSUED", 30, 145, { charSpace: 0.6 })
+  doc.setFont("times", "normal")
+  doc.setFontSize(11)
+  doc.setTextColor(ink, ink, ink)
+  doc.text(fmt(data.issuedAt), 30, 151)
+  if (data.expiresAt) {
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(7.5)
+    doc.setTextColor(nr, ng, nb)
+    doc.text("EXPIRES", 30, 159, { charSpace: 0.6 })
+    doc.setFont("times", "normal")
+    doc.setFontSize(11)
+    doc.setTextColor(ink, ink, ink)
+    doc.text(fmt(data.expiresAt), 30, 165)
   }
 
-  // Signatory (left). The on-screen preview renders the name in the Dancing
-  // Script cursive webfont. jsPDF cannot easily embed that font, so the PDF
-  // uses Times italic as the closest available pen-signature approximation.
+  // Centre: signature. (Preview uses a Dancing Script webfont; jsPDF uses Times
+  // italic as the closest pen-signature approximation.)
   const signName = data.signatoryName?.trim() || LEADERSHIP.clinicalDirector.name
   const signRole = data.signatoryRole?.trim() || LEADERSHIP.clinicalDirector.role
   doc.setFont("times", "italic")
-  doc.setFontSize(15)
+  doc.setFontSize(19)
   doc.setTextColor(nr, ng, nb)
-  doc.text(signName, 42, 166)
-  doc.setDrawColor(nr, ng, nb)
+  doc.text(signName, cx, 150, { align: "center" })
+  doc.setDrawColor(ink, ink, ink)
   doc.setLineWidth(0.4)
-  doc.line(40, 168, 110, 168)
-  doc.setFontSize(10)
-  doc.setTextColor(nr, ng, nb)
+  doc.line(cx - 34, 153, cx + 34, 153)
   doc.setFont("helvetica", "bold")
-  doc.text(signName, 40, 174)
-  doc.setFont("helvetica", "normal")
-  doc.setTextColor(110, 110, 110)
-  doc.text(signRole, 40, 179)
-  doc.text(COMPANY.legalName, 40, 184)
+  doc.setFontSize(9)
+  doc.setTextColor(nr, ng, nb)
+  doc.text(signName, cx, 159, { align: "center" })
+  doc.setFont("times", "normal")
+  doc.setFontSize(9.5)
+  doc.setTextColor(grey, grey, grey)
+  doc.text(signRole, cx, 164, { align: "center" })
+  doc.text(COMPANY.legalName, cx, 169, { align: "center" })
 
-  // Verification (right): scannable QR plus the certificate code and UUID.
-  // The QR encodes the verify URL so a scan opens the verification page
-  // pre-filled. No plain verify link is printed; the QR carries it instead.
+  // Right: verification, with QR at the far right and the code to its left.
   const ref = certVerificationRef(data.verificationUuid)
-  const qrSize = 22
-  const qrX = W - 19 - qrSize
-  const qrY = 150
+  const qrSize = 24
+  const qrX = W - 30 - qrSize
+  const qrY = 141
   try {
     const qrPng = await certQrPngDataUrl(data.verificationUuid)
     doc.addImage(qrPng, "PNG", qrX, qrY, qrSize, qrSize)
   } catch (err) {
-    // If rasterising fails, fall back to a bordered placeholder so the layout
-    // stays intact; the printed code below still allows manual verification.
     console.error("[downloadCertificatePdf:qr]", err)
     doc.setDrawColor(nr, ng, nb)
     doc.setLineWidth(0.3)
     doc.rect(qrX, qrY, qrSize, qrSize)
   }
-  // Code text sits to the left of the QR, right-aligned against it.
-  const codeRight = qrX - 4
+  const codeRight = qrX - 6
   doc.setFont("helvetica", "bold")
-  doc.setFontSize(11)
+  doc.setFontSize(7.5)
   doc.setTextColor(nr, ng, nb)
-  doc.text(ref.short, codeRight, 158, { align: "right" })
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(7)
-  doc.setTextColor(110, 110, 110)
-  doc.text("Scan to verify", codeRight, 163, { align: "right" })
-  doc.setFontSize(6.5)
-  doc.text(data.verificationUuid, codeRight, 168, { align: "right" })
-
-  // Footer.
+  doc.text("VERIFICATION ID", codeRight, 147, { align: "right", charSpace: 0.6 })
+  doc.setFontSize(12)
+  doc.text(ref.short, codeRight, 153, { align: "right" })
+  doc.setFont("times", "italic")
   doc.setFontSize(8)
-  doc.setTextColor(140, 140, 140)
+  doc.setTextColor(grey, grey, grey)
+  doc.text("Scan to verify", codeRight, 158, { align: "right" })
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(6.5)
+  doc.text(data.verificationUuid, codeRight, 162, { align: "right" })
+
+  // Company bar.
+  doc.setFillColor(246, 247, 251)
+  doc.rect(0, H - 20, W, 20, "F")
+  doc.setDrawColor(225, 228, 236)
+  doc.setLineWidth(0.3)
+  doc.line(0, H - 20, W, H - 20)
+  doc.setFont("times", "normal")
+  doc.setFontSize(9)
+  doc.setTextColor(grey, grey, grey)
   doc.text(
     data.footerText?.trim() ||
-      `${COMPANY.legalName} · Company No. ${COMPANY.companyNumber}`,
-    W / 2,
-    194,
+      `${COMPANY.legalName} · Company No. ${COMPANY.companyNumber} · Verify at ${COMPANY.website}/verify`,
+    cx,
+    H - 8,
     { align: "center" },
   )
 
