@@ -271,15 +271,6 @@ export default function OurCoursesPage(): React.ReactElement {
       </section>
 
       <BannerBand
-        eyebrow="Training solutions"
-        heading="Training built around your service"
-        description="From NHS Trusts to single sites and individual professionals, we shape the catalogue to the roles your people hold."
-        buttonLabel="Explore solutions"
-        to="/training-solutions/nhs-trusts"
-        tone="gold"
-      />
-
-      <BannerBand
         tone="navy"
         eyebrow="Get a quote"
         heading="Bring this training to your team"

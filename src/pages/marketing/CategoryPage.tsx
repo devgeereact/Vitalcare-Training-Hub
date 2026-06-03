@@ -173,15 +173,6 @@ export default function CategoryPage(): React.ReactElement {
       </section>
 
       <BannerBand
-        eyebrow="Browse more"
-        heading="Explore the full catalogue"
-        description={`${category.name} is one of fifteen categories spanning the full breadth of health and social care training.`}
-        buttonLabel="All courses"
-        to="/our-courses"
-        tone="gold"
-      />
-
-      <BannerBand
         tone="navy"
         eyebrow="Get started"
         heading="Talk to us about this training"

@@ -206,15 +206,6 @@ export default function TrainingSolutionPage(): React.ReactElement {
       </section>
 
       <BannerBand
-        eyebrow="Browse everything"
-        heading="See the full course catalogue"
-        description="190+ courses across fifteen categories, from statutory and mandatory training to clinical and specialist subjects."
-        buttonLabel="All courses"
-        to="/our-courses"
-        tone="gold"
-      />
-
-      <BannerBand
         tone="navy"
         eyebrow="Get started"
         heading="Bring this to your service"
