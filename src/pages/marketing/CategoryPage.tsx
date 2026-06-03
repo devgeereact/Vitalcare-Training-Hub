@@ -1,14 +1,17 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { motion, useReducedMotion } from "framer-motion"
 import { AlertCircle, BookOpen, ShieldCheck } from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { BannerBand } from "@/components/marketing/BannerBand"
+import { Pagination } from "@/components/marketing/Pagination"
 import { CourseCard } from "@/components/courses/CourseCard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getCategory } from "@/data/courses"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
+
+const PAGE_SIZE = 12
 
 export default function CategoryPage(): React.ReactElement {
   const { categorySlug } = useParams<{ categorySlug: string }>()
@@ -20,6 +23,20 @@ export default function CategoryPage(): React.ReactElement {
     if (!categorySlug) return []
     return (courses.data ?? []).filter((c) => c.categorySlug === categorySlug)
   }, [courses.data, categorySlug])
+
+  const [page, setPage] = useState(1)
+  const pageCount = Math.max(1, Math.ceil(categoryCourses.length / PAGE_SIZE))
+
+  // Reset to the first page when the category or live data changes.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset paging on category/data change
+    setPage(1)
+  }, [categorySlug, categoryCourses.length])
+
+  const pagedCourses = useMemo(
+    () => categoryCourses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [categoryCourses, page],
+  )
 
   if (!category) {
     return (
@@ -135,34 +152,44 @@ export default function CategoryPage(): React.ReactElement {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {categoryCourses.map((course, i) => (
-                <motion.div
-                  key={course.id}
-                  className="h-full"
-                  variants={fadeUp}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{
-                    duration: 0.45,
-                    delay: reduce ? 0 : Math.min(i, 7) * 0.05,
-                  }}
-                >
-                  <CourseCard
+            <>
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {pagedCourses.map((course, i) => (
+                  <motion.div
+                    key={course.id}
                     className="h-full"
-                    title={course.title}
-                    href={`/our-courses/course/${course.slug}`}
-                    categoryName={category.name}
-                    cpdHours={course.cpdHours}
-                    durationMins={course.durationMins}
-                    cstf={course.cstf}
-                    thumbnailUrl={course.thumbnailUrl}
-                    ctaLabel="View course"
-                  />
-                </motion.div>
-              ))}
-            </div>
+                    variants={fadeUp}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{
+                      duration: 0.45,
+                      delay: reduce ? 0 : Math.min(i, 7) * 0.05,
+                    }}
+                  >
+                    <CourseCard
+                      className="h-full"
+                      title={course.title}
+                      href={`/our-courses/course/${course.slug}`}
+                      categoryName={category.name}
+                      cpdHours={course.cpdHours}
+                      durationMins={course.durationMins}
+                      cstf={course.cstf}
+                      thumbnailUrl={course.thumbnailUrl}
+                      ctaLabel="View course"
+                    />
+                  </motion.div>
+                ))}
+              </div>
+
+              <Pagination
+                page={page}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                label="Category courses pagination"
+                className="mt-12"
+              />
+            </>
           )}
 
           <p className="mt-10 flex items-center gap-2 text-sm text-muted-foreground">

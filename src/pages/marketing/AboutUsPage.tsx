@@ -57,7 +57,7 @@ const VALUES = [
   {
     icon: HeartHandshake,
     title: "Accessible by Design",
-    body: "Fair prices, a simple booking process, and in-house delivery for organisations of all sizes. A 12-person care home deserves the same quality as an NHS trust.",
+    body: "Fair prices, a simple booking process, and training delivered online or in person for organisations of all sizes. A 12-person care home deserves the same quality as an NHS trust.",
   },
 ] as const
 
@@ -99,7 +99,7 @@ export default function AboutUsPage() {
             to="/contact-us"
             className="inline-flex items-center rounded-md border border-white/70 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy"
           >
-            Book In-House Training
+            Get a Quote
           </Link>
         </div>
       </PageHero>
@@ -144,7 +144,8 @@ export default function AboutUsPage() {
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               We are based in South East London, SE13. We deliver across Greater
-              London and are available for in-house delivery at your premises.
+              London and deliver training in person at your premises or live
+              online.
             </p>
             <p className="mt-4 text-sm font-medium text-brand-navy">
               {COMPANY.address.line1}, {COMPANY.address.city}{" "}
@@ -362,8 +363,10 @@ export default function AboutUsPage() {
               <p className="mt-6 max-w-[60ch] text-base leading-relaxed text-muted-foreground">
                 We are open to organisations of all sizes: NHS trusts, care
                 homes, GP practices, supported-living providers, and community
-                healthcare teams. We offer group bookings, in-house delivery, and
-                rolling contracts.
+                healthcare teams. Training is delivered online or in person, with
+                group bookings and rolling contracts available. Once you join,
+                you can request a 1:1 session on any course you are finding
+                difficult.
               </p>
               <div className="mt-8 flex flex-col gap-3 text-sm">
                 <a
@@ -398,7 +401,7 @@ export default function AboutUsPage() {
                   to="/contact-us"
                   className={`group inline-flex items-center gap-2 rounded-md bg-brand-navy px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-navy-dark ${FOCUS}`}
                 >
-                  Book In-House Training
+                  Get a Quote
                   <ArrowRight
                     className="size-4 transition-transform group-hover:translate-x-0.5"
                     aria-hidden="true"

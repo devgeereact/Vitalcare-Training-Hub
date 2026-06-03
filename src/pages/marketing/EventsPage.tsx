@@ -18,7 +18,7 @@ import { usePublicEvents } from "@/lib/queries/public-events.queries"
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 9
 
 const WHAT_TO_EXPECT = [
   {
