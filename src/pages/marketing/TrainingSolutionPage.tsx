@@ -119,6 +119,51 @@ export default function TrainingSolutionPage(): React.ReactElement {
         </div>
       </section>
 
+      {/* Outcomes + standards (sector-specific) */}
+      <section className="bg-muted/40">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+          <SectionHeading
+            eyebrow="What changes"
+            title={`Outcomes for ${sector.name.toLowerCase()}`}
+            subtitle="What teams like yours see once their training runs on Vitalcare."
+          />
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {sector.outcomes.map((outcome, i) => (
+              <motion.div
+                key={outcome}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.45, delay: reduce ? 0 : i * 0.08 }}
+                className="flex h-full items-start gap-4 rounded-2xl border border-border bg-white p-7 shadow-sm"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
+                  <Check className="size-5" aria-hidden />
+                </span>
+                <p className="text-base leading-relaxed text-foreground">
+                  {outcome}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="mt-8 flex items-start gap-4 rounded-2xl border border-brand-gold/30 bg-gradient-to-br from-brand-gold/10 to-transparent p-7">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-gold/20 text-brand-gold">
+              <ShieldCheck className="size-6" aria-hidden />
+            </span>
+            <div>
+              <h3 className="font-sans font-semibold tracking-tight text-lg text-brand-navy">
+                Standards you answer to
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {sector.standards}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How we get you started */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         <SectionHeading
