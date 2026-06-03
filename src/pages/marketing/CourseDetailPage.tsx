@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom"
+import { motion, useReducedMotion } from "framer-motion"
 import {
   Clock,
   Award,
@@ -7,6 +8,8 @@ import {
   Layers,
   BookOpen,
   AlertCircle,
+  ArrowRight,
+  BadgeCheck,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CTABand } from "@/components/marketing/CTABand"
@@ -48,6 +51,7 @@ export default function CourseDetailPage(): React.ReactElement {
   const course = usePublishedCourse(slug)
   const categories = useCategories()
   const curriculum = usePublicCurriculum(course.data?.id)
+  const reduce = useReducedMotion()
 
   const fallback = COURSES.find((c) => c.slug === slug)
   const fallbackCategory = fallback ? getCategory(fallback.categorySlug) : undefined
@@ -55,8 +59,8 @@ export default function CourseDetailPage(): React.ReactElement {
   if (course.isLoading) {
     return (
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[20rem_1fr]">
-          <Skeleton className="h-96 w-full rounded-xl" />
+        <div className="grid gap-8 lg:grid-cols-[22rem_1fr]">
+          <Skeleton className="h-96 w-full rounded-2xl" />
           <div className="space-y-4">
             <Skeleton className="h-10 w-3/4" />
             <Skeleton className="h-24 w-full" />
@@ -126,25 +130,74 @@ export default function CourseDetailPage(): React.ReactElement {
   const lessonCount =
     curriculum.data?.reduce((sum, m) => sum + m.lessons.length, 0) ?? 0
 
+  const fade = {
+    hidden: { opacity: 0, y: reduce ? 0 : 20 },
+    show: { opacity: 1, y: 0 },
+  }
+
   return (
     <>
-      <section className="bg-brand-navy">
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      {/* Premium navy hero */}
+      <section className="relative overflow-hidden bg-brand-navy">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530]"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -right-32 -top-40 size-[28rem] rounded-full bg-brand-gold/20 blur-3xl"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand-gold/50 to-transparent"
+          aria-hidden="true"
+        />
+        <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
           <Crumbs title={title} />
-          <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-brand-gold">
+          <motion.p
+            initial={{ opacity: 0, y: reduce ? 0 : 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mt-8 inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold"
+          >
+            <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
             {categoryName ?? "Course"}
-          </p>
-          <h1 className="mt-2 max-w-3xl font-display text-4xl text-white lg:text-5xl">
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: reduce ? 0 : 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.06 }}
+            className="mt-4 max-w-3xl font-display text-4xl leading-tight text-white lg:text-6xl"
+          >
             {title}
-          </h1>
+          </motion.h1>
+          <motion.div
+            initial={{ opacity: 0, y: reduce ? 0 : 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.12 }}
+            className="mt-7 flex flex-wrap items-center gap-3"
+          >
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-sm font-medium text-white ring-1 ring-white/15">
+              <Clock className="size-4 text-brand-gold" aria-hidden />
+              {formatCourseDuration(durationMins)}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-sm font-medium text-white ring-1 ring-white/15">
+              <Award className="size-4 text-brand-gold" aria-hidden />
+              {cpdHours} CPD hours
+            </span>
+            {cstf ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-3.5 py-1.5 text-sm font-medium text-emerald-200 ring-1 ring-success/30">
+                <ShieldCheck className="size-4" aria-hidden /> CSTF aligned
+              </span>
+            ) : null}
+          </motion.div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[20rem_1fr]">
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <div className="grid gap-10 lg:grid-cols-[22rem_1fr]">
           {/* Left: facts card */}
           <aside className="h-fit lg:sticky lg:top-6">
-            <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
               {thumbnail ? (
                 <img
                   src={driveImageUrl(thumbnail, 800)}
@@ -152,16 +205,16 @@ export default function CourseDetailPage(): React.ReactElement {
                   className="aspect-video w-full object-cover"
                 />
               ) : (
-                <div className="flex aspect-video w-full items-center justify-center bg-brand-navy/5 text-brand-navy/40">
+                <div className="flex aspect-video w-full items-center justify-center bg-gradient-to-br from-brand-navy/5 to-brand-gold/5 text-brand-navy/40">
                   <BookOpen className="size-8" aria-hidden />
                 </div>
               )}
-              <div className="space-y-4 p-5">
+              <div className="space-y-5 p-6">
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    About course
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    About this course
                   </p>
-                  <dl className="space-y-2.5 text-sm">
+                  <dl className="space-y-3 text-sm">
                     <div className="flex items-center justify-between gap-3">
                       <dt className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="size-4 text-brand-navy/60" /> Duration
@@ -200,13 +253,13 @@ export default function CourseDetailPage(): React.ReactElement {
 
                 {(moduleCount > 0 || lessonCount > 0) && (
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-lg border border-border bg-muted/40 p-3 text-center">
+                    <div className="rounded-xl border border-border bg-muted/40 p-3 text-center">
                       <p className="flex items-center justify-center gap-1.5 text-lg font-semibold text-brand-navy">
                         <Layers className="size-4 text-brand-gold" /> {moduleCount}
                       </p>
                       <p className="text-xs text-muted-foreground">Modules</p>
                     </div>
-                    <div className="rounded-lg border border-border bg-muted/40 p-3 text-center">
+                    <div className="rounded-xl border border-border bg-muted/40 p-3 text-center">
                       <p className="flex items-center justify-center gap-1.5 text-lg font-semibold text-brand-navy">
                         <BookOpen className="size-4 text-brand-gold" />{" "}
                         {lessonCount}
@@ -218,83 +271,101 @@ export default function CourseDetailPage(): React.ReactElement {
 
                 <Link
                   to="/contact-us"
-                  className="inline-flex w-full items-center justify-center rounded-md bg-brand-navy px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+                  className="group inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-navy px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
                 >
                   Enquire about this course
+                  <ArrowRight
+                    className="size-4 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
                 </Link>
+                <p className="text-center text-xs text-muted-foreground">
+                  Group rates and dates on request.
+                </p>
               </div>
             </div>
           </aside>
 
           {/* Right: overview + what you will cover */}
-          <div className="space-y-6">
-            <div className="flex flex-wrap items-center gap-2">
-              {cstf && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-                  <ShieldCheck className="size-3.5" /> CSTF aligned
-                </span>
-              )}
-              {categoryName && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs font-semibold text-brand-navy">
-                  <Tag className="size-3.5" /> {categoryName}
-                </span>
-              )}
-            </div>
-
-            <div className="max-w-[65ch] space-y-4">
-              {summary ? (
-                <p className="text-lg leading-relaxed text-foreground">
-                  {summary}
-                </p>
-              ) : null}
-              {description ? (
-                <div
-                  className="prose prose-slate max-w-none"
-                  dangerouslySetInnerHTML={{ __html: description }}
-                />
-              ) : null}
-              {!summary && !description ? (
-                <p className="text-muted-foreground">
-                  Get in touch for the full course outline, dates and group
-                  rates. Our team will talk you through how this training fits
-                  your service.
-                </p>
-              ) : null}
+          <motion.div
+            variants={fade}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.55 }}
+            className="space-y-10"
+          >
+            <div className="space-y-5">
+              <p className="inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold">
+                <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
+                Overview
+              </p>
+              <div className="max-w-[65ch] space-y-4">
+                {summary ? (
+                  <p className="font-display text-2xl leading-snug text-brand-navy">
+                    {summary}
+                  </p>
+                ) : null}
+                {description ? (
+                  <div
+                    className="prose prose-slate max-w-none"
+                    dangerouslySetInnerHTML={{ __html: description }}
+                  />
+                ) : null}
+                {!summary && !description ? (
+                  <p className="text-lg leading-relaxed text-muted-foreground">
+                    Get in touch for the full course outline, dates and group
+                    rates. Our team will talk you through how this training fits
+                    your service.
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             {moduleCount > 0 && (
               <div>
-                <h2 className="font-display text-2xl text-brand-navy">
+                <h2 className="font-display text-3xl text-brand-navy">
                   What you will cover
                 </h2>
-                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                   {curriculum.data!.map((mod) => (
                     <li
                       key={mod.id}
-                      className="flex items-start gap-2 text-sm text-foreground"
+                      className="flex items-start gap-3 rounded-xl border border-border bg-white p-4 text-sm text-foreground shadow-sm"
                     >
-                      <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand-gold" />
-                      {mod.title}
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-gold">
+                        <ShieldCheck className="size-4" aria-hidden />
+                      </span>
+                      <span className="pt-0.5">{mod.title}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            <div>
-              <h2 className="font-display text-2xl text-brand-navy">
-                Accreditation
-              </h2>
-              <p className="mt-3 max-w-[65ch] leading-relaxed text-muted-foreground">
-                Overseen by Harni Muharami RN MSc, Clinical Director. CSTF-aligned,
-                CPD-accredited, verifiable at vitalcare.uk/verify.
-              </p>
+            {/* Accreditation panel */}
+            <div className="relative overflow-hidden rounded-2xl border border-brand-gold/30 bg-gradient-to-br from-brand-gold/10 to-transparent p-8">
+              <div className="flex items-start gap-4">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-gold/20 text-brand-gold">
+                  <BadgeCheck className="size-6" aria-hidden />
+                </span>
+                <div>
+                  <h2 className="font-display text-2xl text-brand-navy">
+                    Accreditation and oversight
+                  </h2>
+                  <p className="mt-3 max-w-[60ch] leading-relaxed text-muted-foreground">
+                    Overseen by Harni Muharami RN MSc, Clinical Director.
+                    CSTF-aligned, CPD-accredited, verifiable at
+                    vitalcare.uk/verify.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      <CTABand />
+      <CTABand heading="Bring this training to your team" />
     </>
   )
 }

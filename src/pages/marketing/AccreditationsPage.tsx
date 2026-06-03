@@ -1,6 +1,14 @@
-import { Link } from "react-router-dom"
-import { ShieldCheck, Award, ClipboardCheck, Stethoscope, ArrowRight } from "lucide-react"
+import { motion, useReducedMotion, type Variants } from "framer-motion"
+import {
+  ShieldCheck,
+  Award,
+  ClipboardCheck,
+  Stethoscope,
+  Check,
+} from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
+import { BannerBand } from "@/components/marketing/BannerBand"
+import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { CTABand } from "@/components/marketing/CTABand"
 import { LEADERSHIP } from "@/lib/constants"
 
@@ -46,78 +54,99 @@ const BADGE_MEANINGS = [
 ] as const
 
 export default function AccreditationsPage() {
+  const reduce = useReducedMotion()
+
+  const container: Variants = {
+    hidden: {},
+    show: { transition: { staggerChildren: reduce ? 0 : 0.09 } },
+  }
+  const item: Variants = {
+    hidden: { opacity: 0, y: reduce ? 0 : 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] },
+    },
+  }
+
   return (
     <>
       <PageHero
         eyebrow="Accreditations"
         title="Standards you can evidence"
-        description="CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify."
+        description="CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify. The marks behind our training explained in plain terms."
       />
 
       {/* Accreditation pillars */}
-      <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-6 sm:grid-cols-2">
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <SectionHeading
+          eyebrow="The standards we hold"
+          title="Four pillars of credible training"
+          subtitle="The recognition, accreditation and oversight that procurement and inspection teams look for."
+        />
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          className="mt-12 grid gap-6 sm:grid-cols-2"
+        >
           {ITEMS.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="rounded-xl border border-border p-8">
-              <span className="flex size-11 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-gold">
-                <Icon className="size-5" />
+            <motion.div
+              key={title}
+              variants={item}
+              className="flex flex-col rounded-2xl border border-border bg-white p-8 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
+            >
+              <span className="flex size-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
+                <Icon className="size-6" />
               </span>
-              <h2 className="mt-4 text-lg font-semibold text-brand-navy">
+              <h2 className="mt-5 text-lg font-semibold text-brand-navy">
                 {title}
               </h2>
-              <p className="mt-3 text-sm text-muted-foreground">{body}</p>
-            </div>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {body}
+              </p>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* What the badges mean */}
       <section className="bg-muted/40">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-          <h2 className="font-display text-3xl text-brand-navy">
-            What the badges mean
-          </h2>
-          <p className="mt-2 text-muted-foreground">
-            The marks you see on our courses and certificates, in plain terms.
-          </p>
-          <dl className="mt-8 space-y-6">
-            {BADGE_MEANINGS.map((item) => (
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+          <SectionHeading
+            eyebrow="In plain terms"
+            title="What the badges mean"
+            subtitle="The marks you see on our courses and certificates, without the jargon."
+          />
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            {BADGE_MEANINGS.map((badge) => (
               <div
-                key={item.badge}
-                className="rounded-xl border border-border bg-white p-6"
+                key={badge.badge}
+                className="flex flex-col rounded-2xl border border-border bg-white p-7 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
               >
-                <dt className="text-base font-semibold text-brand-navy">
-                  {item.badge}
-                </dt>
-                <dd className="mt-2 text-sm text-muted-foreground">
-                  {item.meaning}
-                </dd>
+                <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-brand-navy px-3 py-1 text-xs font-semibold text-white">
+                  <Check className="size-3 text-brand-gold" aria-hidden="true" />
+                  {badge.badge}
+                </span>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  {badge.meaning}
+                </p>
               </div>
             ))}
-          </dl>
+          </div>
         </div>
       </section>
 
       {/* Verification */}
-      <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-border bg-brand-navy p-8 sm:p-10">
-          <h2 className="font-display text-2xl text-white sm:text-3xl">
-            Verify a certificate
-          </h2>
-          <p className="mt-3 max-w-2xl text-white/80">
-            Confirm that a Vitalcare certificate is genuine and in date. Enter
-            the certificate reference to check completion, the course and the
-            date awarded.
-          </p>
-          <Link
-            to="/resources/verify-certificate"
-            className="mt-6 inline-flex items-center gap-2 rounded-md bg-brand-gold px-6 py-3 text-sm font-semibold text-brand-navy transition-colors hover:bg-brand-gold-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy"
-          >
-            Verify a certificate
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </Link>
-        </div>
-      </section>
+      <BannerBand
+        tone="gold"
+        eyebrow="Verifiable by design"
+        heading="Confirm a certificate in seconds"
+        description="Enter a certificate reference to check completion, the course and the date awarded. Genuine, in date and ready for inspection."
+        buttonLabel="Verify a certificate"
+        to="/resources/verify-certificate"
+      />
 
       <CTABand />
     </>

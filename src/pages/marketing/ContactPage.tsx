@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { Loader2, Mail, Phone, MapPin, Clock } from "lucide-react"
+import { Loader2, Mail, Phone, MapPin, Clock, ShieldCheck } from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -68,7 +68,98 @@ export default function ContactPage(): React.ReactElement {
         description="Tell us about your team and what you need. We will get back to you quickly."
       />
 
-      <section className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-5 lg:gap-12 lg:px-8">
+      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-5 lg:gap-12 lg:px-8 lg:py-28">
+        {/* Left: company info */}
+        <div className="space-y-6 lg:col-span-2">
+          <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530] px-7 py-8">
+              <div
+                className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-brand-gold/20 blur-3xl"
+                aria-hidden="true"
+              />
+              <p className="relative inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold">
+                <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
+                Get in touch
+              </p>
+              <h2 className="relative mt-3 font-display text-2xl text-white">
+                We answer training questions fast
+              </h2>
+              <p className="relative mt-2 text-sm leading-relaxed text-white/80">
+                Reach us directly, or send the form and a member of the team
+                will reply.
+              </p>
+            </div>
+
+            <ul className="space-y-5 px-7 py-7 text-sm">
+              <li className="flex items-start gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
+                  <MapPin className="size-5" />
+                </span>
+                <span className="text-foreground">
+                  {COMPANY.address.line1}
+                  <br />
+                  {COMPANY.address.city} {COMPANY.address.postcode}
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
+                  <Phone className="size-5" />
+                </span>
+                <a
+                  href={`tel:${COMPANY.phone.replace(/\s/g, "")}`}
+                  className={`rounded text-foreground hover:text-brand-navy ${FOCUS}`}
+                >
+                  {COMPANY.phone}
+                </a>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
+                  <Mail className="size-5" />
+                </span>
+                <a
+                  href={`mailto:${COMPANY.email}`}
+                  className={`rounded text-foreground hover:text-brand-navy ${FOCUS}`}
+                >
+                  {COMPANY.email}
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-white p-7 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
+                <Clock className="size-5" />
+              </span>
+              <h2 className="font-display text-xl text-brand-navy">
+                Office hours
+              </h2>
+            </div>
+            <dl className="mt-5 space-y-2.5 text-sm text-muted-foreground">
+              <div className="flex justify-between">
+                <dt>Monday to Friday</dt>
+                <dd className="font-medium text-foreground">9am to 5pm</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt>Saturday and Sunday</dt>
+                <dd className="font-medium text-foreground">Closed</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="flex items-start gap-3 rounded-2xl border border-brand-gold/30 bg-brand-gold/[0.06] p-6">
+            <ShieldCheck
+              className="mt-0.5 size-5 shrink-0 text-brand-gold"
+              aria-hidden="true"
+            />
+            <p className="text-sm leading-relaxed text-foreground">
+              {COMPANY.legalName}, company number {COMPANY.companyNumber},
+              registered in {COMPANY.jurisdiction}.
+            </p>
+          </div>
+        </div>
+
+        {/* Right: form */}
         <div className="lg:col-span-3">
           <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
             <h2 className="font-display text-2xl text-brand-navy">
@@ -171,68 +262,6 @@ export default function ContactPage(): React.ReactElement {
                 )}
               </Button>
             </form>
-          </div>
-        </div>
-
-        <div className="space-y-6 lg:col-span-2">
-          <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-            <h2 className="font-display text-xl text-brand-navy">
-              Get in touch
-            </h2>
-            <ul className="mt-5 space-y-4 text-sm">
-              <li className="flex items-start gap-3">
-                <MapPin className="mt-0.5 size-5 shrink-0 text-brand-gold" />
-                <span className="text-foreground">
-                  {COMPANY.address.line1}
-                  <br />
-                  {COMPANY.address.city} {COMPANY.address.postcode}
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone className="size-5 shrink-0 text-brand-gold" />
-                <a
-                  href={`tel:${COMPANY.phone.replace(/\s/g, "")}`}
-                  className={`rounded text-foreground hover:text-brand-navy ${FOCUS}`}
-                >
-                  {COMPANY.phone}
-                </a>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="size-5 shrink-0 text-brand-gold" />
-                <a
-                  href={`mailto:${COMPANY.email}`}
-                  className={`rounded text-foreground hover:text-brand-navy ${FOCUS}`}
-                >
-                  {COMPANY.email}
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <Clock className="size-5 shrink-0 text-brand-gold" />
-              <h2 className="font-display text-xl text-brand-navy">
-                Office hours
-              </h2>
-            </div>
-            <dl className="mt-4 space-y-2 text-sm text-muted-foreground">
-              <div className="flex justify-between">
-                <dt>Monday to Friday</dt>
-                <dd className="font-medium text-foreground">9am to 5pm</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>Saturday and Sunday</dt>
-                <dd className="font-medium text-foreground">Closed</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="rounded-2xl border border-brand-gold/30 bg-brand-gold/[0.06] p-6">
-            <p className="text-sm leading-relaxed text-foreground">
-              {COMPANY.legalName}, company number {COMPANY.companyNumber},
-              registered in {COMPANY.jurisdiction}.
-            </p>
           </div>
         </div>
       </section>

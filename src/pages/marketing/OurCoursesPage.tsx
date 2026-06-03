@@ -1,7 +1,16 @@
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import { AlertCircle, BookOpen, Sparkles } from "lucide-react"
+import { motion, useReducedMotion } from "framer-motion"
+import {
+  AlertCircle,
+  BookOpen,
+  ShieldCheck,
+  Award,
+  BadgeCheck,
+} from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
+import { SectionHeading } from "@/components/marketing/SectionHeading"
+import { BannerBand } from "@/components/marketing/BannerBand"
 import { CategoryGrid } from "@/components/marketing/CategoryGrid"
 import { CTABand } from "@/components/marketing/CTABand"
 import { CourseCard } from "@/components/courses/CourseCard"
@@ -11,9 +20,31 @@ import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
 
 const ALL = "all" as const
 
+const HERO_IMAGE =
+  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=70"
+
+const ASSURANCES = [
+  {
+    icon: ShieldCheck,
+    title: "CSTF-aligned",
+    body: "Mapped to the Core Skills Training Framework so your records hold up at inspection.",
+  },
+  {
+    icon: Award,
+    title: "CPD-accredited",
+    body: "Logged CPD hours on every course, ready for portfolios and revalidation.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Verifiable certificates",
+    body: "Each certificate is checkable online at vitalcare.uk/verify, with full history.",
+  },
+]
+
 export default function OurCoursesPage(): React.ReactElement {
   const courses = usePublishedCourses()
   const [activeSlug, setActiveSlug] = useState<string>(ALL)
+  const reduce = useReducedMotion()
 
   // Only show filter pills for categories that have live published courses.
   const liveCategorySlugs = useMemo(() => {
@@ -35,58 +66,92 @@ export default function OurCoursesPage(): React.ReactElement {
     return list.filter((c) => c.categorySlug === activeSlug)
   }, [courses.data, activeSlug])
 
+  const fadeUp = {
+    hidden: { opacity: 0, y: reduce ? 0 : 24 },
+    show: { opacity: 1, y: 0 },
+  }
+
   return (
     <>
       <PageHero
         eyebrow="Our courses"
         title="Training across every area of care"
         description={`${TOTAL_COURSE_COUNT}+ courses across ${COURSE_CATEGORIES.length} categories, from statutory and mandatory training to clinical and specialist subjects.`}
+        imageUrl={HERO_IMAGE}
+        imageAlt="Healthcare professionals in a training session"
+        stats={[
+          { value: `${TOTAL_COURSE_COUNT}+`, label: "Courses" },
+          { value: `${COURSE_CATEGORIES.length}`, label: "Categories" },
+        ]}
       >
         <p className="text-sm text-white/70">
           CSTF-aligned, CPD-accredited, verifiable at vitalcare.uk/verify.
         </p>
       </PageHero>
 
+      {/* Assurance strip */}
+      <section className="border-b border-border bg-white">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-12 sm:grid-cols-3 sm:px-6 lg:px-8">
+          {ASSURANCES.map((item, i) => (
+            <motion.div
+              key={item.title}
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.5, delay: reduce ? 0 : i * 0.08 }}
+              className="flex items-start gap-4"
+            >
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-gold">
+                <item.icon className="size-5" aria-hidden />
+              </span>
+              <div>
+                <h3 className="text-base font-semibold text-brand-navy">
+                  {item.title}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {item.body}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
       {/* Browse by category */}
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-        <div className="max-w-2xl">
-          <h2 className="font-display text-3xl text-brand-navy">
-            Browse by category
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            Fifteen categories spanning the full breadth of health and social
-            care training. Choose a category to see the courses within it.
-          </p>
-        </div>
-        <div className="mt-8">
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <SectionHeading
+          eyebrow="Browse the catalogue"
+          title="Fifteen categories, every area of care"
+          subtitle="From statutory and mandatory training to clinical and specialist subjects. Choose a category to see the courses within it."
+        />
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.55 }}
+          className="mt-12"
+        >
           <CategoryGrid />
-        </div>
+        </motion.div>
       </section>
 
       {/* Live published courses */}
       <section className="bg-muted/40">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div className="max-w-2xl">
-              <p className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-brand-gold">
-                <Sparkles className="size-4" aria-hidden /> Available now
-              </p>
-              <h2 className="mt-2 font-display text-3xl text-brand-navy">
-                Courses ready to book
-              </h2>
-              <p className="mt-3 text-muted-foreground">
-                Published courses you can explore today. New subjects are added
-                as the catalogue rolls out.
-              </p>
-            </div>
-          </div>
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+          <SectionHeading
+            eyebrow="Available now"
+            title="Courses ready to book"
+            subtitle="Published courses you can explore today. New subjects are added as the catalogue rolls out."
+          />
 
           {/* Category filter pills (only when live data is present) */}
           {!courses.isLoading &&
           !courses.isError &&
           (courses.data?.length ?? 0) > 0 ? (
             <div
-              className="mt-8 flex flex-wrap gap-2"
+              className="mt-10 flex flex-wrap gap-2"
               role="group"
               aria-label="Filter courses by category"
             >
@@ -106,15 +171,15 @@ export default function OurCoursesPage(): React.ReactElement {
             </div>
           ) : null}
 
-          <div className="mt-8">
+          <div className="mt-10">
             {courses.isLoading ? (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-80 w-full rounded-xl" />
+                  <Skeleton key={i} className="h-80 w-full rounded-2xl" />
                 ))}
               </div>
             ) : courses.isError ? (
-              <div className="rounded-xl border border-dashed border-border bg-white p-12 text-center">
+              <div className="rounded-2xl border border-dashed border-border bg-white p-12 text-center shadow-sm">
                 <AlertCircle
                   className="mx-auto size-8 text-destructive"
                   aria-hidden
@@ -134,7 +199,7 @@ export default function OurCoursesPage(): React.ReactElement {
                 </button>
               </div>
             ) : visibleCourses.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-white p-12 text-center">
+              <div className="rounded-2xl border border-dashed border-border bg-white p-12 text-center shadow-sm">
                 <BookOpen
                   className="mx-auto size-8 text-brand-navy/40"
                   aria-hidden
@@ -155,23 +220,43 @@ export default function OurCoursesPage(): React.ReactElement {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {visibleCourses.map((course) => (
-                  <CourseCard
+                {visibleCourses.map((course, i) => (
+                  <motion.div
                     key={course.id}
-                    title={course.title}
-                    href={`/our-courses/course/${course.slug}`}
-                    categoryName={course.categoryName}
-                    cpdHours={course.cpdHours}
-                    durationMins={course.durationMins}
-                    cstf={course.cstf}
-                    thumbnailUrl={course.thumbnailUrl}
-                  />
+                    variants={fadeUp}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{
+                      duration: 0.45,
+                      delay: reduce ? 0 : Math.min(i, 7) * 0.05,
+                    }}
+                  >
+                    <CourseCard
+                      title={course.title}
+                      href={`/our-courses/course/${course.slug}`}
+                      categoryName={course.categoryName}
+                      cpdHours={course.cpdHours}
+                      durationMins={course.durationMins}
+                      cstf={course.cstf}
+                      thumbnailUrl={course.thumbnailUrl}
+                    />
+                  </motion.div>
                 ))}
               </div>
             )}
           </div>
         </div>
       </section>
+
+      <BannerBand
+        eyebrow="Training solutions"
+        heading="Training built around your service"
+        description="From NHS Trusts to single sites and individual professionals, we shape the catalogue to the roles your people hold."
+        buttonLabel="Explore solutions"
+        to="/training-solutions/nhs-trusts"
+        tone="navy"
+      />
 
       <CTABand />
     </>

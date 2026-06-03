@@ -89,38 +89,54 @@ export default function VerifyCertPage(): React.ReactElement {
         description="Enter the verification code printed on the certificate to confirm it is genuine and in date."
       />
 
-      <section className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
-          <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="Verification code (UUID)"
-                aria-label="Certificate verification code"
-                className={`pl-9 font-mono ${FOCUS}`}
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={state.kind === "loading"}
-              className={`shrink-0 ${FOCUS}`}
-            >
-              {state.kind === "loading" ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Checking
-                </>
-              ) : (
-                "Verify"
-              )}
-            </Button>
-          </form>
-          <p className="mt-3 text-xs text-muted-foreground">
-            The verification code is printed at the foot of every Vitalcare
-            certificate.
-          </p>
+      <section className="mx-auto max-w-2xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+        <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+          <div className="relative overflow-hidden bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530] px-6 py-7 sm:px-8">
+            <div
+              className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full bg-brand-gold/20 blur-3xl"
+              aria-hidden="true"
+            />
+            <p className="relative inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold">
+              <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
+              Certificate check
+            </p>
+            <h2 className="relative mt-3 font-display text-2xl text-white">
+              Enter a verification code
+            </h2>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  placeholder="Verification code (UUID)"
+                  aria-label="Certificate verification code"
+                  className={`pl-9 font-mono ${FOCUS}`}
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={state.kind === "loading"}
+                className={`shrink-0 ${FOCUS}`}
+              >
+                {state.kind === "loading" ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Checking
+                  </>
+                ) : (
+                  "Verify"
+                )}
+              </Button>
+            </form>
+            <p className="mt-3 text-xs text-muted-foreground">
+              The verification code is printed at the foot of every Vitalcare
+              certificate.
+            </p>
+          </div>
         </div>
 
         <div className="mt-8">
