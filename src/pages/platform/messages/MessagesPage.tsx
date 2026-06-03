@@ -437,7 +437,7 @@ export default function MessagesPage() {
       </div>
 
       <Card className="overflow-hidden">
-        <div className="grid h-[calc(100svh-13rem)] min-h-[28rem] lg:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="grid h-[calc(100svh-17rem)] min-h-[28rem] lg:grid-cols-[320px_minmax(0,1fr)]">
           {/* Thread list */}
           <div
             className={cn(
