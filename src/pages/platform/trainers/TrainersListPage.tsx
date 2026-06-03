@@ -58,7 +58,7 @@ export default function TrainersListPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data!.map((t) => (
-            <Card key={t.id} className="flex flex-col">
+            <Card key={t.id} className="flex h-full flex-col">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-3">
                   <span className="flex size-11 items-center justify-center rounded-full bg-brand-navy/10 text-base font-semibold text-brand-navy">
