@@ -487,6 +487,15 @@
 /* ================================
    Vitalcare calendar polish
 ================================ */
+/* Past events: faded, struck through, so they read as done. */
+.fc-event.vc-event-past {
+  opacity: 0.45;
+  filter: grayscale(0.35);
+}
+.fc-event.vc-event-past .fc-event-title,
+.fc-event.vc-event-past .fc-event-time {
+  text-decoration: line-through;
+}
 .vitalcare-calendar .fc .fc-toolbar-title {
   font-family: "DM Serif Display", serif;
   font-weight: 400;

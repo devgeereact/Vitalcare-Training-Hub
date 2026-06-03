@@ -347,6 +347,12 @@ export default function CalendarPage() {
                   }}
                   events={events}
                   height="auto"
+                  eventClassNames={(arg) => {
+                    const end = arg.event.end ?? arg.event.start
+                    return end && end.getTime() < Date.now()
+                      ? ["vc-event-past"]
+                      : []
+                  }}
                   eventClick={(info) => {
                     info.jsEvent.preventDefault()
                     const kind = info.event.extendedProps.kind as Selected["kind"]
@@ -456,13 +462,24 @@ export default function CalendarPage() {
                         <ExternalLink className="mr-2 size-4" /> View 1:1
                       </Link>
                     </Button>
-                    {selected.meetUrl && (
-                      <Button asChild>
-                        <a href={selected.meetUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-2 size-4" /> Join meeting
-                        </a>
-                      </Button>
-                    )}
+                    {selected.meetUrl &&
+                      ((selected.end
+                        ? new Date(selected.end).getTime()
+                        : new Date(selected.start).getTime()) < Date.now() ? (
+                        <Button disabled variant="secondary">
+                          Meeting ended
+                        </Button>
+                      ) : (
+                        <Button asChild>
+                          <a
+                            href={selected.meetUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="mr-2 size-4" /> Join meeting
+                          </a>
+                        </Button>
+                      ))}
                   </>
                 )}
                 {selected.kind === "custom" && (
