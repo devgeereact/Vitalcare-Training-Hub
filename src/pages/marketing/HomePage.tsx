@@ -12,9 +12,7 @@ import {
   Quote,
   CalendarClock,
   LineChart,
-  Award,
-  FileCheck2,
-  Clock3,
+  Check,
 } from "lucide-react"
 import { StatsBar } from "@/components/marketing/StatsBar"
 import { CategoryGrid } from "@/components/marketing/CategoryGrid"
@@ -29,12 +27,12 @@ const HERO_IMAGE =
 const LEARNING_IMAGE =
   "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=70"
 
-/** Flagship trust bar shown beneath the hero CTAs. */
+/** Short trust points shown beneath the hero CTAs. */
 const HERO_TRUST = [
-  { icon: ShieldCheck, label: "CSTF-Aligned Courses" },
-  { icon: Award, label: "CPD-Accredited" },
-  { icon: FileCheck2, label: "Certificates Verifiable Online" },
-  { icon: Clock3, label: "24-Hour Certificate Issue" },
+  "CSTF-aligned",
+  "CPD-accredited",
+  "Verifiable certificates",
+  "Issued within 24 hours",
 ] as const
 
 const AUDIENCES = [
@@ -116,9 +114,10 @@ const TESTIMONIALS = [
 const FEATURED_SECTORS = SECTORS.slice(0, 4)
 
 /**
- * Flagship homepage hero. Bespoke, distinct from the interior PageHero:
- * editorial split layout, layered navy gradient with grid + dot texture,
- * gold glows, a masked healthcare photo and a four-chip trust bar.
+ * Flagship homepage hero. Clean, light editorial layout: an off-white canvas,
+ * one strong typographic column, a single restrained accent and a calm image
+ * frame with one clinical-credibility card. Decoration is kept to a minimum so
+ * the message and the primary action lead.
  */
 function HomeHero() {
   const reduce = useReducedMotion()
@@ -126,99 +125,60 @@ function HomeHero() {
   const container: Variants = {
     hidden: {},
     show: {
-      transition: { staggerChildren: reduce ? 0 : 0.08, delayChildren: 0.05 },
+      transition: { staggerChildren: reduce ? 0 : 0.08, delayChildren: 0.04 },
     },
   }
   const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 24 },
+    hidden: { opacity: 0, y: reduce ? 0 : 20 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] },
+      transition: { duration: 0.55, ease: [0.21, 0.47, 0.32, 0.98] },
     },
   }
 
   return (
-    <section className="relative overflow-hidden bg-brand-navy">
-      {/* Rich navy gradient base */}
+    <section className="relative overflow-hidden bg-background">
+      {/* One soft navy wash, top-right. Quiet, not busy. */}
       <div
-        className="absolute inset-0 bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0b1129]"
-        aria-hidden="true"
-      />
-      {/* Layered gold glows */}
-      <div
-        className="pointer-events-none absolute -right-40 -top-48 size-[34rem] rounded-full bg-brand-gold/25 blur-3xl"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute -bottom-48 -left-28 size-[30rem] rounded-full bg-brand-gold/10 blur-3xl"
-        aria-hidden="true"
-      />
-      {/* Fine grid texture, masked towards the top-left */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px)",
-          backgroundSize: "52px 52px",
-          maskImage:
-            "radial-gradient(ellipse at 25% 15%, black 0%, transparent 72%)",
-          WebkitMaskImage:
-            "radial-gradient(ellipse at 25% 15%, black 0%, transparent 72%)",
-        }}
-        aria-hidden="true"
-      />
-      {/* Dot texture overlay for depth */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
-        style={{
-          backgroundImage:
-            "radial-gradient(rgba(212,168,67,0.9) 1px, transparent 1.4px)",
-          backgroundSize: "26px 26px",
-          maskImage:
-            "radial-gradient(ellipse at 80% 90%, black 0%, transparent 65%)",
-          WebkitMaskImage:
-            "radial-gradient(ellipse at 80% 90%, black 0%, transparent 65%)",
-        }}
-        aria-hidden="true"
-      />
-      {/* Gold hairline along the bottom edge */}
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand-gold/60 to-transparent"
+        className="pointer-events-none absolute -right-40 -top-44 size-[34rem] rounded-full bg-brand-navy/[0.04] blur-3xl"
         aria-hidden="true"
       />
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-4 py-20 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-28">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16 lg:px-8 lg:py-28">
         {/* Editorial column */}
         <motion.div variants={container} initial="hidden" animate="show">
-          <motion.p
+          <motion.span
             variants={item}
-            className="inline-flex items-center gap-2.5 rounded-full border border-brand-gold/30 bg-brand-gold/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-brand-gold-light"
+            className="inline-flex items-center gap-2.5 rounded-full border border-brand-navy/10 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-navy shadow-sm"
           >
-            <span className="size-1.5 rounded-full bg-brand-gold" aria-hidden="true" />
+            <span
+              className="size-1.5 rounded-full bg-brand-gold"
+              aria-hidden="true"
+            />
             CSTF-aligned · CPD-accredited · CQC-ready
-          </motion.p>
+          </motion.span>
 
           <motion.h1
             variants={item}
-            className="mt-6 max-w-2xl font-display text-5xl leading-tight text-white sm:text-6xl lg:text-7xl"
+            className="mt-6 max-w-2xl font-display text-[2.75rem] leading-[1.05] text-brand-navy sm:text-6xl lg:text-[4rem]"
           >
             Healthcare Training Built for Real Care Environments.
           </motion.h1>
 
           <motion.p
             variants={item}
-            className="mt-6 max-w-xl text-lg leading-relaxed text-white/80"
+            className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground"
           >
             CSTF-aligned, CPD-accredited mandatory training for NHS and care
             sector professionals. CQC-ready certificates issued within 24 hours.
             Delivered in South East London and across Greater London.
           </motion.p>
 
-          <motion.div variants={item} className="mt-9 flex flex-wrap gap-4">
+          <motion.div variants={item} className="mt-9 flex flex-wrap gap-3">
             <Link
               to="/our-courses"
-              className="group inline-flex items-center gap-2 rounded-md bg-brand-navy px-7 py-3.5 text-sm font-semibold text-brand-gold shadow-lg ring-1 ring-inset ring-brand-gold/40 transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy"
+              className="group inline-flex items-center gap-2 rounded-md bg-brand-navy px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
             >
               Explore Our Courses
               <ArrowRight
@@ -228,27 +188,27 @@ function HomeHero() {
             </Link>
             <Link
               to="/contact-us"
-              className="inline-flex items-center rounded-md bg-brand-gold px-7 py-3.5 text-sm font-semibold text-brand-navy shadow-lg transition-colors hover:bg-brand-gold-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy"
+              className="inline-flex items-center rounded-md border border-brand-navy/15 bg-white px-7 py-3.5 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-navy/30 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
             >
               Get a Quote
             </Link>
           </motion.div>
 
-          {/* Trust bar */}
+          {/* Trust points */}
           <motion.ul
             variants={item}
-            className="mt-10 grid grid-cols-1 gap-2.5 sm:grid-cols-2"
+            className="mt-10 flex flex-wrap gap-x-6 gap-y-3"
           >
-            {HERO_TRUST.map(({ icon: Icon, label }) => (
+            {HERO_TRUST.map((label) => (
               <li
                 key={label}
-                className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/[0.07] px-4 py-2 text-sm font-medium text-white backdrop-blur"
+                className="inline-flex items-center gap-2 text-sm font-medium text-brand-navy"
               >
                 <span
-                  className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-gold/90"
+                  className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-gold/15 text-brand-gold"
                   aria-hidden="true"
                 >
-                  <Icon className="size-3 text-brand-navy" />
+                  <Check className="size-3.5" />
                 </span>
                 {label}
               </li>
@@ -258,51 +218,41 @@ function HomeHero() {
 
         {/* Visual column */}
         <motion.div
-          initial={{ opacity: 0, y: reduce ? 0 : 30, scale: reduce ? 1 : 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
+          initial={{ opacity: 0, y: reduce ? 0 : 24 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{
-            duration: 0.75,
+            duration: 0.7,
             ease: [0.21, 0.47, 0.32, 0.98],
             delay: 0.12,
           }}
           className="relative mx-auto w-full max-w-md lg:mx-0 lg:ml-auto lg:max-w-none"
         >
-          {/* Gold ring accent behind the frame */}
-          <div
-            className="pointer-events-none absolute -right-4 -top-4 hidden h-full w-full rounded-3xl border-2 border-brand-gold/60 sm:block"
-            aria-hidden="true"
-          />
-          <div className="relative overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
+          <div className="relative overflow-hidden rounded-2xl border border-border shadow-xl">
             <img
               src={HERO_IMAGE}
               alt="Healthcare professionals in a clinical training session"
               loading="eager"
               className="aspect-[4/5] w-full object-cover sm:aspect-[5/4] lg:aspect-[4/5]"
             />
-            <div
-              className="absolute inset-0 bg-gradient-to-t from-brand-navy-dark/55 via-transparent to-transparent"
-              aria-hidden="true"
-            />
           </div>
 
-          {/* Floating practitioner-credibility card */}
+          {/* One clinical-credibility card */}
           <motion.div
-            initial={{ opacity: 0, y: reduce ? 0 : 18 }}
+            initial={{ opacity: 0, y: reduce ? 0 : 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
               duration: 0.55,
-              delay: 0.5,
+              delay: 0.45,
               ease: [0.21, 0.47, 0.32, 0.98],
             }}
-            className="absolute -bottom-6 -left-4 max-w-[17rem] rounded-2xl border border-white/20 bg-white/95 p-5 shadow-xl backdrop-blur sm:-left-8"
+            className="absolute -bottom-5 left-4 right-4 flex items-start gap-3 rounded-xl border border-border bg-white/95 p-4 shadow-lg backdrop-blur sm:left-auto sm:right-6 sm:max-w-xs"
           >
-            <ShieldCheck
-              className="size-6 text-brand-gold"
-              aria-hidden="true"
-            />
-            <p className="mt-2.5 text-sm font-medium leading-snug text-brand-navy">
-              Healthcare training built by practitioners who know what is at
-              stake.
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-gold">
+              <ShieldCheck className="size-5" aria-hidden="true" />
+            </span>
+            <p className="text-sm font-medium leading-snug text-brand-navy">
+              Overseen by {LEADERSHIP.clinicalDirector.name}, our{" "}
+              {LEADERSHIP.clinicalDirector.role}.
             </p>
           </motion.div>
         </motion.div>
@@ -330,9 +280,9 @@ export default function HomePage() {
             <Link
               key={label}
               to={to}
-              className="group flex flex-col rounded-2xl border border-border bg-white p-6 shadow-sm transition-[transform,box-shadow,border-color] duration-200 will-change-transform hover:-translate-y-1 hover:border-brand-gold hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+              className="group flex flex-col rounded-2xl border border-border bg-white p-6 shadow-sm transition-[transform,box-shadow,border-color] duration-200 will-change-transform hover:-translate-y-1 hover:border-brand-gold/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
             >
-              <span className="flex size-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy transition-colors group-hover:bg-brand-gold group-hover:text-brand-navy">
+              <span className="flex size-12 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy transition-colors group-hover:bg-brand-gold/15 group-hover:text-brand-gold">
                 <Icon className="size-6" />
               </span>
               <h3 className="mt-5 text-base font-semibold text-brand-navy">
@@ -398,7 +348,7 @@ export default function HomePage() {
             <Link
               key={sector.slug}
               to={`/training-solutions/${sector.slug}`}
-              className="group flex flex-col rounded-2xl border border-border bg-white p-7 shadow-sm transition-[transform,box-shadow,border-color] duration-200 will-change-transform hover:-translate-y-1 hover:border-brand-gold hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+              className="group flex flex-col rounded-2xl border border-border bg-white p-7 shadow-sm transition-[transform,box-shadow,border-color] duration-200 will-change-transform hover:-translate-y-1 hover:border-brand-gold/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
             >
               <h3 className="text-lg font-semibold text-brand-navy">
                 {sector.name}
@@ -436,7 +386,7 @@ export default function HomePage() {
                 className="h-full min-h-72 w-full object-cover"
               />
               <div
-                className="absolute inset-0 bg-gradient-to-t from-brand-navy-dark/80 via-brand-navy/30 to-transparent"
+                className="absolute inset-0 bg-gradient-to-t from-brand-navy-dark/80 via-brand-navy/25 to-transparent"
                 aria-hidden="true"
               />
               <div className="absolute inset-x-0 bottom-0 p-6">
@@ -444,7 +394,8 @@ export default function HomePage() {
                   Learning that fits around the shift
                 </p>
                 <p className="mt-2 text-sm text-white/80">
-                  Any device, at the learner's pace, with progress tracked centrally.
+                  Any device, at the learner's pace, with progress tracked
+                  centrally.
                 </p>
               </div>
             </div>
@@ -454,7 +405,7 @@ export default function HomePage() {
                 key={title}
                 className="rounded-2xl border border-border bg-white p-6 shadow-sm transition-[transform,box-shadow] duration-200 will-change-transform hover:-translate-y-1 hover:shadow-md"
               >
-                <span className="flex size-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
+                <span className="flex size-12 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy">
                   <Icon className="size-6" />
                 </span>
                 <h3 className="mt-5 text-base font-semibold text-brand-navy">
