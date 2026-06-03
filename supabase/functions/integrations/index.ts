@@ -34,11 +34,15 @@ const CATALOGUE: { id: string; label: string; keys: string[] }[] = [
     keys: ["IMAP_HOST", "IMAP_PORT"],
   },
   { id: "google_oauth", label: "Google sign-in", keys: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"] },
-  { id: "google_meet", label: "Google Meet & Calendar", keys: ["GCAL_CALENDAR_ID"] },
+  {
+    id: "google_meet",
+    label: "Google Meet & Calendar",
+    keys: ["GCAL_CALENDAR_ID", "GOOGLE_SA_JSON"],
+  },
   { id: "zoom", label: "Zoom (backup video)", keys: ["ZOOM_ACCOUNT_ID", "ZOOM_CLIENT_ID", "ZOOM_CLIENT_SECRET"] },
   { id: "openweather", label: "OpenWeather", keys: ["OPENWEATHER_API_KEY"] },
   { id: "gemini", label: "Google AI / Gemini (primary)", keys: ["GOOGLE_AI_API_KEY", "GOOGLE_AI_MODEL"] },
-  { id: "openrouter", label: "OpenRouter (AI fallback)", keys: ["OPENROUTER_API_KEY"] },
+  { id: "openrouter", label: "OpenRouter (AI fallback)", keys: ["OPENROUTER_API_KEY", "OR_MODEL"] },
   {
     id: "google_drive",
     label: "Google Drive (file storage)",
@@ -49,6 +53,12 @@ const CATALOGUE: { id: string; label: string; keys: string[] }[] = [
       "GDRIVE_REFRESH_TOKEN",
       "GDRIVE_FOLDER_ID",
     ],
+  },
+  { id: "webpush", label: "Web push notifications", keys: ["VAPID_JWK", "VAPID_SUBJECT"] },
+  {
+    id: "platform",
+    label: "Platform & notifications",
+    keys: ["APP_URL", "ADMIN_EMAIL", "ADMIN_EMAIL_SECONDARY", "CRON_SECRET"],
   },
 ]
 const ALLOWED = new Set(CATALOGUE.flatMap((c) => c.keys))

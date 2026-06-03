@@ -10,6 +10,8 @@ import {
   Save,
   ShieldAlert,
   HardDrive,
+  Trash2,
+  Info,
 } from "lucide-react"
 
 import {
@@ -20,10 +22,14 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { supabase } from "@/lib/supabase/client"
 import SettingsShell from "@/components/settings/SettingsShell"
+
+/** Keys whose values are long JSON blobs, better edited in a textarea. */
+const MULTILINE_KEYS = new Set(["GOOGLE_SA_JSON", "VAPID_JWK"])
 
 interface KeyStatus {
   name: string
@@ -37,6 +43,8 @@ interface Integration {
 
 function KeyRow({ k, onSaved }: { k: KeyStatus; onSaved: () => void }) {
   const [value, setValue] = useState("")
+  const multiline = MULTILINE_KEYS.has(k.name)
+
   const save = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.functions.invoke("integrations", {
@@ -50,6 +58,20 @@ function KeyRow({ k, onSaved }: { k: KeyStatus; onSaved: () => void }) {
       onSaved()
     },
     onError: () => toast.error("Could not save", { description: "Super-admin only." }),
+  })
+
+  const remove = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.functions.invoke("integrations", {
+        body: { action: "remove", name: k.name },
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      toast.success(`${k.name} cleared`)
+      onSaved()
+    },
+    onError: () => toast.error("Could not clear", { description: "Super-admin only." }),
   })
 
   return (
@@ -66,23 +88,55 @@ function KeyRow({ k, onSaved }: { k: KeyStatus; onSaved: () => void }) {
           </Badge>
         )}
       </div>
-      <div className="flex gap-2">
-        <Input
-          type="password"
-          autoComplete="off"
-          placeholder={k.configured ? "Enter a new value to replace…" : "Paste value…"}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="flex-1"
-        />
-        <Button size="sm" disabled={!value.trim() || save.isPending} onClick={() => save.mutate()}>
-          {save.isPending ? (
-            <Loader2 className="mr-1.5 size-4 animate-spin" />
-          ) : (
-            <Save className="mr-1.5 size-4" />
-          )}
-          Save
-        </Button>
+      <div className={multiline ? "space-y-2" : "flex gap-2"}>
+        {multiline ? (
+          <Textarea
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={k.configured ? "Paste a new JSON value to replace…" : "Paste JSON value…"}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="min-h-24 font-mono text-xs"
+          />
+        ) : (
+          <Input
+            type="password"
+            autoComplete="off"
+            placeholder={k.configured ? "Enter a new value to replace…" : "Paste value…"}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="flex-1"
+          />
+        )}
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            disabled={!value.trim() || save.isPending}
+            onClick={() => save.mutate()}
+          >
+            {save.isPending ? (
+              <Loader2 className="mr-1.5 size-4 animate-spin" />
+            ) : (
+              <Save className="mr-1.5 size-4" />
+            )}
+            Save
+          </Button>
+          {k.configured ? (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={remove.isPending}
+              onClick={() => remove.mutate()}
+              aria-label={`Clear ${k.name}`}
+            >
+              {remove.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
+            </Button>
+          ) : null}
+        </div>
       </div>
     </div>
   )
@@ -149,8 +203,20 @@ export default function IntegrationsPage() {
         <CardContent className="flex items-start gap-3 p-4 text-sm">
           <ShieldAlert className="mt-0.5 size-5 shrink-0 text-warning" />
           <p className="text-muted-foreground">
-            Keys are stored server-side and never shown again after saving. Only a
-            super admin can view or change this page.
+            Keys are stored server-side and never shown again after saving. Saved
+            keys take effect automatically for services that resolve them through
+            the platform. Only a super admin can view or change this page.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border bg-muted/30">
+        <CardContent className="flex items-start gap-3 p-4 text-sm">
+          <Info className="mt-0.5 size-5 shrink-0 text-brand-navy" />
+          <p className="text-muted-foreground">
+            Supabase keys (project URL and service role) are managed by Supabase
+            itself and injected automatically. Rotate the service role key in the
+            Supabase dashboard under Project Settings, API. It is not set here.
           </p>
         </CardContent>
       </Card>
