@@ -1,7 +1,5 @@
 import type { ReactNode } from "react"
 
-import CommsNav from "@/components/communication/CommsNav"
-
 interface CommsShellProps {
   /** Sub-heading for the active section, shown under the area title. */
   subtitle: string
@@ -29,8 +27,6 @@ export default function CommsShell({
         </div>
         {action}
       </header>
-
-      <CommsNav />
 
       <div className="space-y-6">{children}</div>
     </div>

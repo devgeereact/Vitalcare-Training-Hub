@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom"
 import { AppSidebar } from "@/components/app-sidebar"
 import BottomTabBar from "@/components/platform/BottomTabBar"
+import SectionTabs from "@/components/platform/SectionTabs"
 import React from "react"
 import { NotificationDropdown } from "@/components/notification-dropdown"
 import AnnouncementPopup from "@/components/platform/AnnouncementPopup"
@@ -163,6 +164,7 @@ export default function AppLayout() {
 
         {/* PAGE CONTENT */}
         <main className="flex-1 p-6 pb-24 md:pb-6">
+          <SectionTabs />
           <Outlet />
         </main>
 
