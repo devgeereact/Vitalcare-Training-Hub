@@ -2,7 +2,7 @@ import jsPDF from "jspdf"
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 import { QRCodeSVG } from "qrcode.react"
-import { COMPANY, BRAND, LEADERSHIP } from "@/lib/constants"
+import { COMPANY, BRAND, LEADERSHIP, LOGOS } from "@/lib/constants"
 
 export interface CertificatePdfData {
   learnerName: string
@@ -72,25 +72,92 @@ export async function certQrPngDataUrl(uuid: string, sizePx = 256): Promise<stri
       marginSize: 2,
     }),
   )
-  const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  return svgStringToPng(svg, sizePx, "#ffffff")
+}
+
+/** Load an image source, rejecting if it fails to decode. */
+function loadImage(src: string, w: number, h: number): Promise<HTMLImageElement> {
   const img = new Image()
-  img.width = sizePx
-  img.height = sizePx
-  const loaded = new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve()
-    img.onerror = () => reject(new Error("Failed to render QR code image"))
+  img.width = w
+  img.height = h
+  const done = new Promise<HTMLImageElement>((resolve, reject) => {
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error("Failed to load image"))
   })
-  img.src = svgUrl
-  await loaded
+  img.src = src
+  return done
+}
+
+/**
+ * Rasterise an inline SVG string to a PNG data URL at the given square size.
+ * `bg` is optional; omit to keep transparency (used for the seal so its ribbon
+ * tails do not sit on a white box).
+ */
+async function svgStringToPng(
+  svg: string,
+  sizePx: number,
+  bg?: string,
+): Promise<string> {
+  const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  const img = await loadImage(svgUrl, sizePx, sizePx)
   const canvas = document.createElement("canvas")
   canvas.width = sizePx
   canvas.height = sizePx
   const ctx = canvas.getContext("2d")
   if (!ctx) throw new Error("Canvas 2D context unavailable")
-  ctx.fillStyle = "#ffffff"
-  ctx.fillRect(0, 0, sizePx, sizePx)
+  if (bg) {
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, sizePx, sizePx)
+  }
   ctx.drawImage(img, 0, 0, sizePx, sizePx)
   return canvas.toDataURL("image/png")
+}
+
+/** Rasterise a same-origin image URL (the round logo SVG) to a PNG data URL. */
+async function urlToPng(url: string, sizePx = 256): Promise<string> {
+  const img = await loadImage(url, sizePx, sizePx)
+  const canvas = document.createElement("canvas")
+  canvas.width = sizePx
+  canvas.height = sizePx
+  const ctx = canvas.getContext("2d")
+  if (!ctx) throw new Error("Canvas 2D context unavailable")
+  ctx.drawImage(img, 0, 0, sizePx, sizePx)
+  return canvas.toDataURL("image/png")
+}
+
+/**
+ * The gold medallion seal as an SVG string, matching the on-screen GoldSeal in
+ * CertificatePreview so the printed and previewed seals are the same.
+ */
+function sealSvgMarkup(): string {
+  const teeth = Array.from({ length: 48 }, (_, i) => {
+    const a = (i / 48) * Math.PI * 2
+    const cx = (60 + Math.cos(a) * 54.5).toFixed(2)
+    const cy = (60 + Math.sin(a) * 54.5).toFixed(2)
+    return `<circle cx="${cx}" cy="${cy}" r="2.4" fill="#c79a38"/>`
+  }).join("")
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+    <defs>
+      <radialGradient id="sf" cx="50%" cy="38%" r="70%">
+        <stop offset="0%" stop-color="#e8c26a"/>
+        <stop offset="55%" stop-color="#d4a843"/>
+        <stop offset="100%" stop-color="#a9842f"/>
+      </radialGradient>
+      <linearGradient id="sr" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#22387f"/>
+        <stop offset="100%" stop-color="#142054"/>
+      </linearGradient>
+    </defs>
+    <path d="M44 96 L34 118 L48 110 L52 120 L60 98 Z" fill="url(#sr)"/>
+    <path d="M76 96 L86 118 L72 110 L68 120 L60 98 Z" fill="url(#sr)"/>
+    ${teeth}
+    <circle cx="60" cy="60" r="52" fill="url(#sf)"/>
+    <circle cx="60" cy="60" r="46" fill="none" stroke="#fff6e0" stroke-opacity="0.55" stroke-width="0.8"/>
+    <circle cx="60" cy="60" r="40" fill="none" stroke="#8c6b22" stroke-width="0.5" stroke-dasharray="1 2"/>
+    <circle cx="60" cy="60" r="35" fill="none" stroke="#fff6e0" stroke-opacity="0.6" stroke-width="0.7"/>
+    <text x="60" y="58" text-anchor="middle" dominant-baseline="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="#142054">VC</text>
+    <text x="60" y="78" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="6.5" letter-spacing="1.5" fill="#142054" fill-opacity="0.85">VERIFIED</text>
+  </svg>`
 }
 
 /** RGB triplet for a hex colour, used by jsPDF's numeric draw/text setters. */
@@ -101,39 +168,6 @@ function rgb(hex: string): [number, number, number] {
     parseInt(h.slice(2, 4), 16),
     parseInt(h.slice(4, 6), 16),
   ]
-}
-
-/** Draw the gold medallion seal centred at (cx, cy) with the given radius. */
-function drawSeal(doc: jsPDF, cx: number, cy: number, r: number): void {
-  const [gr, gg, gb] = rgb(BRAND.gold)
-  const [nr, ng, nb] = rgb(BRAND.navy)
-
-  // Fluted edge: small gold dots around the rim.
-  doc.setFillColor(gr, gg, gb)
-  const teeth = 40
-  for (let i = 0; i < teeth; i += 1) {
-    const a = (i / teeth) * Math.PI * 2
-    doc.circle(cx + Math.cos(a) * (r + 1.6), cy + Math.sin(a) * (r + 1.6), 0.7, "F")
-  }
-
-  // Face and rings.
-  doc.setFillColor(gr, gg, gb)
-  doc.circle(cx, cy, r, "F")
-  doc.setDrawColor(255, 246, 224)
-  doc.setLineWidth(0.4)
-  doc.circle(cx, cy, r - 1.6)
-  doc.setDrawColor(140, 107, 34)
-  doc.setLineWidth(0.25)
-  doc.circle(cx, cy, r - 3.4)
-
-  // Monogram.
-  doc.setTextColor(nr, ng, nb)
-  doc.setFont("times", "bold")
-  doc.setFontSize(r * 1.5)
-  doc.text("VC", cx, cy + r * 0.05, { align: "center", baseline: "middle" })
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(r * 0.32)
-  doc.text("VERIFIED", cx, cy + r * 0.55, { align: "center", baseline: "middle" })
 }
 
 /** Draw a decorative corner flourish anchored at (x, y) towards (sx, sy). */
@@ -178,21 +212,31 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
   drawCorner(doc, 19, H - 19, 1, -1)
   drawCorner(doc, W - 19, H - 19, -1, -1)
 
+  // Crest: the round Vitalcare logo, top centre (matches the on-screen
+  // preview). If it fails to rasterise the certificate still renders.
+  const logoSize = 16
+  try {
+    const logoPng = await urlToPng(LOGOS.roundNavy, 256)
+    doc.addImage(logoPng, "PNG", W / 2 - logoSize / 2, 18, logoSize, logoSize)
+  } catch (err) {
+    console.error("[downloadCertificatePdf:logo]", err)
+  }
+
   // Heading.
   doc.setTextColor(nr, ng, nb)
   doc.setFont("times", "normal")
   doc.setFontSize(32)
-  doc.text(data.titleText?.trim() || "Certificate of Completion", W / 2, 42, {
+  doc.text(data.titleText?.trim() || "Certificate of Completion", W / 2, 48, {
     align: "center",
   })
 
   // Gold divider under the title.
   doc.setDrawColor(gr, gg, gb)
   doc.setLineWidth(0.6)
-  doc.line(W / 2 - 26, 47, W / 2 - 4, 47)
-  doc.line(W / 2 + 4, 47, W / 2 + 26, 47)
+  doc.line(W / 2 - 26, 53, W / 2 - 4, 53)
+  doc.line(W / 2 + 4, 53, W / 2 + 26, 53)
   doc.setFillColor(gr, gg, gb)
-  doc.rect(W / 2 - 1.3, 45.7, 2.6, 2.6, "F")
+  doc.rect(W / 2 - 1.3, 51.7, 2.6, 2.6, "F")
 
   // Recital: intro line.
   doc.setFont("helvetica", "normal")
@@ -251,8 +295,16 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
     { align: "center" },
   )
 
-  // Central seal, sitting above the signature row.
-  drawSeal(doc, W / 2, 158, 15)
+  // Central seal, rasterised from the same SVG used on screen so the printed
+  // and previewed medallions match. 30mm square places the circle centre at
+  // y158, with the ribbon tails below.
+  const sealSize = 30
+  try {
+    const sealPng = await svgStringToPng(sealSvgMarkup(), 320)
+    doc.addImage(sealPng, "PNG", W / 2 - sealSize / 2, 143, sealSize, sealSize)
+  } catch (err) {
+    console.error("[downloadCertificatePdf:seal]", err)
+  }
 
   // Signatory (left). The on-screen preview renders the name in the Dancing
   // Script cursive webfont. jsPDF cannot easily embed that font, so the PDF
