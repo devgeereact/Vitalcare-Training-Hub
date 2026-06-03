@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { ChevronDown, Menu, X, LayoutDashboard, LogOut, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -27,6 +28,8 @@ function isActive(pathname: string, href?: string): boolean {
 export function Nav() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  // Portal target resolved after mount, so document.body is guaranteed present.
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const { session, profile, role, signOut } = useAuth()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -40,6 +43,10 @@ export function Nav() {
     setMobileOpen(false)
     navigate("/")
   }
+
+  useEffect(() => {
+    setPortalTarget(document.body)
+  }, [])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -205,9 +212,11 @@ export function Nav() {
         </button>
       </div>
 
-      {/* Mobile drawer */}
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
+      {/* Mobile drawer — portalled to <body> so the header's backdrop-blur
+          containing block cannot trap the fixed overlay (mobile Safari bug). */}
+      {mobileOpen && portalTarget
+        ? createPortal(
+        <div className="fixed inset-0 z-[60] lg:hidden">
           <button
             type="button"
             aria-label="Close menu"
@@ -335,8 +344,10 @@ export function Nav() {
               )}
             </div>
           </div>
-        </div>
-      ) : null}
+        </div>,
+            portalTarget,
+          )
+        : null}
     </header>
   )
 }

@@ -229,8 +229,8 @@ function HomeHero() {
         >
           <div className="relative overflow-hidden rounded-2xl border border-border shadow-xl">
             <img
-              src={img("consultation")}
-              alt={imgAlt("consultation")}
+              src={img("clinicalReview")}
+              alt={imgAlt("clinicalReview")}
               loading="eager"
               className="aspect-[4/5] w-full object-cover sm:aspect-[5/4] lg:aspect-[4/5]"
             />
