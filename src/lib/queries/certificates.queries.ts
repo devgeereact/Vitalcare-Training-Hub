@@ -72,7 +72,7 @@ export async function getCertificates(): Promise<CertRow[]> {
       id: d.id,
       learnerId: d.learner_id,
       learnerName: nameById.get(d.learner_id) ?? "Unknown",
-      courseTitle: d.course_id ? titleById.get(d.course_id) ?? "—" : "Standalone",
+      courseTitle: d.course_id ? titleById.get(d.course_id) ?? "-" : "Standalone",
       cpdHours: d.cpd_hours,
       issuedAt: d.issued_at,
       expiresAt: d.expires_at,

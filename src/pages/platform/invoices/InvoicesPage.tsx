@@ -273,7 +273,7 @@ export default function InvoicesPage() {
                       {isAdmin && <td className="px-5 py-3">{inv.recipient_name}</td>}
                       <td className="px-5 py-3">{gbp(inv.total_pence)}</td>
                       <td className="px-5 py-3 text-muted-foreground">
-                        {inv.due_date ? format(new Date(inv.due_date), "d MMM yyyy") : "—"}
+                        {inv.due_date ? format(new Date(inv.due_date), "d MMM yyyy") : "-"}
                       </td>
                       <td className="px-5 py-3">
                         <Badge variant="secondary" className={STATUS_STYLE[inv.status]}>

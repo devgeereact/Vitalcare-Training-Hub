@@ -30,7 +30,7 @@ export const learnerColumns: ColumnDef<LearnerRow>[] = [
   {
     accessorKey: "phone",
     header: "Phone",
-    cell: ({ row }) => row.original.phone || "—",
+    cell: ({ row }) => row.original.phone || "-",
   },
   {
     accessorKey: "joined",

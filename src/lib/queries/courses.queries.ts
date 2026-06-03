@@ -83,7 +83,7 @@ export async function getCourses(): Promise<CourseRow[]> {
   return (courses.data ?? []).map((c) => ({
     id: c.id,
     title: c.title,
-    categoryName: c.category_id ? catName.get(c.category_id) ?? "—" : "—",
+    categoryName: c.category_id ? catName.get(c.category_id) ?? "-" : "-",
     cstf: c.is_cstf_aligned,
     cpdHours: c.cpd_hours,
     status: c.is_published ? "Published" : "Draft",

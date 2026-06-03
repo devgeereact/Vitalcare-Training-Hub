@@ -597,7 +597,7 @@ export async function getAttendanceLog(): Promise<AttendanceLogRow[]> {
   return data.map((d) => ({
     id: d.id,
     learnerName: nameById.get(d.learner_id) ?? "Unknown",
-    sessionTitle: titleById.get(d.session_id) ?? "—",
+    sessionTitle: titleById.get(d.session_id) ?? "-",
     status: d.status,
     markedAt: d.marked_at,
   }))

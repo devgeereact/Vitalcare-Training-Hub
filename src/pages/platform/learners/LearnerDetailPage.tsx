@@ -226,7 +226,7 @@ function FeesTab({ learnerId }: { learnerId: string }) {
                       <td className="px-5 py-3 font-mono text-xs">{inv.number}</td>
                       <td className="px-5 py-3">{gbp(inv.total_pence)}</td>
                       <td className="px-5 py-3 text-muted-foreground">
-                        {inv.due_date ? format(new Date(inv.due_date), "d MMM yyyy") : "—"}
+                        {inv.due_date ? format(new Date(inv.due_date), "d MMM yyyy") : "-"}
                       </td>
                       <td className="px-5 py-3">
                         <Badge
@@ -298,7 +298,7 @@ function ExamTab({ learnerId }: { learnerId: string }) {
                       <td className="px-5 py-3 font-medium">{r.assessmentTitle}</td>
                       <td className="px-5 py-3">{r.score}%</td>
                       <td className="px-5 py-3 text-muted-foreground">
-                        {r.completedAt ? format(new Date(r.completedAt), "d MMM yyyy") : "—"}
+                        {r.completedAt ? format(new Date(r.completedAt), "d MMM yyyy") : "-"}
                       </td>
                       <td className="px-5 py-3">
                         <Badge

@@ -135,7 +135,7 @@ export default function AssignSessionDialog({
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Basic Life Support — practical" {...field} />
+                    <Input placeholder="Basic Life Support, practical" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -96,15 +96,15 @@ export default function ContactDetailDialog({
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Phone</p>
-              <p className="font-medium">{user.phone || "—"}</p>
+              <p className="font-medium">{user.phone || "-"}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Emergency contact</p>
-              <p className="font-medium">{user.emergency_contact_name || "—"}</p>
+              <p className="font-medium">{user.emergency_contact_name || "-"}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Emergency phone</p>
-              <p className="font-medium">{user.emergency_contact_phone || "—"}</p>
+              <p className="font-medium">{user.emergency_contact_phone || "-"}</p>
             </div>
             {user.created_at && (
               <div>

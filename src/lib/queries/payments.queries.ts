@@ -63,7 +63,7 @@ export function useSubscriptionHistory(orgId: string | null | undefined) {
           ...r,
           planName: plan?.name ?? "Custom",
           pricePence: plan?.price_pence ?? 0,
-          interval: plan?.interval ?? "—",
+          interval: plan?.interval ?? "-",
         }
       })
     },

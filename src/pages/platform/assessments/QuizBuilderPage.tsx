@@ -194,7 +194,7 @@ export default function QuizBuilderPage() {
                   <FormItem>
                     <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="Moving and Handling — knowledge check" {...field} />
+                      <Input placeholder="Moving and Handling, knowledge check" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -87,7 +87,7 @@ export function downloadInvoicePdf(inv: Invoice): void {
   doc.text("BILL TO", 196, 62, { align: "right" })
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
-  doc.text(inv.recipient_name ?? "—", 196, 68, { align: "right" })
+  doc.text(inv.recipient_name ?? "-", 196, 68, { align: "right" })
   if (inv.recipient_email) {
     doc.setTextColor(muted)
     doc.setFontSize(9)

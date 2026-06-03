@@ -213,7 +213,7 @@ export async function getLearnerExamResults(
 
   return data.map((d) => ({
     id: d.id,
-    assessmentTitle: titleById.get(d.assessment_id) ?? "—",
+    assessmentTitle: titleById.get(d.assessment_id) ?? "-",
     score: d.score,
     passed: d.passed,
     completedAt: d.completed_at,

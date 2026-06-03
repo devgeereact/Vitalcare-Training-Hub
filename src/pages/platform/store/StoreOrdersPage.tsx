@@ -72,7 +72,7 @@ export default function StoreOrdersPage() {
                     <tr key={o.id} className="border-b border-border last:border-0">
                       <td className="px-5 py-3 font-mono text-xs">{o.reference}</td>
                       {isAdmin && <td className="px-5 py-3">{o.buyerName}</td>}
-                      <td className="px-5 py-3 text-muted-foreground">{o.items || "—"}</td>
+                      <td className="px-5 py-3 text-muted-foreground">{o.items || "-"}</td>
                       <td className="px-5 py-3">{gbp(o.total_pence)}</td>
                       <td className="px-5 py-3 text-muted-foreground">
                         {o.payment_method === "paypal" ? "PayPal" : "Bank transfer"}

@@ -129,7 +129,7 @@ export default function AiFieldsButton({
               <div key={f.key}>
                 <p className="text-xs font-medium text-muted-foreground">{f.label}</p>
                 <p className="line-clamp-3 rounded bg-muted/50 p-2 text-xs">
-                  {(result[f.key] || "—").replace(/<[^>]+>/g, " ")}
+                  {(result[f.key] || "-").replace(/<[^>]+>/g, " ")}
                 </p>
               </div>
             ))}

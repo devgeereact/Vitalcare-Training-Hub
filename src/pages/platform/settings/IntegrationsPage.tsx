@@ -123,7 +123,7 @@ export default function IntegrationsPage() {
     const d = params.get("drive")
     if (!d) return
     if (d === "connected") toast.success("Google Drive connected")
-    else if (d === "norefresh") toast.error("Reconnect needed — no refresh token returned")
+    else if (d === "norefresh") toast.error("Reconnect needed, no refresh token returned")
     else if (d === "noclient") toast.error("Set Drive client ID and secret first")
     else if (d === "error") toast.error("Google Drive connection failed")
     params.delete("drive")

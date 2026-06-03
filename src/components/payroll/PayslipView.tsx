@@ -37,7 +37,7 @@ export function PayslipView({ payslip }: { payslip: Payroll }): JSX.Element {
   const payDate = payslip.paid_at
     ? format(new Date(payslip.paid_at), "d MMMM yyyy")
     : payslip.status === "paid"
-      ? "—"
+      ? "-"
       : "Pending"
 
   return (

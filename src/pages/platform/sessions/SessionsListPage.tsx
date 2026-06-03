@@ -135,7 +135,7 @@ function LearnerSessions() {
                         onClick={() =>
                           mark
                             .mutateAsync(s.sessionId)
-                            .then(() => toast.success("Attendance marked — you're in"))
+                            .then(() => toast.success("Attendance marked, you're in"))
                             .catch(() => toast.error("Could not mark attendance"))
                         }
                       >

@@ -127,7 +127,7 @@ export default function AttendanceLogPage() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {r.markedAt ? format(new Date(r.markedAt), "d MMM yyyy, HH:mm") : "—"}
+                      {r.markedAt ? format(new Date(r.markedAt), "d MMM yyyy, HH:mm") : "-"}
                     </TableCell>
                   </TableRow>
                 ))}

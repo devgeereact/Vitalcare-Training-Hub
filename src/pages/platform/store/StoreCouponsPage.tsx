@@ -127,7 +127,7 @@ export default function StoreCouponsPage() {
                 <li key={c.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
                   <code className="rounded bg-muted px-2 py-1 text-sm font-medium">{c.code}</code>
                   <span className="text-sm text-muted-foreground">
-                    {c.percent_off ? `${c.percent_off}% off` : c.amount_off_pence ? `${gbp(c.amount_off_pence)} off` : "—"}
+                    {c.percent_off ? `${c.percent_off}% off` : c.amount_off_pence ? `${gbp(c.amount_off_pence)} off` : "-"}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     used {c.used_count}

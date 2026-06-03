@@ -168,7 +168,7 @@ export default function SessionFormPage() {
                   <FormItem>
                     <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="Basic Life Support — practical" {...field} />
+                      <Input placeholder="Basic Life Support, practical" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

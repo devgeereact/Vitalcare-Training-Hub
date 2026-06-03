@@ -83,7 +83,7 @@ export function downloadPayslipPdf(p: Payroll): void {
   doc.setTextColor(muted)
   doc.setFontSize(9)
   doc.text(`Period: ${periodRange(p)}`, pageW - 14, 52, { align: "right" })
-  const payDate = p.paid_at ? ukDate(p.paid_at) : p.status === "paid" ? "—" : "Pending"
+  const payDate = p.paid_at ? ukDate(p.paid_at) : p.status === "paid" ? "-" : "Pending"
   doc.text(`Pay date: ${payDate}`, pageW - 14, 57, { align: "right" })
   doc.text(`Status: ${p.status.toUpperCase()}`, pageW - 14, 62, { align: "right" })
 

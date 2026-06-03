@@ -75,13 +75,13 @@ export default function FeesReceiptsPage() {
                     <tr key={r.id} className="border-b border-border last:border-0">
                       <td className="px-5 py-3 font-medium">{r.planName}</td>
                       <td className="px-5 py-3">
-                        {r.pricePence > 0 ? `${gbp(r.pricePence)} / ${r.interval}` : "—"}
+                        {r.pricePence > 0 ? `${gbp(r.pricePence)} / ${r.interval}` : "-"}
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">
                         {format(new Date(r.started_at), "d MMM yyyy")}
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">
-                        {r.ends_at ? format(new Date(r.ends_at), "d MMM yyyy") : "—"}
+                        {r.ends_at ? format(new Date(r.ends_at), "d MMM yyyy") : "-"}
                       </td>
                       <td className="px-5 py-3">
                         <Badge variant="secondary" className="capitalize">

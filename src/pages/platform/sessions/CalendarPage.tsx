@@ -193,7 +193,7 @@ export default function CalendarPage() {
           rawId: r.id,
           description: [counterpart ? `With ${counterpart}` : null, r.note]
             .filter(Boolean)
-            .join(" — ") || undefined,
+            .join(" · ") || undefined,
           meetUrl: r.meet_url ?? undefined,
         },
       })

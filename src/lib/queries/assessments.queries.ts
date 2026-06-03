@@ -47,7 +47,7 @@ export async function getAssessments(): Promise<AssessmentRow[]> {
   return (data ?? []).map((a) => ({
     id: a.id,
     title: a.title,
-    courseTitle: a.course_id ? titleById.get(a.course_id) ?? "—" : "Standalone",
+    courseTitle: a.course_id ? titleById.get(a.course_id) ?? "-" : "Standalone",
     passMark: a.pass_mark,
     status: a.is_published ? "Published" : "Draft",
     updatedAt: a.updated_at,
@@ -398,7 +398,7 @@ export async function getResults(): Promise<ResultRow[]> {
   return data.map((d) => ({
     id: d.id,
     learnerName: nameById.get(d.learner_id) ?? "Unknown",
-    assessmentTitle: titleById.get(d.assessment_id) ?? "—",
+    assessmentTitle: titleById.get(d.assessment_id) ?? "-",
     score: d.score,
     passed: d.passed,
     completedAt: d.completed_at,

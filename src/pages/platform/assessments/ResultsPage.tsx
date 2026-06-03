@@ -99,7 +99,7 @@ export default function ResultsPage() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {r.completedAt ? format(new Date(r.completedAt), "d MMM yyyy, HH:mm") : "—"}
+                      {r.completedAt ? format(new Date(r.completedAt), "d MMM yyyy, HH:mm") : "-"}
                     </TableCell>
                   </TableRow>
                 ))}

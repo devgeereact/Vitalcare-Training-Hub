@@ -99,7 +99,7 @@ export function InvoiceView({ invoice }: { invoice: Invoice }): JSX.Element {
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Bill to
             </p>
-            <p className="font-medium text-foreground">{invoice.recipient_name ?? "—"}</p>
+            <p className="font-medium text-foreground">{invoice.recipient_name ?? "-"}</p>
             {invoice.recipient_email && (
               <p className="text-sm text-muted-foreground">{invoice.recipient_email}</p>
             )}

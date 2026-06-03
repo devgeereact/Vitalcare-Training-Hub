@@ -227,7 +227,7 @@ export default function StoreDashboard({ staff, buyerId }: Props): JSX.Element {
                         {staff ? o.buyerName : o.items || "Order"}
                       </p>
                       <p className="truncate font-mono text-[11px] text-muted-foreground">
-                        {o.reference ?? "—"}
+                        {o.reference ?? "-"}
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
