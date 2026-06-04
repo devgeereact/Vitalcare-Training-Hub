@@ -17,14 +17,40 @@ import type {
  * from the existing `select("*")` payload, casting once, with justification,
  * rather than reaching for `any`.
  */
+/** Supported social platforms, in display order. */
+export const SOCIAL_PLATFORMS = [
+  "linkedin",
+  "twitter",
+  "facebook",
+  "instagram",
+  "youtube",
+  "github",
+  "website",
+] as const
+
+export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number]
+export type SocialLinks = Partial<Record<SocialPlatform, string>>
+
 export interface ProfileExtras {
   banner_url: string | null
   job_title: string | null
+  social_links: SocialLinks
 }
 
 export type FullProfile = Profile & ProfileExtras
 
-/** Read the banner/job-title extras off a profile loaded via `select("*")`. */
+/** Keep only known platforms with non-empty string values. */
+function cleanSocialLinks(value: unknown): SocialLinks {
+  if (!value || typeof value !== "object") return {}
+  const out: SocialLinks = {}
+  for (const key of SOCIAL_PLATFORMS) {
+    const v = (value as Record<string, unknown>)[key]
+    if (typeof v === "string" && v.trim()) out[key] = v.trim()
+  }
+  return out
+}
+
+/** Read the banner/job-title/social extras off a profile loaded via `select("*")`. */
 export function readProfileExtras(profile: Profile | null): ProfileExtras {
   // The row already contains these columns at runtime; the generated type just
   // does not list them. A single narrow cast keeps the rest of the app typed.
@@ -32,6 +58,7 @@ export function readProfileExtras(profile: Profile | null): ProfileExtras {
   return {
     banner_url: row.banner_url ?? null,
     job_title: row.job_title ?? null,
+    social_links: cleanSocialLinks(row.social_links),
   }
 }
 
@@ -45,6 +72,7 @@ export interface ProfileUpdate {
   job_title?: string | null
   avatar_url?: string | null
   banner_url?: string | null
+  social_links?: SocialLinks
 }
 
 /**

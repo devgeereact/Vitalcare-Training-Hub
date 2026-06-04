@@ -14,6 +14,7 @@ import ProfileIdentityCard from "@/components/profile/ProfileIdentityCard"
 import ProfilePersonalInfo from "@/components/profile/ProfilePersonalInfo"
 import ProfileMetrics from "@/components/profile/ProfileMetrics"
 import ProfileContact from "@/components/profile/ProfileContact"
+import ProfileConnections from "@/components/profile/ProfileConnections"
 import ProfileDepartments from "@/components/profile/ProfileDepartments"
 import ProfileActivity from "@/components/profile/ProfileActivity"
 
@@ -84,6 +85,11 @@ export default function ProfilePage(): React.ReactElement {
           onBannerUploaded={(url) => void saveImage("banner_url", url)}
         />
         <ProfileContact profile={profile} organisationName={org.data ?? null} />
+        <ProfileConnections
+          profile={profile}
+          organisationName={org.data ?? null}
+          socialLinks={extras.social_links}
+        />
         <ProfileDepartments userId={profile.id} />
       </div>
 

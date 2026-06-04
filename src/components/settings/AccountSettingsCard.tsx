@@ -18,7 +18,19 @@ import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import {
   readProfileExtras,
   updateOwnProfile,
+  SOCIAL_PLATFORMS,
+  type SocialLinks,
 } from "@/lib/queries/profile.queries"
+
+const SOCIAL_LABELS: Record<(typeof SOCIAL_PLATFORMS)[number], string> = {
+  linkedin: "LinkedIn",
+  twitter: "X (Twitter)",
+  facebook: "Facebook",
+  instagram: "Instagram",
+  youtube: "YouTube",
+  github: "GitHub",
+  website: "Website",
+}
 
 /**
  * The single place to edit account details. Writes through `updateOwnProfile`,
@@ -37,6 +49,7 @@ export default function AccountSettingsCard(): React.ReactElement {
     profile?.emergency_contact_phone ?? "",
   )
   const [about, setAbout] = useState(profile?.about ?? "")
+  const [social, setSocial] = useState<SocialLinks>(extras.social_links)
   const [saving, setSaving] = useState(false)
 
   async function save(): Promise<void> {
@@ -51,6 +64,11 @@ export default function AccountSettingsCard(): React.ReactElement {
         emergency_contact_name: ecName.trim() || null,
         emergency_contact_phone: ecPhone.trim() || null,
         about: about.trim() || null,
+        social_links: Object.fromEntries(
+          SOCIAL_PLATFORMS.map((p) => [p, social[p]?.trim() ?? ""]).filter(
+            ([, v]) => v,
+          ),
+        ),
       })
       await refreshProfile()
       toast.success("Profile updated")
@@ -130,6 +148,26 @@ export default function AccountSettingsCard(): React.ReactElement {
             onChange={(e) => setAbout(e.target.value)}
           />
         </div>
+        <div className="border-t border-border pt-4 sm:col-span-2">
+          <Label className="mb-3 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Social links
+          </Label>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {SOCIAL_PLATFORMS.map((p) => (
+              <div key={p}>
+                <Label className="mb-1.5 block text-xs">{SOCIAL_LABELS[p]}</Label>
+                <Input
+                  value={social[p] ?? ""}
+                  placeholder={p === "website" ? "https://…" : "Profile URL"}
+                  onChange={(e) =>
+                    setSocial((s) => ({ ...s, [p]: e.target.value }))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="flex justify-end border-t border-border pt-4 sm:col-span-2">
           <Button onClick={() => void save()} disabled={saving}>
             {saving ? (
