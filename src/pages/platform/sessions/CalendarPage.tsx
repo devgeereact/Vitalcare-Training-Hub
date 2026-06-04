@@ -77,6 +77,8 @@ interface Selected {
   description?: string
   color: string
   meetUrl?: string
+  /** True when the event has already ended (computed at selection time). */
+  past?: boolean
 }
 
 function toLocalInput(d: Date) {
@@ -356,6 +358,7 @@ export default function CalendarPage() {
                   eventClick={(info) => {
                     info.jsEvent.preventDefault()
                     const kind = info.event.extendedProps.kind as Selected["kind"]
+                    const endAt = info.event.end ?? info.event.start
                     setSelected({
                       kind,
                       id: (info.event.extendedProps.rawId as string) ?? info.event.id,
@@ -365,6 +368,7 @@ export default function CalendarPage() {
                       description: info.event.extendedProps.description as string | undefined,
                       color: info.event.backgroundColor || COLORS.custom,
                       meetUrl: info.event.extendedProps.meetUrl as string | undefined,
+                      past: endAt ? endAt.getTime() < Date.now() : false,
                     })
                   }}
                   dateClick={(info) => openNew(info.dateStr)}
@@ -398,6 +402,7 @@ export default function CalendarPage() {
                       description: e.extendedProps?.description as string | undefined,
                       color: (e.backgroundColor as string) || COLORS.custom,
                       meetUrl: e.extendedProps?.meetUrl as string | undefined,
+                      past: new Date((e.end ?? e.start) as string).getTime() < Date.now(),
                     })
                   }
                   className="flex w-full items-start gap-2 rounded-lg p-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
@@ -463,9 +468,7 @@ export default function CalendarPage() {
                       </Link>
                     </Button>
                     {selected.meetUrl &&
-                      ((selected.end
-                        ? new Date(selected.end).getTime()
-                        : new Date(selected.start).getTime()) < Date.now() ? (
+                      (selected.past ? (
                         <Button disabled variant="secondary">
                           Meeting ended
                         </Button>
