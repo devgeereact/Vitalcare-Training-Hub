@@ -159,41 +159,25 @@ export default function OurCoursesPage(): React.ReactElement {
           {!courses.isLoading &&
           !courses.isError &&
           (courses.data?.length ?? 0) > 0 ? (
-            (() => {
-              const pills = [
-                { key: ALL, label: "All courses", slug: ALL },
-                ...filterCategories.map((c) => ({
-                  key: c.id,
-                  label: c.name,
-                  slug: c.slug,
-                })),
-              ]
-              const mid = Math.ceil(pills.length / 2)
-              const rows = [pills.slice(0, mid), pills.slice(mid)]
-              return (
-                <div
-                  className="mt-10 space-y-2.5"
-                  role="group"
-                  aria-label="Filter courses by category"
-                >
-                  {rows.map((row, i) => (
-                    <div
-                      key={i}
-                      className="flex flex-wrap justify-center gap-2.5"
-                    >
-                      {row.map((p) => (
-                        <FilterPill
-                          key={p.key}
-                          label={p.label}
-                          active={activeSlug === p.slug}
-                          onClick={() => setActiveSlug(p.slug)}
-                        />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )
-            })()
+            <div
+              className="mx-auto mt-10 flex max-w-5xl flex-wrap justify-center gap-2.5"
+              role="group"
+              aria-label="Filter courses by category"
+            >
+              <FilterPill
+                label="All courses"
+                active={activeSlug === ALL}
+                onClick={() => setActiveSlug(ALL)}
+              />
+              {filterCategories.map((category) => (
+                <FilterPill
+                  key={category.id}
+                  label={category.name}
+                  active={activeSlug === category.slug}
+                  onClick={() => setActiveSlug(category.slug)}
+                />
+              ))}
+            </div>
           ) : null}
 
           <div className="mt-10">
@@ -308,7 +292,7 @@ function FilterPill({
   onClick: () => void
 }): React.ReactElement {
   const base =
-    "rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+    "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
   return (
     <button
       type="button"
@@ -320,6 +304,16 @@ function FilterPill({
           : `${base} border-slate-200 bg-white text-slate-600 hover:border-brand-navy/40 hover:text-brand-navy`
       }
     >
+      <span
+        aria-hidden
+        className={
+          active
+            ? "flex size-4 items-center justify-center rounded-full bg-white/20"
+            : "flex size-4 items-center justify-center rounded-full border-2 border-slate-300"
+        }
+      >
+        {active ? <span className="size-1.5 rounded-full bg-white" /> : null}
+      </span>
       {label}
     </button>
   )
