@@ -152,6 +152,7 @@ export interface StaffRow {
   name: string
   email: string
   role: UserRole
+  isVerified: boolean
 }
 
 const STAFF_ROLES: UserRole[] = [
@@ -168,7 +169,7 @@ export function useStaff() {
     queryFn: async (): Promise<StaffRow[]> => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, email, first_name, last_name, full_name, role")
+        .select("id, email, first_name, last_name, full_name, role, is_verified")
         .in("role", STAFF_ROLES)
         .is("deleted_at", null)
         .order("role", { ascending: true })
@@ -184,6 +185,7 @@ export function useStaff() {
           "Unnamed",
         email: p.email,
         role: p.role,
+        isVerified: !!p.is_verified,
       }))
     },
   })

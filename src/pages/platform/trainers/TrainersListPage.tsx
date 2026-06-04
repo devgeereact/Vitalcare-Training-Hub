@@ -11,10 +11,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useTrainers } from "@/lib/queries/trainers.queries"
+import { useUser } from "@/hooks/use-user"
 import ContactDetailById from "@/components/platform/ContactDetailById"
+import { VerifiedTick, VerifyControl } from "@/components/platform/Verification"
 
 export default function TrainersListPage() {
   const { data, isLoading, isError, refetch } = useTrainers()
+  const { isSuperAdmin } = useUser()
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   return (
@@ -70,8 +73,9 @@ export default function TrainersListPage() {
                       onClick={() => setSelectedId(t.id)}
                       className="block truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold rounded"
                     >
-                      <CardTitle className="truncate text-base hover:text-brand-navy">
-                        {t.name}
+                      <CardTitle className="flex items-center gap-1.5 text-base hover:text-brand-navy">
+                        <span className="truncate">{t.name}</span>
+                        <VerifiedTick verified={t.isVerified} />
                       </CardTitle>
                     </button>
                     <a
@@ -100,6 +104,15 @@ export default function TrainersListPage() {
                   <CalendarDays className="size-3.5" />
                   {t.sessionsCount} session{t.sessionsCount === 1 ? "" : "s"} delivered
                 </p>
+                {isSuperAdmin && (
+                  <div className="border-t border-border pt-3">
+                    <VerifyControl
+                      userId={t.id}
+                      verified={t.isVerified}
+                      name={t.name}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

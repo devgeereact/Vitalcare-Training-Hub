@@ -86,6 +86,9 @@ export type Profile = Timestamps & {
   emergency_contact_name: string | null
   emergency_contact_phone: string | null
   about: string | null
+  is_verified: boolean
+  verified_at: string | null
+  verified_by: string | null
 }
 
 export type Department = Timestamps & {

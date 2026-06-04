@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useStaff } from "@/lib/queries/org.queries"
+import { useUser } from "@/hooks/use-user"
 import ContactDetailById from "@/components/platform/ContactDetailById"
+import { VerifiedTick, VerifyControl } from "@/components/platform/Verification"
 import type { UserRole } from "@/types/database.types"
 
 const ROLE_LABEL: Partial<Record<UserRole, string>> = {
@@ -28,6 +30,7 @@ const ROLE_STYLE: Partial<Record<UserRole, string>> = {
 
 export default function StaffPage() {
   const { data, isLoading, isError, refetch } = useStaff()
+  const { isSuperAdmin } = useUser()
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   return (
@@ -77,7 +80,10 @@ export default function StaffPage() {
                       {s.name.slice(0, 1).toUpperCase()}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">{s.name}</span>
+                      <span className="flex items-center gap-1.5 truncate text-sm font-medium">
+                        <span className="truncate">{s.name}</span>
+                        <VerifiedTick verified={s.isVerified} />
+                      </span>
                       <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
                         <Mail className="size-3" /> {s.email}
                       </span>
@@ -86,6 +92,13 @@ export default function StaffPage() {
                   <Badge variant="secondary" className={ROLE_STYLE[s.role]}>
                     {ROLE_LABEL[s.role] ?? s.role}
                   </Badge>
+                  {isSuperAdmin && (
+                    <VerifyControl
+                      userId={s.id}
+                      verified={s.isVerified}
+                      name={s.name}
+                    />
+                  )}
                   <Button asChild variant="ghost" size="icon" className="size-8" aria-label="Message">
                     <Link to={`/platform/messages?to=${s.id}&name=${encodeURIComponent(s.name)}`}>
                       <MessageSquare className="size-4" />

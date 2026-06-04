@@ -9,6 +9,7 @@ export interface TrainerRow {
   bio: string
   specialisms: string[]
   sessionsCount: number
+  isVerified: boolean
 }
 
 export const trainersKeys = {
@@ -24,7 +25,7 @@ export function useTrainers() {
       // extended bio/specialisms (may not exist yet for every trainer).
       const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("id, email, first_name, last_name, full_name")
+        .select("id, email, first_name, last_name, full_name, is_verified")
         .eq("role", "trainer")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
@@ -67,6 +68,7 @@ export function useTrainers() {
           bio: ext?.bio ?? "",
           specialisms: (ext?.specialisms as string[] | null) ?? [],
           sessionsCount: sessionCount.get(p.id) ?? 0,
+          isVerified: !!p.is_verified,
         }
       })
     },
