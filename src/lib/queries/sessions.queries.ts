@@ -562,8 +562,13 @@ export async function selfCheckIn(sessionId: string): Promise<void> {
 // ─── Attendance log ──────────────────────────────────────────────────────────
 export interface AttendanceLogRow {
   id: string
+  sessionId: string
   learnerName: string
   sessionTitle: string
+  /** Parent course title, when the session is tied to a course. */
+  courseTitle: string | null
+  /** Session start, so the log can show and sort by when the training ran. */
+  sessionStartsAt: string | null
   status: AttendanceStatus
   markedAt: string | null
 }
@@ -584,7 +589,10 @@ export async function getAttendanceLog(): Promise<AttendanceLogRow[]> {
   const sessionIds = [...new Set(data.map((d) => d.session_id))]
   const [profiles, sessions] = await Promise.all([
     supabase.from("profiles").select("id, full_name, first_name, last_name").in("id", learnerIds),
-    supabase.from("training_sessions").select("id, title").in("id", sessionIds),
+    supabase
+      .from("training_sessions")
+      .select("id, title, starts_at, course_id")
+      .in("id", sessionIds),
   ])
   const nameById = new Map(
     (profiles.data ?? []).map((p) => [
@@ -592,15 +600,33 @@ export async function getAttendanceLog(): Promise<AttendanceLogRow[]> {
       p.full_name || [p.first_name, p.last_name].filter(Boolean).join(" ") || "Unknown",
     ]),
   )
-  const titleById = new Map((sessions.data ?? []).map((s) => [s.id, s.title]))
+  const sessionById = new Map((sessions.data ?? []).map((s) => [s.id, s]))
 
-  return data.map((d) => ({
-    id: d.id,
-    learnerName: nameById.get(d.learner_id) ?? "Unknown",
-    sessionTitle: titleById.get(d.session_id) ?? "-",
-    status: d.status,
-    markedAt: d.marked_at,
-  }))
+  const courseIds = [
+    ...new Set((sessions.data ?? []).map((s) => s.course_id).filter(Boolean)),
+  ] as string[]
+  let courseTitleById = new Map<string, string>()
+  if (courseIds.length > 0) {
+    const { data: courses } = await supabase
+      .from("courses")
+      .select("id, title")
+      .in("id", courseIds)
+    courseTitleById = new Map((courses ?? []).map((c) => [c.id, c.title]))
+  }
+
+  return data.map((d) => {
+    const s = sessionById.get(d.session_id)
+    return {
+      id: d.id,
+      sessionId: d.session_id,
+      learnerName: nameById.get(d.learner_id) ?? "Unknown",
+      sessionTitle: s?.title ?? "-",
+      courseTitle: s?.course_id ? courseTitleById.get(s.course_id) ?? null : null,
+      sessionStartsAt: s?.starts_at ?? null,
+      status: d.status,
+      markedAt: d.marked_at,
+    }
+  })
 }
 export function useAttendanceLog() {
   return useQuery({ queryKey: sessionsKeys.log(), queryFn: getAttendanceLog })
