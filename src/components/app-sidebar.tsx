@@ -29,6 +29,7 @@ export function AppSidebar({ onHoverChange, ...props }: AppSidebarProps) {
     title: entry.title,
     url: entry.url,
     icon: entry.icon,
+    sectionId: entry.id,
   }))
   const currentUser = {
     name:

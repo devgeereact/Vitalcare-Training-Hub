@@ -18,6 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import { findSection } from "@/data/platform-sections"
 
 type MenuItem = {
   title: string
@@ -26,6 +27,12 @@ type MenuItem = {
   items?: MenuItem[]
   /** Roles allowed to see this entry. Undefined = visible to every signed-in user. */
   roles?: string[]
+  /**
+   * Platform section this entry represents. When set, the entry is active for
+   * any route inside the section, so the highlight holds as you move between its
+   * sub-tabs (not just the section's first page).
+   */
+  sectionId?: string
 }
 
 export function NavMain({ items }: { items: MenuItem[] }) {
@@ -38,6 +45,13 @@ export function NavMain({ items }: { items: MenuItem[] }) {
     const u = url.startsWith("/") ? url : `/${url}`
     return location.pathname === u || location.pathname.startsWith(`${u}/`)
   }
+
+  // A flat section entry stays active across all of its sub-tabs: match by the
+  // section that owns the current route (longest-prefix), not the first page.
+  const isEntryActive = (item: MenuItem) =>
+    item.sectionId
+      ? findSection(location.pathname)?.id === item.sectionId
+      : isActiveRoute(item.url)
 
   // Auto-open the group that owns the active route; collapse the rest.
   useEffect(() => {
@@ -77,7 +91,7 @@ export function NavMain({ items }: { items: MenuItem[] }) {
   <SidebarMenuButton
     asChild
     tooltip={item.title}
-    isActive={isActiveRoute(item.url)}
+    isActive={isEntryActive(item)}
   >
     <Link to={item.url}>
       {item.icon && <item.icon className="h-4 w-4" />}
