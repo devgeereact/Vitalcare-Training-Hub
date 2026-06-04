@@ -48,17 +48,14 @@ Deno.serve(async (req) => {
   for (const c of due) {
     await admin.from("email_campaigns").update({ status: "sending" }).eq("id", c.id)
 
-    const role =
-      c.audience === "all_staff"
-        ? STAFF_ROLES
-        : c.audience === "all_trainers"
-        ? ["trainer"]
-        : ["learner"]
-    const { data: people } = await admin
-      .from("profiles")
-      .select("email")
-      .in("role", role)
-      .is("deleted_at", null)
+    // "everyone" sends to every active account; otherwise filter by role.
+    let q = admin.from("profiles").select("email").is("deleted_at", null)
+    if (c.audience === "all_staff") q = q.in("role", STAFF_ROLES)
+    else if (c.audience === "all_trainers") q = q.in("role", ["trainer"])
+    else if (c.audience === "all_learners" || c.audience === "learner")
+      q = q.in("role", ["learner"])
+    // c.audience === "everyone" -> no role filter
+    const { data: people } = await q
     const emails = (people ?? []).map((p: { email: string }) => p.email).filter(Boolean)
 
     const html = `
@@ -78,7 +75,8 @@ Deno.serve(async (req) => {
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ from, to: chunk, subject: c.subject, html }),
+          // BCC the recipients so no address is exposed to the others.
+          body: JSON.stringify({ from, to: from, bcc: chunk, subject: c.subject, html }),
         })
         if (res.ok) sent += chunk.length
         else console.error("[process-email-drip]", res.status, await res.text())
