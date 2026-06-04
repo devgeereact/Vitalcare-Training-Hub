@@ -9,6 +9,7 @@ import PasswordCard from "@/components/settings/PasswordCard"
 import AppearanceSettingsCard from "@/components/settings/AppearanceSettingsCard"
 import NotificationSettingsCard from "@/components/settings/NotificationSettingsCard"
 import GoogleIntegrationCard from "@/components/settings/GoogleIntegrationCard"
+import IntegrationsManager from "@/components/settings/IntegrationsManager"
 import SettingsTabs, {
   type SettingsTabItem,
 } from "@/components/settings/SettingsTabs"
@@ -76,7 +77,12 @@ export default function SettingsPage(): React.ReactElement {
 
         {active === "notifications" && <NotificationSettingsCard />}
 
-        {active === "integrations" && isSuperAdmin && <GoogleIntegrationCard />}
+        {active === "integrations" && isSuperAdmin && (
+          <div className="space-y-6">
+            <IntegrationsManager />
+            <GoogleIntegrationCard />
+          </div>
+        )}
 
         {active === "password" && <PasswordCard />}
       </div>
