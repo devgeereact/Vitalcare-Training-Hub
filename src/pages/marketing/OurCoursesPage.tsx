@@ -159,25 +159,41 @@ export default function OurCoursesPage(): React.ReactElement {
           {!courses.isLoading &&
           !courses.isError &&
           (courses.data?.length ?? 0) > 0 ? (
-            <div
-              className="mt-10 flex flex-wrap gap-2.5"
-              role="group"
-              aria-label="Filter courses by category"
-            >
-              <FilterPill
-                label="All courses"
-                active={activeSlug === ALL}
-                onClick={() => setActiveSlug(ALL)}
-              />
-              {filterCategories.map((category) => (
-                <FilterPill
-                  key={category.id}
-                  label={category.name}
-                  active={activeSlug === category.slug}
-                  onClick={() => setActiveSlug(category.slug)}
-                />
-              ))}
-            </div>
+            (() => {
+              const pills = [
+                { key: ALL, label: "All courses", slug: ALL },
+                ...filterCategories.map((c) => ({
+                  key: c.id,
+                  label: c.name,
+                  slug: c.slug,
+                })),
+              ]
+              const mid = Math.ceil(pills.length / 2)
+              const rows = [pills.slice(0, mid), pills.slice(mid)]
+              return (
+                <div
+                  className="mt-10 space-y-2.5"
+                  role="group"
+                  aria-label="Filter courses by category"
+                >
+                  {rows.map((row, i) => (
+                    <div
+                      key={i}
+                      className="flex flex-wrap justify-center gap-2.5"
+                    >
+                      {row.map((p) => (
+                        <FilterPill
+                          key={p.key}
+                          label={p.label}
+                          active={activeSlug === p.slug}
+                          onClick={() => setActiveSlug(p.slug)}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )
+            })()
           ) : null}
 
           <div className="mt-10">
