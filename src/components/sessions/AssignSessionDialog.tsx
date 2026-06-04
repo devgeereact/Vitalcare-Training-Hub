@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
@@ -179,7 +180,7 @@ export default function AssignSessionDialog({
                   <FormItem>
                     <FormLabel>Starts</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -192,7 +193,7 @@ export default function AssignSessionDialog({
                   <FormItem>
                     <FormLabel>Ends</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

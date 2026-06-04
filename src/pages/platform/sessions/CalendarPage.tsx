@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -565,19 +566,11 @@ export default function CalendarPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="mb-1.5 block text-xs">Starts</Label>
-                <Input
-                  type="datetime-local"
-                  value={fStart}
-                  onChange={(e) => setFStart(e.target.value)}
-                />
+                <DateTimePicker value={fStart} onChange={setFStart} />
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs">Ends</Label>
-                <Input
-                  type="datetime-local"
-                  value={fEnd}
-                  onChange={(e) => setFEnd(e.target.value)}
-                />
+                <DateTimePicker value={fEnd} onChange={setFEnd} />
               </div>
             </div>
             {!editId && fKind === "session" && (

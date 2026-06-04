@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -97,11 +98,7 @@ export default function AnnouncementsPage(): ReactNode {
             <label className="mb-1.5 block text-xs text-muted-foreground">
               Action date &amp; time (optional: sets reminders for readers)
             </label>
-            <Input
-              type="datetime-local"
-              value={actionAt}
-              onChange={(e) => setActionAt(e.target.value)}
-            />
+            <DateTimePicker value={actionAt} onChange={setActionAt} />
           </div>
         </div>
         <DialogFooter>

@@ -20,7 +20,7 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -95,11 +95,7 @@ function ApproveDialog({ row, deciderId }: { row: O2ORow; deciderId?: string }) 
           </div>
           <div>
             <Label className="mb-1.5 block text-xs">Date &amp; time</Label>
-            <Input
-              type="datetime-local"
-              value={when}
-              onChange={(e) => setWhen(e.target.value)}
-            />
+            <DateTimePicker value={when} onChange={setWhen} />
             {row.preferred_at && (
               <p className="mt-1 text-xs text-muted-foreground">
                 Learner prefers {format(new Date(row.preferred_at), "EEE d MMM, HH:mm")}
@@ -210,11 +206,7 @@ export default function OneToOnePage() {
                 </div>
                 <div>
                   <Label className="mb-1.5 block text-xs">Preferred date &amp; time</Label>
-                  <Input
-                    type="datetime-local"
-                    value={preferred}
-                    onChange={(e) => setPreferred(e.target.value)}
-                  />
+                  <DateTimePicker value={preferred} onChange={setPreferred} />
                 </div>
                 <Textarea
                   placeholder="What would you like help with?"

@@ -3,7 +3,7 @@ import { toast } from "sonner"
 import { Loader2, LifeBuoy, Info } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import {
@@ -113,11 +113,10 @@ export default function RequestOneToOne({ courseId, courseTitle }: Props): React
             <Label htmlFor="o2o-when" className="mb-1.5 block text-xs">
               Preferred date and time (optional)
             </Label>
-            <Input
+            <DateTimePicker
               id="o2o-when"
-              type="datetime-local"
               value={preferred}
-              onChange={(e) => setPreferred(e.target.value)}
+              onChange={setPreferred}
             />
           </div>
         </div>

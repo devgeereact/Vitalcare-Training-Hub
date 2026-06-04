@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -266,7 +267,10 @@ export default function SessionFormPage() {
                     <FormItem>
                       <FormLabel>Starts</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" {...field} />
+                        <DateTimePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -279,7 +283,10 @@ export default function SessionFormPage() {
                     <FormItem>
                       <FormLabel>Ends</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" {...field} />
+                        <DateTimePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

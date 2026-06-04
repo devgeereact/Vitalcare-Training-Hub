@@ -26,6 +26,7 @@ import {
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import {
@@ -1111,10 +1112,9 @@ function BroadcastDialog({
               </div>
             </div>
             {when === "later" && (
-              <Input
-                type="datetime-local"
+              <DateTimePicker
                 value={scheduledAt}
-                onChange={(e) => setScheduledAt(e.target.value)}
+                onChange={setScheduledAt}
                 className="max-w-xs"
               />
             )}

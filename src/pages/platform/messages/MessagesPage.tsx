@@ -19,6 +19,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -382,11 +383,7 @@ function ScheduleMeetingButton({
           </div>
           <div>
             <Label className="mb-1.5 block text-xs">Date &amp; time</Label>
-            <Input
-              type="datetime-local"
-              value={when}
-              onChange={(e) => setWhen(e.target.value)}
-            />
+            <DateTimePicker value={when} onChange={setWhen} />
           </div>
           <p className="text-xs text-muted-foreground">
             Creates a Google Meet (Zoom backup) and shares the link in this chat.

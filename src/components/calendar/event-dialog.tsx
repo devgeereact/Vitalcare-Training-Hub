@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { CalendarEvent } from "./types"
 import { useEffect, useState } from "react"
 
@@ -99,21 +100,13 @@ export function EventDialog({
           {/* Start */}
           <div className="space-y-2">
             <Label>Start</Label>
-            <Input
-              type="datetime-local"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-            />
+            <DateTimePicker value={start} onChange={setStart} />
           </div>
 
           {/* End */}
           <div className="space-y-2">
             <Label>End</Label>
-            <Input
-              type="datetime-local"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-            />
+            <DateTimePicker value={end} onChange={setEnd} />
           </div>
 
           {/* Color */}
