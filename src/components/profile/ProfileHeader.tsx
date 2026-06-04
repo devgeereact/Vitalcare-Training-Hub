@@ -145,22 +145,24 @@ export default function ProfileHeader({
           )}
         </div>
 
-        {/* Quick-stat chips from real metrics. */}
+        {/* Quick-stat badges from real metrics: solid pills, the last accented. */}
         {chips && chips.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
-            {chips.map((m) => (
+            {chips.map((m, i) => (
               <span
                 key={m.key}
                 className={cn(
-                  "inline-flex items-baseline gap-1.5 rounded-full border border-border",
-                  "bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground",
+                  "inline-flex items-baseline gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold",
+                  i === chips.length - 1
+                    ? "bg-success text-white"
+                    : "bg-brand-navy text-white",
                 )}
               >
-                <span className="font-display text-sm leading-none text-brand-navy">
+                <span className="text-sm leading-none">
                   {m.value.toLocaleString("en-GB")}
                   {m.suffix ?? ""}
                 </span>
-                {m.label}
+                <span className="font-medium opacity-90">{m.label}</span>
               </span>
             ))}
           </div>
