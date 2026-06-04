@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
@@ -237,27 +238,25 @@ export default function SessionFormPage() {
                   </FormItem>
                 )}
               />
-              <FormItem>
-                <FormLabel>Meeting type</FormLabel>
+              <div className="space-y-2">
+                <Label>Meeting type</Label>
                 <Select
                   value={meetingType}
                   onValueChange={(v) => applyMeetingType(v as MeetingType)}
                 >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="one_to_one">1:1</SelectItem>
                     <SelectItem value="team">Team meeting</SelectItem>
                     <SelectItem value="course">Course session</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription>
+                <p className="text-sm text-muted-foreground">
                   Course sessions link to a course; a 1:1 books a single learner.
-                </FormDescription>
-              </FormItem>
+                </p>
+              </div>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <FormField
