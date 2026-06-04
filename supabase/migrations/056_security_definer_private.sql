@@ -8,20 +8,29 @@
 -- policy dependencies are by function OID (preserved by ALTER ... SET SCHEMA),
 -- and the roles keep EXECUTE.
 --
--- The bodies of is_admin/is_super_admin/is_staff call current_role_value() by a
--- public-qualified name, so they are recreated to call the private one.
---
--- Atomic: any error rolls the whole thing back.
+-- Idempotent: only moves helpers still in public, and rebuilds the bodies in
+-- private. Safe to re-run after a partial run. Atomic per statement.
 
 create schema if not exists private;
 grant usage on schema private to anon, authenticated, service_role;
 
--- 1. Relocate the helpers (OID preserved -> existing policies stay valid).
-alter function public.current_role_value() set schema private;
-alter function public.is_admin() set schema private;
-alter function public.is_super_admin() set schema private;
-alter function public.is_staff() set schema private;
-alter function public.is_department_member(uuid) set schema private;
+-- 1. Relocate the helpers still in public (OID preserved -> policies stay valid).
+do $$
+declare r record;
+begin
+  for r in
+    select p.oid::regprocedure as sig
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in (
+        'current_role_value', 'is_admin', 'is_super_admin',
+        'is_staff', 'is_department_member'
+      )
+  loop
+    execute format('alter function %s set schema private', r.sig);
+  end loop;
+end $$;
 
 -- 2. Fix the helper bodies that referenced public.current_role_value().
 create or replace function private.is_admin()
@@ -54,19 +63,15 @@ as $$
   select coalesce(private.current_role_value() in ('trainer', 'admin', 'super_admin'), false);
 $$;
 
--- 3. Make sure RLS evaluation can still call them (grants are preserved by the
---    move, but re-assert to be safe). This does NOT expose them as RPC, because
---    PostgREST does not scan the private schema.
+-- 3. Re-assert EXECUTE so RLS can still call them (not exposed as RPC: PostgREST
+--    does not scan the private schema).
 grant execute on function private.current_role_value() to anon, authenticated;
 grant execute on function private.is_admin() to anon, authenticated;
 grant execute on function private.is_super_admin() to anon, authenticated;
 grant execute on function private.is_staff() to anon, authenticated;
 grant execute on function private.is_department_member(uuid) to anon, authenticated;
 
--- 4. Move pg_net out of the public schema (extension_in_public). The
---    `extensions` schema is on the default search_path, so unqualified
---    references keep resolving. Guarded so a managed-extension restriction
---    surfaces as a notice instead of failing the migration.
+-- 4. Move pg_net out of public (extension_in_public). Guarded.
 do $$
 begin
   if exists (select 1 from pg_extension where extname = 'pg_net') then
