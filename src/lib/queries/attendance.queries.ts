@@ -61,6 +61,58 @@ export function useMyBookedSessions(learnerId: string | undefined) {
   })
 }
 
+export interface MyAttendanceRecord {
+  id: string
+  sessionId: string
+  sessionTitle: string
+  sessionStartsAt: string | null
+  status: AttendanceStatus
+  markedAt: string | null
+}
+
+/**
+ * A learner's own attendance register: every session they were marked for,
+ * most recent first. Powers the register card on the learner dashboard.
+ */
+export function useMyAttendanceRegister(learnerId: string | undefined) {
+  return useQuery({
+    queryKey: ["my-attendance-register", learnerId ?? "none"],
+    enabled: !!learnerId,
+    queryFn: async (): Promise<MyAttendanceRecord[]> => {
+      const { data, error } = await supabase
+        .from("attendance_records")
+        .select("id, session_id, status, marked_at")
+        .eq("learner_id", learnerId!)
+        .order("marked_at", { ascending: false })
+        .limit(100)
+      if (error) {
+        console.error("[useMyAttendanceRegister]", error)
+        throw error
+      }
+      if (!data || data.length === 0) return []
+
+      const ids = [...new Set(data.map((d) => d.session_id))]
+      const { data: sessions } = await supabase
+        .from("training_sessions")
+        .select("id, title, starts_at")
+        .in("id", ids)
+      const sessionById = new Map((sessions ?? []).map((s) => [s.id, s]))
+
+      return data.map((d) => {
+        const s = sessionById.get(d.session_id)
+        return {
+          id: d.id,
+          sessionId: d.session_id,
+          sessionTitle: s?.title ?? "Session",
+          sessionStartsAt: s?.starts_at ?? null,
+          status: d.status as AttendanceStatus,
+          markedAt: d.marked_at,
+        }
+      })
+    },
+  })
+}
+
 export function useMarkSelfAttendance(learnerId: string | undefined) {
   const qc = useQueryClient()
   return useMutation({
@@ -80,7 +132,11 @@ export function useMarkSelfAttendance(learnerId: string | undefined) {
         throw error
       }
     },
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ["my-sessions", learnerId ?? "none"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["my-sessions", learnerId ?? "none"] })
+      qc.invalidateQueries({
+        queryKey: ["my-attendance-register", learnerId ?? "none"],
+      })
+    },
   })
 }

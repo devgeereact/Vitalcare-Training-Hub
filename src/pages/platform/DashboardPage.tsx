@@ -11,10 +11,12 @@ import {
   Megaphone,
   GraduationCap,
   ClipboardList,
+  ClipboardCheck,
   Trophy,
   Banknote,
   CheckCircle2,
 } from "lucide-react"
+import { format } from "date-fns"
 
 import {
   Card,
@@ -61,6 +63,7 @@ import {
 } from "@/lib/queries/dashboard.queries"
 import { useAnnouncements } from "@/lib/queries/communication.queries"
 import { useMyCourses } from "@/lib/queries/courses.queries"
+import { useMyAttendanceRegister } from "@/lib/queries/attendance.queries"
 import { gbp } from "@/lib/queries/invoices.queries"
 
 const CompletionTrendChart = lazy(
@@ -658,6 +661,15 @@ function TrainerDashboard({
 
 // ─── Learner dashboard ───────────────────────────────────────────────────────
 
+/** Pill colours for each attendance status, shared with the attendance log. */
+const ATTENDANCE_STATUS_CLS: Record<string, string> = {
+  present: "bg-success/15 text-success",
+  attended: "bg-success/15 text-success",
+  late: "bg-warning/15 text-warning",
+  excused: "bg-primary/10 text-primary",
+  absent: "bg-destructive/15 text-destructive",
+}
+
 function LearnerDashboard({
   learnerId,
   name,
@@ -670,6 +682,7 @@ function LearnerDashboard({
   const stats = useLearnerStats(learnerId)
   const myCourses = useMyCourses()
   const sessions = useLearnerUpcomingSessions(learnerId)
+  const register = useMyAttendanceRegister(learnerId)
 
   const inProgress = (myCourses.data ?? []).filter(
     (c) => c.enrolled && c.progressPct < 100,
@@ -804,6 +817,63 @@ function LearnerDashboard({
             </CardContent>
           </Card>
         </div>
+      </section>
+
+      <section className="space-y-4">
+        <SectionHeading
+          title="Attendance register"
+          description="Every training session you have been marked for."
+        />
+        <Card>
+          <CardContent className="p-5">
+            {register.isLoading ? (
+              <ListSkeleton />
+            ) : register.isError ? (
+              <ErrorState onRetry={() => register.refetch()} />
+            ) : (register.data?.length ?? 0) === 0 ? (
+              <EmptyState
+                icon={ClipboardCheck}
+                message="No attendance recorded yet. Check in to a session to start your register."
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Training</TableHead>
+                    <TableHead>Session date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Marked</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {register.data!.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-medium">{r.sessionTitle}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.sessionStartsAt
+                          ? format(new Date(r.sessionStartsAt), "d MMM yyyy, HH:mm")
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+                            ATTENDANCE_STATUS_CLS[r.status] ??
+                            "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {r.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.markedAt ? format(new Date(r.markedAt), "d MMM yyyy") : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </section>
 
       <NoticeBoardCard />
