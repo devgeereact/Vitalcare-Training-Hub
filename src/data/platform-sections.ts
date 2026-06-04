@@ -84,6 +84,7 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
       { label: "Course Builder", to: "/platform/courses/builder", prefix: "/platform/courses/builder", roles: CONTENT },
       { label: "Quiz Builder", to: "/platform/assessments/builder", prefix: "/platform/assessments/builder", roles: CONTENT },
       { label: "Resources", to: "/platform/library", prefix: "/platform/library" },
+      { label: "Blog", to: "/platform/blog", prefix: "/platform/blog", roles: CONTENT },
     ],
   },
   {

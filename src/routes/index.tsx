@@ -40,6 +40,8 @@ import StaffPage from "@/pages/platform/staff/StaffPage"
 import DepartmentsPage from "@/pages/platform/departments/DepartmentsPage"
 import VirtualTrainingPage from "@/pages/platform/virtual/VirtualTrainingPage"
 import LibraryPage from "@/pages/platform/library/LibraryPage"
+import BlogAdminPage from "@/pages/platform/blog/BlogAdminPage"
+import BlogEditPage from "@/pages/platform/blog/BlogEditPage"
 import LearningPathsPage from "@/pages/platform/courses/LearningPathsPage"
 import LearningPathDetailPage from "@/pages/platform/courses/LearningPathDetailPage"
 import CohortsPage from "@/pages/platform/cohorts/CohortsPage"
@@ -280,6 +282,30 @@ export const router = createBrowserRouter (
         },
 
         // 📚 COURSES
+        {
+          path: "blog",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
+              <BlogAdminPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "blog/new",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
+              <BlogEditPage />
+            </RoleGuard>
+          ),
+        },
+        {
+          path: "blog/:id",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
+              <BlogEditPage />
+            </RoleGuard>
+          ),
+        },
         { path: "courses", element: <MyCoursesPage /> },
         { path: "courses/:id", element: <CourseOverviewPage /> },
         { path: "courses/:id/learn/:lessonId", element: <LessonPlayerPage /> },

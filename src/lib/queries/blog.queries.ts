@@ -194,3 +194,132 @@ export function useToggleLike(postId: string | null, userId: string | undefined)
     },
   })
 }
+
+// ── Admin authoring ──────────────────────────────────────────────────────────
+
+export interface AdminBlogPost {
+  id: string
+  slug: string
+  title: string
+  excerpt: string
+  body: string
+  feature_image_url: string | null
+  status: "draft" | "published"
+  author_name: string
+  published_at: string | null
+  views: number
+  updated_at: string
+}
+
+export interface BlogPostInput {
+  id?: string
+  title: string
+  slug: string
+  excerpt: string
+  body: string
+  feature_image_url: string | null
+  status: "draft" | "published"
+}
+
+const adminKeys = {
+  list: () => [...blogKeys.all, "admin", "list"] as const,
+  detail: (id: string) => [...blogKeys.all, "admin", id] as const,
+}
+
+/** Turn a title into a URL-safe slug. */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80)
+}
+
+export function useAdminPosts(): UseQueryResult<AdminBlogPost[], Error> {
+  return useQuery({
+    queryKey: adminKeys.list(),
+    queryFn: async (): Promise<AdminBlogPost[]> => {
+      const { data, error } = await sb
+        .from("blog_posts")
+        .select(
+          "id, slug, title, excerpt, body, feature_image_url, status, author_name, published_at, views, updated_at",
+        )
+        .order("updated_at", { ascending: false })
+      if (error) throw error
+      return (data ?? []) as AdminBlogPost[]
+    },
+  })
+}
+
+export function useAdminPost(
+  id: string | undefined,
+): UseQueryResult<AdminBlogPost | null, Error> {
+  return useQuery({
+    queryKey: adminKeys.detail(id ?? ""),
+    enabled: Boolean(id),
+    queryFn: async (): Promise<AdminBlogPost | null> => {
+      const { data, error } = await sb
+        .from("blog_posts")
+        .select(
+          "id, slug, title, excerpt, body, feature_image_url, status, author_name, published_at, views, updated_at",
+        )
+        .eq("id", id as string)
+        .maybeSingle()
+      if (error) throw error
+      return (data as AdminBlogPost) ?? null
+    },
+  })
+}
+
+export function useSavePost(authorId: string | undefined, authorName: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: BlogPostInput): Promise<string> => {
+      const now = new Date().toISOString()
+      const base = {
+        title: input.title,
+        slug: input.slug,
+        excerpt: input.excerpt,
+        body: input.body,
+        feature_image_url: input.feature_image_url,
+        status: input.status,
+        updated_at: now,
+      }
+      if (input.id) {
+        // On publish, stamp published_at if not already set.
+        const patch: Record<string, unknown> = { ...base }
+        if (input.status === "published") patch.published_at = now
+        const { error } = await sb.from("blog_posts").update(patch).eq("id", input.id)
+        if (error) throw error
+        return input.id
+      }
+      const { data, error } = await sb
+        .from("blog_posts")
+        .insert({
+          ...base,
+          author_id: authorId ?? null,
+          author_name: authorName,
+          published_at: input.status === "published" ? now : null,
+        })
+        .select("id")
+        .single()
+      if (error) throw error
+      return (data as { id: string }).id
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: blogKeys.all })
+    },
+  })
+}
+
+export function useDeletePost() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await sb.from("blog_posts").delete().eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: blogKeys.all }),
+  })
+}
