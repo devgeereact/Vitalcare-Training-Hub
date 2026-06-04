@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn, formatCourseDuration } from "@/lib/utils"
 import {
@@ -29,6 +30,7 @@ import {
   useMyCourses,
   useEnrolSelf,
   useCategoryNameMap,
+  useCompletedLessons,
 } from "@/lib/queries/courses.queries"
 import CourseDiscussion from "@/components/platform/CourseDiscussion"
 import RequestOneToOne from "@/components/platform/RequestOneToOne"
@@ -50,7 +52,16 @@ export default function CourseOverviewPage() {
   const categoryNames = useCategoryNameMap()
 
   const mine = myCourses.data?.find((m) => m.course.id === id)
-  const firstLesson = curriculum.data?.flatMap((m) => m.lessons)[0]
+  const allLessons = curriculum.data?.flatMap((m) => m.lessons) ?? []
+  const allLessonIds = allLessons.map((l) => l.id)
+  const completed = useCompletedLessons(id, allLessonIds)
+  const firstLesson = allLessons[0]
+  // Resume point: first lesson the learner has not completed, else the first.
+  const resumeLesson =
+    allLessons.find((l) => !completed.data?.has(l.id)) ?? firstLesson
+  const progressPct = mine?.progressPct ?? 0
+  const courseComplete = progressPct >= 100 && allLessons.length > 0
+  const notStarted = progressPct === 0
   const moduleCount = curriculum.data?.length ?? 0
   const lessonCount =
     curriculum.data?.reduce((sum, m) => sum + m.lessons.length, 0) ?? 0
@@ -167,11 +178,34 @@ export default function CourseOverviewPage() {
             <div className="space-y-2 pt-1">
               {mine?.enrolled ? (
                 firstLesson ? (
-                  <Button asChild className="w-full">
-                    <Link to={`/platform/courses/${id}/learn/${firstLesson.id}`}>
-                      <PlayCircle className="mr-2 size-4" /> Continue learning
-                    </Link>
-                  </Button>
+                  <>
+                    {/* Progress + resume. Label adapts to where the learner is. */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-foreground">
+                          {courseComplete ? "Completed" : `${progressPct}% complete`}
+                        </span>
+                        {courseComplete && (
+                          <span className="inline-flex items-center gap-1 text-success">
+                            <CheckCircle2 className="size-3.5" /> Certificate issued
+                          </span>
+                        )}
+                      </div>
+                      <Progress value={progressPct} className="h-2" />
+                    </div>
+                    <Button asChild className="w-full">
+                      <Link
+                        to={`/platform/courses/${id}/learn/${resumeLesson.id}`}
+                      >
+                        <PlayCircle className="mr-2 size-4" />
+                        {courseComplete
+                          ? "Review course"
+                          : notStarted
+                            ? "Start learning"
+                            : "Continue learning"}
+                      </Link>
+                    </Button>
+                  </>
                 ) : (
                   <Button disabled className="w-full">
                     No lessons yet
