@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { Award, AlertCircle, Download, Plus, BadgeCheck, Clock } from "lucide-react"
+import { Award, AlertCircle, Download, Plus, BadgeCheck, Clock, Eye } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -38,11 +38,14 @@ import {
   useCertificates,
   useIssueCertificate,
   useDefaultTemplate,
+  DEFAULT_TEMPLATE,
   type CertRow,
+  type CertTemplate,
 } from "@/lib/queries/certificates.queries"
 import { useLearners } from "@/lib/queries/learners.queries"
 import { useCourses } from "@/lib/queries/courses.queries"
 import { downloadCertificatePdf } from "@/lib/certificates/pdf"
+import { CertificatePreview } from "@/components/certificates/CertificatePreview"
 import { useUser } from "@/hooks/use-user"
 
 function ExpiryBadge({ cert }: { cert: CertRow }) {
@@ -204,6 +207,31 @@ export default function CertificatesListPage() {
   const template = useDefaultTemplate()
   const [signatory, setSignatory] = useState("")
   const [signatoryRole, setSignatoryRole] = useState("")
+  const [preview, setPreview] = useState<CertRow | null>(null)
+
+  const baseTpl = template.data ?? DEFAULT_TEMPLATE
+  const previewTemplate: CertTemplate = {
+    ...baseTpl,
+    signatoryName: signatory || baseTpl.signatoryName,
+    signatoryRole: signatoryRole || baseTpl.signatoryRole,
+  }
+
+  function runDownload(c: CertRow) {
+    downloadCertificatePdf({
+      learnerName: c.learnerName,
+      courseTitle: c.courseTitle,
+      issuedAt: c.issuedAt,
+      expiresAt: c.expiresAt,
+      verificationUuid: c.verificationUuid,
+      titleText: baseTpl.titleText,
+      introText: baseTpl.introText,
+      completionText: baseTpl.completionText,
+      accreditationLine: baseTpl.accreditationLine,
+      footerText: baseTpl.footerText,
+      signatoryName: previewTemplate.signatoryName,
+      signatoryRole: previewTemplate.signatoryRole,
+    }).catch(() => toast.error("Could not generate the certificate PDF."))
+  }
 
   const expiringCount =
     data?.filter((c) => c.status === "expiring" || c.status === "expired").length ?? 0
@@ -317,27 +345,17 @@ export default function CertificatesListPage() {
                           variant="ghost"
                           size="icon"
                           className="size-8"
+                          aria-label="Preview certificate"
+                          onClick={() => setPreview(c)}
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
                           aria-label="Download PDF"
-                          onClick={() => {
-                            downloadCertificatePdf({
-                              learnerName: c.learnerName,
-                              courseTitle: c.courseTitle,
-                              issuedAt: c.issuedAt,
-                              expiresAt: c.expiresAt,
-                              verificationUuid: c.verificationUuid,
-                              titleText: template.data?.titleText,
-                              introText: template.data?.introText,
-                              completionText: template.data?.completionText,
-                              accreditationLine: template.data?.accreditationLine,
-                              footerText: template.data?.footerText,
-                              signatoryName:
-                                signatory || template.data?.signatoryName || undefined,
-                              signatoryRole:
-                                signatoryRole || template.data?.signatoryRole || undefined,
-                            }).catch(() =>
-                              toast.error("Could not generate the certificate PDF."),
-                            )
-                          }}
+                          onClick={() => runDownload(c)}
                         >
                           <Download className="size-4" />
                         </Button>
@@ -355,6 +373,41 @@ export default function CertificatesListPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="font-display">Certificate preview</DialogTitle>
+            <DialogDescription>
+              {preview ? `${preview.learnerName} · ${preview.courseTitle}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {preview ? (
+            <CertificatePreview
+              template={previewTemplate}
+              values={{
+                learnerName: preview.learnerName,
+                courseTitle: preview.courseTitle,
+                issuedAt: preview.issuedAt,
+                expiresAt: preview.expiresAt,
+                verificationUuid: preview.verificationUuid,
+              }}
+            />
+          ) : null}
+          <DialogFooter>
+            <Button asChild variant="outline">
+              <Link
+                to={`/resources/verify-certificate?id=${preview?.verificationUuid ?? ""}`}
+              >
+                <BadgeCheck className="mr-2 size-4" /> Verify
+              </Link>
+            </Button>
+            <Button onClick={() => preview && runDownload(preview)}>
+              <Download className="mr-2 size-4" /> Download PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
