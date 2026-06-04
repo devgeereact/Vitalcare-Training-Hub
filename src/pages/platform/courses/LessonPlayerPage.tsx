@@ -28,7 +28,7 @@ export default function LessonPlayerPage() {
   const allLessons = curriculum.data?.flatMap((m) => m.lessons) ?? []
   const lessonIds = allLessons.map((l) => l.id)
   const completed = useCompletedLessons(id, lessonIds)
-  const markComplete = useMarkLessonComplete(id, lessonIds.length)
+  const markComplete = useMarkLessonComplete(id, lessonIds)
 
   const index = allLessons.findIndex((l) => l.id === lessonId)
   const lesson = index >= 0 ? allLessons[index] : null
@@ -69,8 +69,14 @@ export default function LessonPlayerPage() {
   function handleComplete() {
     markComplete
       .mutateAsync(lessonId)
-      .then(() => {
-        toast.success("Lesson complete")
+      .then((res) => {
+        if (res?.done) {
+          toast.success("Course complete", {
+            description: "Your certificate has been issued.",
+          })
+        } else {
+          toast.success("Lesson complete")
+        }
         if (next) navigate(`/platform/courses/${id}/learn/${next.id}`)
       })
       .catch(() => toast.error("Could not save progress"))

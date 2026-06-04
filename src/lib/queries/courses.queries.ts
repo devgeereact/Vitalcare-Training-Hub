@@ -510,7 +510,13 @@ export function useCompletedLessons(courseId: string, lessonIds: string[]) {
 }
 
 /** Mark a lesson complete and recompute the enrolment progress percentage. */
-export function useMarkLessonComplete(courseId: string, totalLessons: number) {
+/**
+ * Mark a lesson complete, recompute the learner's course progress, and — when
+ * every lesson in THIS course is done — complete the enrolment and auto-issue a
+ * certificate (once). Pass the course's lesson ids so progress is scoped to the
+ * course rather than every lesson the learner has ever finished.
+ */
+export function useMarkLessonComplete(courseId: string, lessonIds: string[]) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (lessonId: string) => {
@@ -532,29 +538,63 @@ export function useMarkLessonComplete(courseId: string, totalLessons: number) {
         throw upErr
       }
 
-      // Recompute progress for this learner's enrolment on the course.
-      const { count } = await supabase
-        .from("lesson_progress")
-        .select("lesson_id", { count: "exact", head: true })
-        .eq("learner_id", uid)
-        .eq("completed", true)
+      const total = lessonIds.length
+      // Count only the completed lessons that belong to this course.
+      const { count } =
+        total > 0
+          ? await supabase
+              .from("lesson_progress")
+              .select("lesson_id", { count: "exact", head: true })
+              .eq("learner_id", uid)
+              .eq("completed", true)
+              .in("lesson_id", lessonIds)
+          : { count: 0 }
       const pct =
-        totalLessons > 0
-          ? Math.min(100, Math.round(((count ?? 0) / totalLessons) * 100))
-          : 0
+        total > 0 ? Math.min(100, Math.round(((count ?? 0) / total) * 100)) : 0
+      const done = pct >= 100 && total > 0
+
       await supabase
         .from("enrollments")
         .update({
           progress_pct: pct,
-          status: pct >= 100 ? "completed" : "in_progress",
-          completed_at: pct >= 100 ? new Date().toISOString() : null,
+          status: done ? "completed" : "in_progress",
+          completed_at: done ? new Date().toISOString() : null,
         })
         .eq("course_id", courseId)
         .eq("learner_id", uid)
+
+      // Auto-issue a certificate on first completion (idempotent: skip if one
+      // already exists for this learner + course).
+      if (done) {
+        const { data: existing } = await supabase
+          .from("learner_certificates")
+          .select("id")
+          .eq("learner_id", uid)
+          .eq("course_id", courseId)
+          .limit(1)
+        if (!existing || existing.length === 0) {
+          const { data: course } = await supabase
+            .from("courses")
+            .select("cpd_hours")
+            .eq("id", courseId)
+            .single()
+          const { error: certErr } = await supabase
+            .from("learner_certificates")
+            .insert({
+              learner_id: uid,
+              course_id: courseId,
+              cpd_hours: course?.cpd_hours ?? 0,
+              expires_at: null,
+            })
+          if (certErr) console.error("[useMarkLessonComplete:cert]", certErr)
+        }
+      }
+      return { done }
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: lessonProgressKey(courseId) })
       qc.invalidateQueries({ queryKey: coursesKeys.myEnrolments() })
+      if (res?.done) qc.invalidateQueries({ queryKey: ["certificates"] })
     },
   })
 }
