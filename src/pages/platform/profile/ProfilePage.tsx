@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
-import { Settings, UserRound } from "lucide-react"
+import { BarChart3, Settings, UserRound } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -114,9 +114,14 @@ export default function ProfilePage(): React.ReactElement {
         {/* Main column: overview metrics + activity timeline. */}
         <div className="space-y-6 lg:col-span-2">
           <section>
-            <h2 className="mb-3 font-display text-xl text-foreground">
-              Overview
-            </h2>
+            <div className="mb-3 flex items-center gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-navy/5 text-brand-navy">
+                <BarChart3 className="size-4" />
+              </span>
+              <h2 className="font-display text-lg leading-none text-foreground">
+                Overview
+              </h2>
+            </div>
             <ProfileMetrics userId={profile.id} role={role} />
           </section>
 

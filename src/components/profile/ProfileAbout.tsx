@@ -1,10 +1,7 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { UserRound } from "lucide-react"
+
+import { Card, CardContent } from "@/components/ui/card"
+import ProfileCardHeader from "@/components/profile/ProfileCardHeader"
 
 interface Props {
   /** The user's saved bio. Never altered or generated. */
@@ -16,10 +13,11 @@ export default function ProfileAbout({ about }: Props): React.ReactElement {
   const hasBio = !!about?.trim()
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>About</CardTitle>
-        <CardDescription>A short bio for colleagues.</CardDescription>
-      </CardHeader>
+      <ProfileCardHeader
+        icon={UserRound}
+        title="About"
+        description="A short bio for colleagues."
+      />
       <CardContent>
         {hasBio ? (
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">

@@ -7,13 +7,8 @@ import {
   CheckCircle2,
 } from "lucide-react"
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import ProfileCardHeader from "@/components/profile/ProfileCardHeader"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -91,10 +86,11 @@ export default function ProfileActivity({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Recent activity</CardTitle>
-        <CardDescription>Your latest milestones on the hub.</CardDescription>
-      </CardHeader>
+      <ProfileCardHeader
+        icon={Activity}
+        title="Recent activity"
+        description="Your latest milestones on the hub."
+      />
       <CardContent>
         {isLoading ? (
           <div className="space-y-4">

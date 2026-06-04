@@ -1,18 +1,14 @@
 import {
   AlertTriangle,
   Building2,
+  Contact,
   Mail,
   Phone,
   ShieldAlert,
 } from "lucide-react"
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import ProfileCardHeader from "@/components/profile/ProfileCardHeader"
 import type { Profile } from "@/types/database.types"
 
 interface Props {
@@ -59,10 +55,11 @@ export default function ProfileContact({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Contact details</CardTitle>
-        <CardDescription>How colleagues reach you.</CardDescription>
-      </CardHeader>
+      <ProfileCardHeader
+        icon={Contact}
+        title="Contact details"
+        description="How colleagues reach you."
+      />
       <CardContent className="space-y-4">
         <Line icon={Mail} label="Email" value={profile.email} />
         <Line icon={Phone} label="Phone" value={profile.phone} />
