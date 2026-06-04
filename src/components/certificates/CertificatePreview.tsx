@@ -59,13 +59,13 @@ export function CertificatePreview({
         className,
       )}
     >
-      {/* Gold border frame with a thin navy keyline */}
+      {/* Thin gold border frame with a fine navy keyline */}
       <div
-        className="pointer-events-none absolute inset-[1.4%] z-20 rounded-[2px] border-[2.5px] border-brand-gold"
+        className="pointer-events-none absolute inset-[1.4%] z-20 rounded-[2px] border border-brand-gold"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-[2.3%] z-20 rounded-[2px] border border-brand-navy/40"
+        className="pointer-events-none absolute inset-[2.1%] z-20 rounded-[2px] border border-brand-navy/30"
         aria-hidden
       />
 
@@ -78,7 +78,7 @@ export function CertificatePreview({
         />
       </div>
       {/* Gold rule */}
-      <div className="h-[3px] w-full bg-gradient-to-r from-transparent via-brand-gold to-transparent" />
+      <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-brand-gold to-transparent" />
 
       {/* Body */}
       <div className="flex flex-1 flex-col items-center justify-center px-[7%] py-[3%] text-center">
@@ -157,18 +157,9 @@ export function CertificatePreview({
             </p>
           </div>
 
-          {/* Right: verification + QR */}
-          <div className="flex items-start justify-end gap-[5%]">
-            <div className="min-w-0 text-right">
-              <p className={label}>Verification code</p>
-              <p className="text-[clamp(0.55rem,1.4vw,0.9rem)] font-semibold text-brand-navy">
-                {ref.short}
-              </p>
-              <p className="font-display text-[clamp(0.42rem,0.95vw,0.62rem)] italic text-muted-foreground">
-                Scan the code to verify
-              </p>
-            </div>
-            <div className="shrink-0 rounded-[2px] bg-white p-[2px] ring-1 ring-brand-navy/15">
+          {/* Right: QR with a verify label, the code beneath */}
+          <div className="flex flex-col items-end gap-[3%]">
+            <div className="rounded-[2px] bg-white p-[2px] ring-1 ring-brand-navy/15">
               <QRCodeSVG
                 value={certVerifyUrl(v.verificationUuid)}
                 size={256}
@@ -178,6 +169,14 @@ export function CertificatePreview({
                 marginSize={2}
                 className="h-[clamp(2rem,6.5vw,3.8rem)] w-[clamp(2rem,6.5vw,3.8rem)]"
               />
+            </div>
+            <div className="text-center">
+              <p className="font-display text-[clamp(0.4rem,0.9vw,0.6rem)] italic text-muted-foreground">
+                Scan to verify
+              </p>
+              <p className="text-[clamp(0.5rem,1.3vw,0.82rem)] font-semibold text-brand-navy">
+                {ref.short}
+              </p>
             </div>
           </div>
         </div>

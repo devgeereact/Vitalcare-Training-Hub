@@ -209,7 +209,7 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
 
   // Gold rule beneath the band.
   doc.setDrawColor(gr, gg, gb)
-  doc.setLineWidth(1.1)
+  doc.setLineWidth(0.7)
   doc.line(24, M + bandH + 0.6, W - 24, M + bandH + 0.6)
 
   // Title.
@@ -322,11 +322,12 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
   doc.text(signRole, cx, 164, { align: "center" })
   doc.text(COMPANY.legalName, cx, 169, { align: "center" })
 
-  // Right: verification, with QR at the far right and the code to its left.
+  // Right: the QR with a verify label, and the short code centred beneath it.
   const ref = certVerificationRef(data.verificationUuid)
-  const qrSize = 24
+  const qrSize = 22
   const qrX = W - 30 - qrSize
-  const qrY = 141
+  const qrCx = qrX + qrSize / 2
+  const qrY = 138
   try {
     const qrPng = await certQrPngDataUrl(data.verificationUuid)
     doc.addImage(qrPng, "PNG", qrX, qrY, qrSize, qrSize)
@@ -336,17 +337,14 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
     doc.setLineWidth(0.3)
     doc.rect(qrX, qrY, qrSize, qrSize)
   }
-  const codeRight = qrX - 6
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(7.5)
-  doc.setTextColor(nr, ng, nb)
-  doc.text("VERIFICATION CODE", codeRight, 147, { align: "right", charSpace: 0.6 })
-  doc.setFontSize(13)
-  doc.text(ref.short, codeRight, 153, { align: "right" })
   doc.setFont("times", "italic")
   doc.setFontSize(8)
   doc.setTextColor(grey, grey, grey)
-  doc.text("Scan the code to verify", codeRight, 158, { align: "right" })
+  doc.text("Scan to verify", qrCx, qrY + qrSize + 4.5, { align: "center" })
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(11)
+  doc.setTextColor(nr, ng, nb)
+  doc.text(ref.short, qrCx, qrY + qrSize + 10, { align: "center" })
 
   // Company bar, inset to sit inside the frame.
   doc.setFillColor(246, 247, 251)
@@ -365,13 +363,13 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
     { align: "center" },
   )
 
-  // Gold border frame with a thin navy keyline, drawn last so it sits on top.
+  // Thin gold border frame with a fine navy keyline, drawn last.
   doc.setDrawColor(gr, gg, gb)
-  doc.setLineWidth(2.4)
+  doc.setLineWidth(1.0)
   doc.rect(M, M, W - 2 * M, H - 2 * M)
   doc.setDrawColor(nr, ng, nb)
-  doc.setLineWidth(0.4)
-  doc.rect(M + 2.4, M + 2.4, W - 2 * M - 4.8, H - 2 * M - 4.8)
+  doc.setLineWidth(0.3)
+  doc.rect(M + 1.8, M + 1.8, W - 2 * M - 3.6, H - 2 * M - 3.6)
 
   doc.save(`vitalcare-certificate-${data.verificationUuid.slice(0, 8)}.pdf`)
 }
