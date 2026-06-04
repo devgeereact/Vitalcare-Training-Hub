@@ -138,8 +138,8 @@ export default function BlogEditPage(): React.ReactElement {
 
   return (
     <div className="space-y-6">
-      <AuthoringHeader />
       <div className="mx-auto max-w-3xl space-y-6">
+        <AuthoringHeader />
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link to="/platform/blog">
             <ArrowLeft className="mr-1.5 size-4" /> All posts

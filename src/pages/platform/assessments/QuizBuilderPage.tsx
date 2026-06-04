@@ -143,9 +143,9 @@ export default function QuizBuilderPage() {
 
   if (isEdit && assessment.isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="mx-auto max-w-3xl space-y-6">
         <AuthoringHeader />
-        <div className="mx-auto max-w-3xl space-y-4">
+        <div className="space-y-4">
           <Skeleton className="h-8 w-40" />
           <Skeleton className="h-64 w-full" />
         </div>
@@ -155,9 +155,9 @@ export default function QuizBuilderPage() {
 
   return (
     <div className="space-y-6">
-      <AuthoringHeader />
       <div className="mx-auto max-w-3xl space-y-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-2">
+        <AuthoringHeader />
+        <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/platform/assessments/builder">
           <ArrowLeft className="mr-1.5 size-4" /> Back to assessments
         </Link>
