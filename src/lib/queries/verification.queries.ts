@@ -19,15 +19,13 @@ export function useSetVerification() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ userId, verified }: SetVerificationInput) => {
-      // The RPC is not in the generated types; call it through a narrow cast.
-      const rpc = supabase.rpc as unknown as (
-        fn: string,
-        args: Record<string, unknown>,
-      ) => Promise<{ error: { message: string } | null }>
-      const { error } = await rpc("set_user_verification", {
+      // The RPC is not in the generated types; cast the args. Call it directly
+      // on `supabase` so `this` stays bound (a detached rpc reads `this.rest`
+      // and crashes with "Cannot read properties of undefined").
+      const { error } = await supabase.rpc("set_user_verification" as never, {
         target_id: userId,
         make_verified: verified,
-      })
+      } as never)
       if (error) {
         console.error("[useSetVerification]", error)
         throw new Error(error.message)

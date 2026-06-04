@@ -24,7 +24,7 @@ export function VerifiedTick({
       title="Verified by a super admin"
       role="img"
     >
-      <BadgeCheck className="size-4 text-brand-gold" />
+      <BadgeCheck className="size-4 text-success" />
     </span>
   )
 }
