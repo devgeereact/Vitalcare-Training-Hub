@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
 import { format, isPast } from "date-fns"
 import { toast } from "sonner"
 import {
@@ -34,7 +33,6 @@ import {
 } from "@/components/ui/dialog"
 import { useAuth } from "@/hooks/use-auth"
 import { useUser } from "@/hooks/use-user"
-import { getUpcomingHolidays } from "@/lib/integrations/holidays"
 import {
   useOrgHolidays,
   useOrgHolidayMutations,
@@ -46,9 +44,9 @@ function fmtDay(iso: string): string {
 }
 
 /**
- * Company closures management for the Organisation area.
- * Staff and admin add, edit and delete closures. UK public holidays are shown
- * read-only. Both render on the calendar and trainer timetable as all-day blocks.
+ * Company closures management for the Organisation area. Staff and admin add,
+ * edit and delete closures, which render on the calendar and trainer timetable
+ * as all-day blocks. Added closures appear in the list below the header.
  */
 export default function CompanyClosures(): React.JSX.Element {
   const { user } = useAuth()
@@ -57,13 +55,6 @@ export default function CompanyClosures(): React.JSX.Element {
 
   const org = useOrgHolidays()
   const mut = useOrgHolidayMutations()
-
-  const publicHols = useQuery({
-    queryKey: ["holidays", "GB", "list"],
-    queryFn: () => getUpcomingHolidays("GB"),
-    staleTime: 24 * 60 * 60 * 1000,
-    retry: false,
-  })
 
   const [editing, setEditing] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -118,7 +109,7 @@ export default function CompanyClosures(): React.JSX.Element {
       <Card>
         <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 font-display text-xl">
               <Flag className="size-4 text-brand-gold" /> Company closures
             </CardTitle>
             <CardDescription className="mt-1">
@@ -208,63 +199,6 @@ export default function CompanyClosures(): React.JSX.Element {
                         </Button>
                       </div>
                     )}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* UK public holidays (read-only from Nager.Date) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>United Kingdom public holidays</CardTitle>
-          <CardDescription>Sourced automatically. These cannot be edited.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {publicHols.isLoading ? (
-            <div className="space-y-2 p-5">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-11 w-full" />
-              ))}
-            </div>
-          ) : publicHols.isError || !publicHols.data ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <AlertCircle className="size-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">
-                Could not load public holidays. Please try again.
-              </p>
-              <Button variant="outline" size="sm" onClick={() => publicHols.refetch()}>
-                Retry
-              </Button>
-            </div>
-          ) : publicHols.data.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                <CalendarOff className="size-6" />
-              </div>
-              <p className="text-sm text-muted-foreground">No public holidays found.</p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {publicHols.data.map((h) => {
-                const past = isPast(new Date(`${h.date}T23:59:59`))
-                return (
-                  <li
-                    key={`${h.date}-${h.name}`}
-                    className="flex items-center gap-3 px-5 py-3"
-                  >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                      <CalendarOff className="size-4" />
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{h.name}</span>
-                    {past && (
-                      <Badge variant="secondary" className="text-muted-foreground">
-                        Past
-                      </Badge>
-                    )}
-                    <span className="text-sm text-muted-foreground">{fmtDay(h.date)}</span>
                   </li>
                 )
               })}
