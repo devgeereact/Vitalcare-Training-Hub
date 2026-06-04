@@ -1,5 +1,8 @@
 import { useState } from "react"
+import { format } from "date-fns"
 import { toast } from "sonner"
+
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import {
   Wallet,
   AlertCircle,
@@ -173,15 +176,19 @@ export default function PayrollPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="mb-1.5 block text-xs">Period start</Label>
-                    <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label className="mb-1.5 block text-xs">Period end</Label>
-                    <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
-                  </div>
+                <div>
+                  <Label className="mb-1.5 block text-xs">Period dates</Label>
+                  <DateRangePicker
+                    className="w-full"
+                    value={{
+                      from: periodStart ? new Date(periodStart) : undefined,
+                      to: periodEnd ? new Date(periodEnd) : undefined,
+                    }}
+                    onChange={(range) => {
+                      setPeriodStart(range?.from ? format(range.from, "yyyy-MM-dd") : "")
+                      setPeriodEnd(range?.to ? format(range.to, "yyyy-MM-dd") : "")
+                    }}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
