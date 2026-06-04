@@ -5,10 +5,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLearners } from "@/lib/queries/learners.queries"
+import { useVerifiedUserIds } from "@/lib/queries/verification.queries"
+import { VerifiedTick } from "@/components/platform/Verification"
 import ContactDetailById from "@/components/platform/ContactDetailById"
 
 export default function LearnersListPage() {
   const { data, isLoading, isError, refetch } = useLearners()
+  const verifiedIds = useVerifiedUserIds()
   const [q, setQ] = useState("")
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -90,7 +93,10 @@ export default function LearnersListPage() {
                     {l.name.slice(0, 1).toUpperCase()}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{l.name}</p>
+                    <p className="flex items-center gap-1.5 font-medium">
+                      <span className="truncate">{l.name}</span>
+                      <VerifiedTick verified={!!verifiedIds.data?.has(l.id)} />
+                    </p>
                     <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
                       <Mail className="size-3" /> {l.email}
                     </p>

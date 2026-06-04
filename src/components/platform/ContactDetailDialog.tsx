@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { VerifiedTick } from "@/components/platform/Verification"
 import {
   Select,
   SelectContent,
@@ -79,7 +80,10 @@ export default function ContactDetailDialog({
             <span className="flex size-11 items-center justify-center rounded-full bg-brand-navy/10 text-base font-semibold text-brand-navy">
               {name.slice(0, 1).toUpperCase()}
             </span>
-            {name}
+            <span className="flex items-center gap-1.5">
+              {name}
+              <VerifiedTick verified={!!user.is_verified} className="[&_svg]:size-5" />
+            </span>
           </DialogTitle>
           <DialogDescription>
             <Badge variant="secondary" className="capitalize">

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import type { Profile, UserRole } from "@/types/database.types"
 import type { ProfileMetric } from "@/lib/queries/profile.queries"
 import ProfileImageUpload from "@/components/profile/ProfileImageUpload"
+import { VerifiedTick } from "@/components/platform/Verification"
 
 interface Props {
   profile: Profile
@@ -104,8 +105,9 @@ export default function ProfileHeader({
 
           <div className="min-w-0 flex-1 sm:pb-1.5">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h1 className="font-display text-3xl leading-tight text-foreground sm:text-4xl">
+              <h1 className="flex items-center gap-2 font-display text-3xl leading-tight text-foreground sm:text-4xl">
                 {name}
+                <VerifiedTick verified={profile.is_verified} className="[&_svg]:size-6" />
               </h1>
               <Badge
                 variant="secondary"

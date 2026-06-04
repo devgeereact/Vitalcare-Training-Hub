@@ -1,8 +1,31 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { supabase } from "@/lib/supabase/client"
 import { trainersKeys } from "@/lib/queries/trainers.queries"
 import { orgKeys } from "@/lib/queries/org.queries"
+
+/**
+ * Set of every verified user's id. Fetched once and cached, so any list that
+ * renders names can show the verified tick with `verifiedIds.has(id)` without
+ * each query having to select the column itself.
+ */
+export function useVerifiedUserIds() {
+  return useQuery({
+    queryKey: ["verified-user-ids"],
+    queryFn: async (): Promise<Set<string>> => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("is_verified", true)
+      if (error) {
+        console.error("[useVerifiedUserIds]", error)
+        throw error
+      }
+      return new Set((data ?? []).map((p) => p.id))
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
 
 interface SetVerificationInput {
   userId: string
@@ -34,6 +57,7 @@ export function useSetVerification() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: trainersKeys.all })
       void qc.invalidateQueries({ queryKey: orgKeys.staff() })
+      void qc.invalidateQueries({ queryKey: ["verified-user-ids"] })
     },
   })
 }

@@ -50,6 +50,8 @@ import {
 } from "@/lib/queries/sessions.queries"
 import { useLearners } from "@/lib/queries/learners.queries"
 import { sessionPhase, sessionPhaseLabel } from "@/lib/sessions/timing"
+import { useVerifiedUserIds } from "@/lib/queries/verification.queries"
+import { VerifiedTick } from "@/components/platform/Verification"
 import type { AttendanceStatus } from "@/types/database.types"
 
 const STATUSES: { key: AttendanceStatus; label: string; cls: string }[] = [
@@ -64,6 +66,7 @@ export default function SessionDetailPage() {
   const navigate = useNavigate()
   const session = useSession(id)
   const roster = useRoster(id)
+  const verifiedIds = useVerifiedUserIds()
   const learners = useLearners()
   const mut = useRosterMutations(id)
   const del = useDeleteSession()
@@ -381,7 +384,10 @@ export default function SessionDetailPage() {
               <ul className="divide-y divide-border">
                 {roster.data!.map((r) => (
                   <li key={r.learnerId} className="flex flex-wrap items-center gap-2 py-2.5">
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{r.name}</span>
+                    <span className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-medium">
+                      <span className="truncate">{r.name}</span>
+                      <VerifiedTick verified={!!verifiedIds.data?.has(r.learnerId)} />
+                    </span>
                     <div className="flex flex-wrap gap-1">
                       {STATUSES.map((st) => (
                         <button

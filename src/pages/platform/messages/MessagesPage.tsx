@@ -35,6 +35,8 @@ import { useAuth } from "@/hooks/use-auth"
 import { useUser } from "@/hooks/use-user"
 import { supabase } from "@/lib/supabase/client"
 import { useCreateSession } from "@/lib/queries/sessions.queries"
+import { useVerifiedUserIds } from "@/lib/queries/verification.queries"
+import { VerifiedTick } from "@/components/platform/Verification"
 import {
   useThreads,
   useThread,
@@ -78,6 +80,7 @@ function ThreadView({
   const { data, isLoading, isError, refetch } = useThread(userId, otherId)
   const send = useSendMessage(userId)
   const markRead = useMarkThreadRead(userId)
+  const verifiedIds = useVerifiedUserIds()
   const qc = useQueryClient()
   const [draft, setDraft] = useState("")
   const [attachment, setAttachment] = useState<PendingAttachment | null>(null)
@@ -185,7 +188,10 @@ function ThreadView({
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
           {otherName.slice(0, 1).toUpperCase()}
         </span>
-        <p className="min-w-0 flex-1 truncate font-medium">{otherName}</p>
+        <p className="flex min-w-0 flex-1 items-center gap-1.5 truncate font-medium">
+          <span className="truncate">{otherName}</span>
+          <VerifiedTick verified={!!verifiedIds.data?.has(otherId)} />
+        </p>
         <ScheduleMeetingButton
           otherName={otherName}
           onScheduled={(body) => send.mutateAsync({ recipientId: otherId, body })}
@@ -406,6 +412,7 @@ function ScheduleMeetingButton({
 export default function MessagesPage() {
   const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useThreads(user?.id)
+  const verifiedIds = useVerifiedUserIds()
   const [active, setActive] = useState<{ id: string; name: string } | null>(null)
   const [q, setQ] = useState("")
   const [params, setParams] = useSearchParams()
@@ -496,8 +503,12 @@ export default function MessagesPage() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center justify-between gap-2">
-                          <span className="truncate text-sm font-medium">
-                            {t.otherName}
+                          <span className="flex min-w-0 items-center gap-1 text-sm font-medium">
+                            <span className="truncate">{t.otherName}</span>
+                            <VerifiedTick
+                              verified={!!verifiedIds.data?.has(t.otherId)}
+                              className="[&_svg]:size-3.5"
+                            />
                           </span>
                           <span className="shrink-0 text-[10px] text-muted-foreground">
                             {relativeLabel(t.lastAt)}
