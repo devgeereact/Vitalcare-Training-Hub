@@ -21,7 +21,7 @@ export default function ProfileDepartments({
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="h-full">
         <ProfileCardHeader icon={Users} title="Teams and departments" />
         <CardContent className="space-y-2">
           <Skeleton className="h-9 w-full" />
@@ -33,7 +33,7 @@ export default function ProfileDepartments({
 
   if (isError) {
     return (
-      <Card>
+      <Card className="h-full">
         <ProfileCardHeader icon={Users} title="Teams and departments" />
         <CardContent className="flex flex-col items-center gap-3 py-2 text-center">
           <AlertCircle className="size-5 text-destructive" />
@@ -52,7 +52,7 @@ export default function ProfileDepartments({
   if (!data || data.length === 0) return null
 
   return (
-    <Card>
+    <Card className="h-full">
       <ProfileCardHeader
         icon={Users}
         title="Teams and departments"

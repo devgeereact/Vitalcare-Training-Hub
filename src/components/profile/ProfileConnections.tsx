@@ -53,7 +53,7 @@ export default function ProfileConnections({
   if (socials.length === 0) return null
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="font-display text-xl">Connections</CardTitle>
         <CardDescription>Find this person elsewhere.</CardDescription>

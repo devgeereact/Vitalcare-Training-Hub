@@ -73,7 +73,7 @@ export default function ProfilePage(): React.ReactElement {
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-      {/* Left column: identity card, contact, teams. */}
+      {/* Left column: identity card + contact details. */}
       <div className="space-y-6 lg:col-span-1">
         <ProfileIdentityCard
           profile={profile}
@@ -85,17 +85,22 @@ export default function ProfilePage(): React.ReactElement {
           onBannerUploaded={(url) => void saveImage("banner_url", url)}
         />
         <ProfileContact profile={profile} organisationName={org.data ?? null} />
-        <ProfileConnections socialLinks={extras.social_links} />
-        <ProfileDepartments userId={profile.id} />
       </div>
 
-      {/* Main column: about + personal info, overview metrics, activity. */}
+      {/* Main column: about, connections + teams, overview, activity. */}
       <div className="space-y-6 lg:col-span-2">
         <ProfilePersonalInfo
           profile={profile}
           role={role}
           organisationName={org.data ?? null}
         />
+
+        {/* Connections and Teams sit side by side at equal height. Each hides
+            itself when empty, so the row collapses gracefully. */}
+        <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2">
+          <ProfileConnections socialLinks={extras.social_links} />
+          <ProfileDepartments userId={profile.id} />
+        </div>
 
         <section>
           <div className="mb-3 flex items-center gap-2.5">
