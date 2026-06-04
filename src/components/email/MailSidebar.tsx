@@ -82,9 +82,9 @@ export default function MailSidebar({
                   onClick={() => onSelectFolder(f.key)}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-full px-3 py-2 text-sm transition-colors",
+                    "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
                     isActive
-                      ? "bg-brand-navy/10 font-semibold text-brand-navy"
+                      ? "bg-brand-navy font-semibold text-white shadow-sm"
                       : "font-medium text-foreground hover:bg-muted",
                     FOCUS_RING,
                   )}
@@ -92,19 +92,19 @@ export default function MailSidebar({
                   <f.icon
                     className={cn(
                       "size-4 shrink-0",
-                      isActive ? "text-brand-navy" : "text-muted-foreground",
+                      isActive ? "text-white" : "text-muted-foreground",
                     )}
                   />
                   <span className="flex-1 truncate text-left">{f.label}</span>
                   {count != null && count > 0 && (
                     <span
                       className={cn(
-                        "shrink-0 text-xs tabular-nums",
-                        isActive
-                          ? "font-semibold text-brand-navy"
-                          : accent
-                            ? "font-semibold text-brand-navy"
-                            : "text-muted-foreground",
+                        "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
+                        accent
+                          ? "bg-destructive text-white"
+                          : isActive
+                            ? "bg-white/20 text-white"
+                            : "bg-muted text-muted-foreground",
                       )}
                     >
                       {count}
