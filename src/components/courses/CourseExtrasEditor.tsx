@@ -48,7 +48,7 @@ export default function CourseExtrasEditor({ courseId }: { courseId: string }) {
       {/* FAQ */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 font-display text-xl">
             <HelpCircle className="size-5 text-brand-navy" /> FAQ
           </CardTitle>
           <CardDescription>Common questions shown on the course page.</CardDescription>
@@ -120,7 +120,7 @@ export default function CourseExtrasEditor({ courseId }: { courseId: string }) {
       {/* Prerequisites */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 font-display text-xl">
             <GitBranch className="size-5 text-brand-navy" /> Prerequisites
           </CardTitle>
           <CardDescription>

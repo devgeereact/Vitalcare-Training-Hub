@@ -3,7 +3,7 @@ import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useParams, Link } from "react-router-dom"
 import { toast } from "sonner"
-import { ArrowLeft, AlertCircle } from "lucide-react"
+import { ArrowLeft, AlertCircle, GraduationCap, ListTree } from "lucide-react"
 
 import {
   Card,
@@ -154,7 +154,8 @@ export default function CourseBuilderPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-display text-2xl">
+          <CardTitle className="flex items-center gap-2 font-display text-2xl">
+            <GraduationCap className="size-6 text-brand-navy" />
             {isEdit ? "Edit course" : "New course"}
           </CardTitle>
           <CardDescription>
@@ -361,7 +362,10 @@ export default function CourseBuilderPage() {
           <CardHeader>
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <CardTitle>Curriculum</CardTitle>
+                <CardTitle className="flex items-center gap-2 font-display text-xl">
+                  <ListTree className="size-5 text-brand-navy" />
+                  Curriculum
+                </CardTitle>
                 <CardDescription>
                   Drag to reorder modules and lessons. Changes save automatically.
                 </CardDescription>
