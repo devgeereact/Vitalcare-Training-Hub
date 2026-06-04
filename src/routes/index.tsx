@@ -309,7 +309,14 @@ export const router = createBrowserRouter (
         { path: "courses", element: <MyCoursesPage /> },
         { path: "courses/:id", element: <CourseOverviewPage /> },
         { path: "courses/:id/learn/:lessonId", element: <LessonPlayerPage /> },
-        { path: "courses/manage", element: <CoursesManagePage /> },
+        {
+          path: "courses/manage",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
+              <CoursesManagePage />
+            </RoleGuard>
+          ),
+        },
         {
           path: "courses/builder",
           element: (
@@ -367,9 +374,23 @@ export const router = createBrowserRouter (
         },
         { path: "sessions/:id/checkin", element: <CheckInPage /> },
         { path: "sessions", element: <SessionsListPage /> },
-        { path: "sessions/new", element: <SessionFormPage /> },
+        {
+          path: "sessions/new",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
+              <SessionFormPage />
+            </RoleGuard>
+          ),
+        },
         { path: "sessions/:id", element: <SessionDetailPage /> },
-        { path: "sessions/:id/edit", element: <SessionFormPage /> },
+        {
+          path: "sessions/:id/edit",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
+              <SessionFormPage />
+            </RoleGuard>
+          ),
+        },
         {
           path: "attendance",
           element: (
@@ -542,7 +563,14 @@ export const router = createBrowserRouter (
         
         
         // 📚 LEARNING (extended)
-        { path: "library", element: <LibraryPage /> },
+        {
+          path: "library",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}>
+              <LibraryPage />
+            </RoleGuard>
+          ),
+        },
         { path: "courses/paths", element: <LearningPathsPage /> },
         { path: "courses/paths/:id", element: <LearningPathDetailPage /> },
         {
@@ -581,7 +609,14 @@ export const router = createBrowserRouter (
         },
         { path: "profile", element: <ProfilePage /> },
         { path: "account/password", element: <PasswordSettingsPage /> },
-        { path: "invoices", element: <InvoicesPage /> },
+        {
+          path: "invoices",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
+              <InvoicesPage />
+            </RoleGuard>
+          ),
+        },
         {
           path: "payroll",
           element: (

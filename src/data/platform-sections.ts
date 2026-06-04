@@ -129,7 +129,10 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
     id: "email",
     title: "Email",
     icon: Mail,
-    items: [{ label: "Email", to: "/platform/email", prefix: "/platform/email" }],
+    roles: CONTENT,
+    items: [
+      { label: "Email", to: "/platform/email", prefix: "/platform/email", roles: CONTENT },
+    ],
   },
   {
     id: "chat",
@@ -163,7 +166,10 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
     id: "ai",
     title: "AI Assistant",
     icon: Sparkles,
-    items: [{ label: "AI Assistant", to: "/platform/ai", prefix: "/platform/ai" }],
+    roles: CONTENT,
+    items: [
+      { label: "AI Assistant", to: "/platform/ai", prefix: "/platform/ai", roles: CONTENT },
+    ],
   },
   {
     id: "organisation",
