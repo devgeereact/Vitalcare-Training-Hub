@@ -72,8 +72,8 @@ export default function BlogPage(): React.ReactElement {
   const { data, isLoading } = usePublishedPosts()
   const posts = useMemo(() => data ?? [], [data])
 
-  const featured = posts.slice(0, 4)
-  const rest = posts.slice(4)
+  const featured = posts.slice(0, 3)
+  const rest = posts.slice(3)
 
   const [page, setPage] = useState(1)
   const pageCount = Math.max(1, Math.ceil(rest.length / PAGE_SIZE))
@@ -107,7 +107,7 @@ export default function BlogPage(): React.ReactElement {
         ) : (
           <>
             <SectionHeading eyebrow="Latest" title="Featured articles" />
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {featured.map((post, i) => (
                 <motion.div
                   key={post.slug}
@@ -125,7 +125,7 @@ export default function BlogPage(): React.ReactElement {
             {rest.length > 0 ? (
               <div className="mt-20">
                 <SectionHeading eyebrow="More reading" title="All articles" />
-                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {paged.map((post, i) => (
                     <motion.div
                       key={post.slug}

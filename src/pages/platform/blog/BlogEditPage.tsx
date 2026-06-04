@@ -5,6 +5,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
 import { ArrowLeft, Loader2, Save, Send } from "lucide-react"
+import AuthoringHeader from "@/components/authoring/AuthoringHeader"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -113,19 +121,26 @@ export default function BlogEditPage(): React.ReactElement {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <Link
-        to="/platform/blog"
-        className={`inline-flex items-center gap-2 text-sm font-medium text-brand-navy/70 hover:text-brand-navy ${FOCUS}`}
-      >
-        <ArrowLeft className="size-4" /> All posts
-      </Link>
+    <div className="space-y-6">
+      <AuthoringHeader />
+      <div className="mx-auto max-w-3xl space-y-6">
+        <Button asChild variant="ghost" size="sm" className="-ml-2">
+          <Link to="/platform/blog">
+            <ArrowLeft className="mr-1.5 size-4" /> All posts
+          </Link>
+        </Button>
 
-      <h1 className="font-display text-3xl text-foreground">
-        {isNew ? "New post" : "Edit post"}
-      </h1>
-
-      <form className="grid gap-5">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display text-2xl">
+              {isNew ? "New post" : "Edit post"}
+            </CardTitle>
+            <CardDescription>
+              Write an article for the public blog.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="grid gap-5">
         <div className="grid gap-2">
           <Label htmlFor="title">Title</Label>
           <Input id="title" className={FOCUS} {...register("title")} />
@@ -213,8 +228,11 @@ export default function BlogEditPage(): React.ReactElement {
               No unsaved changes
             </span>
           ) : null}
-        </div>
-      </form>
+            </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
