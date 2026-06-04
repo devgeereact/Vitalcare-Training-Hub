@@ -49,6 +49,7 @@ import {
   useUploadRecordingToDrive,
 } from "@/lib/queries/sessions.queries"
 import { useLearners } from "@/lib/queries/learners.queries"
+import { sessionPhase, sessionPhaseLabel } from "@/lib/sessions/timing"
 import type { AttendanceStatus } from "@/types/database.types"
 
 const STATUSES: { key: AttendanceStatus; label: string; cls: string }[] = [
@@ -118,6 +119,14 @@ export default function SessionDetailPage() {
 
   const s = session.data!
   recordingRef.current = recordingRef.current || s.recording_url || ""
+  const phase = sessionPhase(s.starts_at, s.ends_at)
+  const ended = phase === "ended"
+  const phaseBadgeCls =
+    phase === "live"
+      ? "border-success bg-success/10 text-success"
+      : phase === "ended"
+        ? "border-border bg-muted text-muted-foreground"
+        : "border-brand-gold bg-brand-gold/10 text-brand-navy"
 
   return (
     <div className="space-y-6">
@@ -156,10 +165,16 @@ export default function SessionDetailPage() {
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <CardTitle className="font-display text-2xl">{s.title}</CardTitle>
-            <Badge variant="outline" className="gap-1">
-              {s.is_virtual ? <Video className="size-3.5" /> : <MapPin className="size-3.5" />}
-              {s.is_virtual ? "Virtual" : "In person"}
-            </Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className={cn("gap-1", phaseBadgeCls)}>
+                {phase === "live" && <Radio className="size-3.5" />}
+                {sessionPhaseLabel(phase)}
+              </Badge>
+              <Badge variant="outline" className="gap-1">
+                {s.is_virtual ? <Video className="size-3.5" /> : <MapPin className="size-3.5" />}
+                {s.is_virtual ? "Virtual" : "In person"}
+              </Badge>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -175,27 +190,37 @@ export default function SessionDetailPage() {
           )}
           {s.description && <p className="pt-1 text-sm">{s.description}</p>}
           <div className="mt-2 flex flex-wrap gap-2">
-            {s.meet_url && (
-              <Button asChild size="sm">
-                <a href={s.meet_url} target="_blank" rel="noopener noreferrer">
-                  <Video className="mr-1.5 size-4" /> Join Google Meet
-                </a>
-              </Button>
-            )}
-            {s.zoom_join_url && (
-              <Button asChild size="sm" variant={s.meet_url ? "outline" : "default"}>
-                <a href={s.zoom_join_url} target="_blank" rel="noopener noreferrer">
-                  <Video className="mr-1.5 size-4" /> Join Zoom meeting
-                </a>
-              </Button>
-            )}
-            {s.zoom_start_url && (
-              <Button asChild size="sm" variant="outline">
-                <a href={s.zoom_start_url} target="_blank" rel="noopener noreferrer">
-                  <Radio className="mr-1.5 size-4" /> Launch as host
-                </a>
-              </Button>
-            )}
+            {ended
+              ? (s.meet_url || s.zoom_join_url) && (
+                  <Button size="sm" variant="outline" disabled>
+                    <Video className="mr-1.5 size-4" /> Meeting ended
+                  </Button>
+                )
+              : (
+                <>
+                  {s.meet_url && (
+                    <Button asChild size="sm">
+                      <a href={s.meet_url} target="_blank" rel="noopener noreferrer">
+                        <Video className="mr-1.5 size-4" /> Join Google Meet
+                      </a>
+                    </Button>
+                  )}
+                  {s.zoom_join_url && (
+                    <Button asChild size="sm" variant={s.meet_url ? "outline" : "default"}>
+                      <a href={s.zoom_join_url} target="_blank" rel="noopener noreferrer">
+                        <Video className="mr-1.5 size-4" /> Join Zoom meeting
+                      </a>
+                    </Button>
+                  )}
+                  {s.zoom_start_url && (
+                    <Button asChild size="sm" variant="outline">
+                      <a href={s.zoom_start_url} target="_blank" rel="noopener noreferrer">
+                        <Radio className="mr-1.5 size-4" /> Launch as host
+                      </a>
+                    </Button>
+                  )}
+                </>
+              )}
             {s.recording_url && (
               <Button asChild size="sm" variant="outline">
                 <a href={s.recording_url} target="_blank" rel="noopener noreferrer">

@@ -35,6 +35,7 @@ import {
   useMyBookedSessions,
   useMarkSelfAttendance,
 } from "@/lib/queries/attendance.queries"
+import { sessionPhase, sessionPhaseLabel } from "@/lib/sessions/timing"
 
 /** True when "now" sits between start and end (session is in progress). */
 function isOngoing(startsAt: string, endsAt: string): boolean {
@@ -114,6 +115,14 @@ function LearnerSessions() {
                         </Badge>
                       )}
                       {!live && today && !ended && <Badge>Today</Badge>}
+                      {!live && ended && (
+                        <Badge
+                          variant="outline"
+                          className="border-border bg-muted text-muted-foreground"
+                        >
+                          Ended
+                        </Badge>
+                      )}
                       {marked && (
                         <Badge variant="secondary" className="gap-1 text-success">
                           <CheckCircle2 className="size-3" /> {s.attendance}
@@ -152,17 +161,23 @@ function LearnerSessions() {
                         <QrCode className="mr-1.5 size-4" /> QR check-in
                       </Link>
                     </Button>
-                    {s.isVirtual && (s.meetUrl || s.zoomUrl) && (
-                      <Button asChild variant="outline" size="sm">
-                        <a
-                          href={s.meetUrl || s.zoomUrl || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Video className="mr-1.5 size-4" /> Join
-                        </a>
-                      </Button>
-                    )}
+                    {s.isVirtual &&
+                      (s.meetUrl || s.zoomUrl) &&
+                      (ended ? (
+                        <Button variant="outline" size="sm" disabled>
+                          <Video className="mr-1.5 size-4" /> Meeting ended
+                        </Button>
+                      ) : (
+                        <Button asChild variant="outline" size="sm">
+                          <a
+                            href={s.meetUrl || s.zoomUrl || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Video className="mr-1.5 size-4" /> Join
+                          </a>
+                        </Button>
+                      ))}
                     {s.recordingUrl && (
                       <Button asChild variant="outline" size="sm">
                         <a href={s.recordingUrl} target="_blank" rel="noopener noreferrer">
@@ -241,6 +256,11 @@ function StaffSessions() {
                 {data!.map((s) => {
                   const today = isToday(new Date(s.startsAt))
                   const live = isOngoing(s.startsAt, s.endsAt)
+                  const phase = sessionPhase(s.startsAt, s.endsAt)
+                  const statusLabel =
+                    s.status === "cancelled"
+                      ? "Cancelled"
+                      : sessionPhaseLabel(phase)
                   return (
                     <TableRow
                       key={s.id}
@@ -285,8 +305,23 @@ function StaffSessions() {
                           {s.isVirtual ? "Virtual" : "In person"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm capitalize">
-                        {s.status.replace("_", " ")}
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "gap-1",
+                            phase === "live" && "border-success bg-success/10 text-success",
+                            phase === "ended" &&
+                              "border-border bg-muted text-muted-foreground",
+                            phase === "upcoming" &&
+                              "border-brand-gold bg-brand-gold/10 text-brand-navy",
+                            s.status === "cancelled" &&
+                              "border-destructive/40 bg-destructive/10 text-destructive",
+                          )}
+                        >
+                          {phase === "live" && <Radio className="size-3" />}
+                          {statusLabel}
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   )
