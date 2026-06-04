@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { ArrowLeft, Loader2, Save, Send } from "lucide-react"
+import { ArrowLeft, AlertCircle, Loader2, Save, Send } from "lucide-react"
 import AuthoringHeader from "@/components/authoring/AuthoringHeader"
 import {
   Card,
@@ -116,6 +116,22 @@ export default function BlogEditPage(): React.ReactElement {
       <div className="mx-auto max-w-3xl space-y-4">
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-96 w-full" />
+      </div>
+    )
+  }
+
+  if (!isNew && existing.isError) {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-12 text-center">
+          <AlertCircle className="size-8 text-destructive" />
+          <p className="text-sm text-muted-foreground">
+            Could not load this post. Please try again.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => existing.refetch()}>
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }

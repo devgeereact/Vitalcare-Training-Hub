@@ -7,9 +7,9 @@ interface SettingsShellProps {
 }
 
 /**
- * Shared shell for every Settings sub-page. Renders a consistent header; the
- * General / Integrations / Password sub-navigation is provided by SectionTabs
- * in the app layout.
+ * Shared header shell for standalone Settings sub-pages (e.g. the Google Drive
+ * OAuth callback landing at /platform/settings/integrations). The main Settings
+ * page provides its own in-page tabs; this only renders a consistent heading.
  */
 export default function SettingsShell({
   description = "Manage your account, integrations and how the platform looks.",

@@ -94,7 +94,12 @@ function MessageBubble({
         {message.attachment_url && (
           <div className="mb-1.5">
             {isImage(message.attachment_type) ? (
-              <a href={message.attachment_url} target="_blank" rel="noopener noreferrer">
+              <a
+                href={message.attachment_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+              >
                 <img
                   src={message.attachment_url}
                   alt={message.attachment_name ?? "attachment"}
@@ -108,7 +113,7 @@ function MessageBubble({
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
-                  "flex min-w-0 items-center gap-2 rounded-lg px-2.5 py-2 text-xs underline-offset-2 hover:underline",
+                  "flex min-w-0 items-center gap-2 rounded-lg px-2.5 py-2 text-xs underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2",
                   mine ? "bg-white/15" : "bg-background",
                 )}
               >
