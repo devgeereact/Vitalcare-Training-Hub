@@ -181,17 +181,22 @@ function ThreadView({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 items-center gap-2 border-b border-border p-3">
+      <div className="flex shrink-0 items-center gap-3 border-b border-border p-3">
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onBack}>
           <ArrowLeft className="size-4" />
         </Button>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
+        <span className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
           {otherName.slice(0, 1).toUpperCase()}
+          <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-card bg-success" />
         </span>
-        <p className="flex min-w-0 flex-1 items-center gap-1.5 truncate font-medium">
-          <span className="truncate">{otherName}</span>
-          <VerifiedTick verified={!!verifiedIds.data?.has(otherId)} />
-        </p>
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-1.5 font-semibold text-foreground">
+            <span className="truncate">{otherName}</span>
+            {/* Always present so recipients can confirm who they are chatting with. */}
+            <VerifiedTick verified={!!verifiedIds.data?.has(otherId)} />
+          </p>
+          <p className="text-xs text-success">Online</p>
+        </div>
         <ScheduleMeetingButton
           otherName={otherName}
           onScheduled={(body) => send.mutateAsync({ recipientId: otherId, body })}
@@ -410,9 +415,13 @@ function ScheduleMeetingButton({
 }
 
 export default function MessagesPage() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { data, isLoading, isError, refetch } = useThreads(user?.id)
   const verifiedIds = useVerifiedUserIds()
+  const myName =
+    profile?.full_name ||
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ||
+    "You"
   const [active, setActive] = useState<{ id: string; name: string } | null>(null)
   const [q, setQ] = useState("")
   const [params, setParams] = useSearchParams()
@@ -449,14 +458,27 @@ export default function MessagesPage() {
               active ? "hidden lg:flex" : "flex",
             )}
           >
+            <div className="flex shrink-0 items-center gap-3 border-b border-border p-3">
+              <span className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
+                {myName.slice(0, 1).toUpperCase()}
+                <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-card bg-success" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-foreground">
+                  <span className="truncate">{myName}</span>
+                  <VerifiedTick verified={!!profile?.is_verified} className="[&_svg]:size-3.5" />
+                </p>
+                <p className="text-xs text-success">Online</p>
+              </div>
+            </div>
             <div className="shrink-0 border-b border-border p-3">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search chats…"
+                  placeholder="Search chat…"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  className="pl-9"
+                  className="rounded-full pl-9"
                 />
               </div>
             </div>
