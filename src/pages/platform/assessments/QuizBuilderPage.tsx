@@ -143,7 +143,7 @@ export default function QuizBuilderPage() {
 
   if (isEdit && assessment.isLoading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="space-y-6">
         <AuthoringHeader />
         <div className="space-y-4">
           <Skeleton className="h-8 w-40" />
@@ -155,7 +155,7 @@ export default function QuizBuilderPage() {
 
   return (
     <div className="space-y-6">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="space-y-6">
         <AuthoringHeader />
         <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/platform/assessments/builder">

@@ -118,7 +118,7 @@ export default function CourseBuilderPage() {
 
   if (isEdit && course.isLoading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="space-y-6">
         <AuthoringHeader />
         <div className="space-y-4">
           <Skeleton className="h-8 w-40" />
@@ -129,7 +129,7 @@ export default function CourseBuilderPage() {
   }
   if (isEdit && course.isError) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="space-y-6">
         <AuthoringHeader />
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <AlertCircle className="size-8 text-destructive" />
@@ -144,7 +144,7 @@ export default function CourseBuilderPage() {
 
   return (
     <div className="space-y-6">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="space-y-6">
         <AuthoringHeader />
         <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/platform/courses/manage">

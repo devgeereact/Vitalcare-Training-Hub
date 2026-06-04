@@ -16,7 +16,7 @@ export default function SettingsShell({
   children,
 }: SettingsShellProps): ReactNode {
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="space-y-6">
       <header>
         <h1 className="font-display text-3xl text-foreground">Settings</h1>
         <p className="mt-1 text-muted-foreground">{description}</p>

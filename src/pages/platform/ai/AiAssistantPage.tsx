@@ -54,7 +54,7 @@ export default function AiAssistantPage() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-9rem)] max-w-3xl flex-col">
+    <div className="flex h-[calc(100vh-9rem)] flex-col">
       <div className="flex items-center justify-between gap-3 pb-4">
         <div>
           <h1 className="font-display text-3xl text-foreground">AI Assistant</h1>

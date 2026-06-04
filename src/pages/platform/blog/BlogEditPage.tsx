@@ -113,7 +113,7 @@ export default function BlogEditPage(): React.ReactElement {
 
   if (!isNew && existing.isLoading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4">
+      <div className="space-y-4">
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-96 w-full" />
       </div>
@@ -122,7 +122,7 @@ export default function BlogEditPage(): React.ReactElement {
 
   if (!isNew && existing.isError) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <div className="">
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-12 text-center">
           <AlertCircle className="size-8 text-destructive" />
           <p className="text-sm text-muted-foreground">
@@ -138,7 +138,7 @@ export default function BlogEditPage(): React.ReactElement {
 
   return (
     <div className="space-y-6">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="space-y-6">
         <AuthoringHeader />
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link to="/platform/blog">
