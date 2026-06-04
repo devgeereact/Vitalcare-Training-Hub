@@ -1,9 +1,11 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useParams, Link } from "react-router-dom"
 import { toast } from "sonner"
-import { ArrowLeft, AlertCircle, GraduationCap, ListTree } from "lucide-react"
+import { ArrowLeft, AlertCircle, GraduationCap, ListTree, Eye } from "lucide-react"
+
+import CoursePreviewDialog from "@/components/courses/CoursePreviewDialog"
 
 import {
   Card,
@@ -81,6 +83,7 @@ export default function CourseBuilderPage() {
     resolver: zodResolver(courseFormSchema) as Resolver<CourseFormValues>,
     defaultValues: EMPTY,
   })
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
     if (isEdit && course.data) {
@@ -146,11 +149,21 @@ export default function CourseBuilderPage() {
     <div className="space-y-6">
       <div className="space-y-6">
         <AuthoringHeader />
-        <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link to="/platform/courses/manage">
-          <ArrowLeft className="mr-1.5 size-4" /> Back to courses
-        </Link>
-      </Button>
+        <div className="flex items-center justify-between gap-2">
+          <Button asChild variant="ghost" size="sm" className="-ml-2">
+            <Link to="/platform/courses/manage">
+              <ArrowLeft className="mr-1.5 size-4" /> Back to courses
+            </Link>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPreviewOpen(true)}
+          >
+            <Eye className="mr-1.5 size-4" /> Preview
+          </Button>
+        </div>
 
       <Card>
         <CardHeader>
@@ -381,6 +394,21 @@ export default function CourseBuilderPage() {
 
         {isEdit && <CourseExtrasEditor courseId={id!} />}
       </div>
+
+      <CoursePreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        courseId={id}
+        values={{
+          title: form.watch("title"),
+          summary: form.watch("summary") ?? "",
+          description: form.watch("description") ?? "",
+          cpdHours: form.watch("cpd_hours") ?? 0,
+          durationMins: form.watch("duration_mins") ?? 0,
+          cstf: form.watch("is_cstf_aligned") ?? false,
+          thumbnailUrl: form.watch("thumbnail_url") ?? "",
+        }}
+      />
     </div>
   )
 }
