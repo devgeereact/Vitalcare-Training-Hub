@@ -1,8 +1,6 @@
-import { Link } from "react-router-dom"
 import { toast } from "sonner"
-import { BarChart3, Settings, UserRound } from "lucide-react"
+import { BarChart3, UserRound } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/hooks/use-auth"
 import { useUser } from "@/hooks/use-user"
@@ -12,9 +10,9 @@ import {
   useOrganisationName,
   useProfileMetrics,
 } from "@/lib/queries/profile.queries"
-import ProfileHeader from "@/components/profile/ProfileHeader"
+import ProfileIdentityCard from "@/components/profile/ProfileIdentityCard"
+import ProfilePersonalInfo from "@/components/profile/ProfilePersonalInfo"
 import ProfileMetrics from "@/components/profile/ProfileMetrics"
-import ProfileAbout from "@/components/profile/ProfileAbout"
 import ProfileContact from "@/components/profile/ProfileContact"
 import ProfileDepartments from "@/components/profile/ProfileDepartments"
 import ProfileActivity from "@/components/profile/ProfileActivity"
@@ -73,60 +71,43 @@ export default function ProfilePage(): React.ReactElement {
   const chips = metrics.data?.slice(0, 3)
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <ProfileHeader
-        profile={profile}
-        role={role}
-        bannerUrl={extras.banner_url}
-        jobTitle={extras.job_title}
-        organisationName={org.data ?? null}
-        chips={chips}
-        onAvatarUploaded={(url) => void saveImage("avatar_url", url)}
-        onBannerUploaded={(url) => void saveImage("banner_url", url)}
-      />
-
-      {/* Single edit affordance: all editing lives in Settings. */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
-        <p className="text-sm text-muted-foreground">
-          This is how your profile appears to colleagues. Update your details in
-          Settings.
-        </p>
-        <Button
-          asChild
-          variant="outline"
-          className="focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
-        >
-          <Link to="/platform/settings">
-            <Settings className="mr-2 size-4" />
-            Edit in Settings
-          </Link>
-        </Button>
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+      {/* Left column: identity card, contact, teams. */}
+      <div className="space-y-6 lg:col-span-1">
+        <ProfileIdentityCard
+          profile={profile}
+          role={role}
+          bannerUrl={extras.banner_url}
+          jobTitle={extras.job_title}
+          metrics={chips}
+          onAvatarUploaded={(url) => void saveImage("avatar_url", url)}
+          onBannerUploaded={(url) => void saveImage("banner_url", url)}
+        />
+        <ProfileContact profile={profile} organisationName={org.data ?? null} />
+        <ProfileDepartments userId={profile.id} />
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        {/* Left column: About, Contact, Teams. */}
-        <div className="space-y-6 lg:col-span-1">
-          <ProfileAbout about={profile.about} />
-          <ProfileContact profile={profile} organisationName={org.data ?? null} />
-          <ProfileDepartments userId={profile.id} />
-        </div>
+      {/* Main column: about + personal info, overview metrics, activity. */}
+      <div className="space-y-6 lg:col-span-2">
+        <ProfilePersonalInfo
+          profile={profile}
+          role={role}
+          organisationName={org.data ?? null}
+        />
 
-        {/* Main column: overview metrics + activity timeline. */}
-        <div className="space-y-6 lg:col-span-2">
-          <section>
-            <div className="mb-3 flex items-center gap-2.5">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-navy/5 text-brand-navy">
-                <BarChart3 className="size-4" />
-              </span>
-              <h2 className="font-display text-lg leading-none text-foreground">
-                Overview
-              </h2>
-            </div>
-            <ProfileMetrics userId={profile.id} role={role} />
-          </section>
+        <section>
+          <div className="mb-3 flex items-center gap-2.5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-navy/5 text-brand-navy">
+              <BarChart3 className="size-4" />
+            </span>
+            <h2 className="font-display text-lg leading-none text-foreground">
+              Overview
+            </h2>
+          </div>
+          <ProfileMetrics userId={profile.id} role={role} />
+        </section>
 
-          <ProfileActivity userId={profile.id} role={role} />
-        </div>
+        <ProfileActivity userId={profile.id} role={role} />
       </div>
     </div>
   )
