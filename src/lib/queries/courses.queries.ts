@@ -238,6 +238,120 @@ export interface ImportModule {
   lessons: { title: string; content: string }[]
 }
 
+/**
+ * Clone a course into a new unpublished draft: copies the course fields, the
+ * full curriculum (modules + lessons), FAQs and prerequisites. Returns the new
+ * course id so the caller can open the builder on it.
+ */
+export function useDuplicateCourse() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (sourceId: string): Promise<string> => {
+      const { data: src, error: srcErr } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("id", sourceId)
+        .single()
+      if (srcErr || !src) {
+        console.error("[useDuplicateCourse:src]", srcErr)
+        throw srcErr ?? new Error("Course not found")
+      }
+      const source = src as Course
+
+      const { data: auth } = await supabase.auth.getUser()
+      const suffix = crypto.randomUUID().slice(0, 6)
+
+      // 1. The course row (always a draft, unique slug).
+      const { data: created, error: cErr } = await supabase
+        .from("courses")
+        .insert({
+          title: `${source.title} (copy)`,
+          slug: source.slug ? `${source.slug}-copy-${suffix}` : null,
+          summary: source.summary,
+          description: source.description,
+          category_id: source.category_id,
+          is_cstf_aligned: source.is_cstf_aligned,
+          cpd_hours: source.cpd_hours,
+          duration_mins: source.duration_mins,
+          is_published: false,
+          thumbnail_url: source.thumbnail_url,
+          organisation_id: source.organisation_id,
+          created_by: auth.user?.id ?? null,
+        })
+        .select("id")
+        .single()
+      if (cErr || !created) {
+        console.error("[useDuplicateCourse:create]", cErr)
+        throw cErr ?? new Error("Could not create the copy")
+      }
+      const newId = created.id as string
+
+      // 2. Curriculum: modules then their lessons.
+      const curriculum = await getCurriculum(sourceId)
+      for (const mod of curriculum) {
+        const { data: newMod, error: mErr } = await supabase
+          .from("modules")
+          .insert({ course_id: newId, title: mod.title, position: mod.position })
+          .select("id")
+          .single()
+        if (mErr || !newMod) {
+          console.error("[useDuplicateCourse:module]", mErr)
+          throw mErr ?? new Error("Could not copy a module")
+        }
+        if (mod.lessons.length) {
+          const { error: lErr } = await supabase.from("lessons").insert(
+            mod.lessons.map((l) => ({
+              module_id: newMod.id,
+              title: l.title,
+              type: l.type,
+              content: l.content,
+              video_url: l.video_url,
+              scorm_url: l.scorm_url,
+              document_url: l.document_url,
+              duration_mins: l.duration_mins,
+              position: l.position,
+            })),
+          )
+          if (lErr) {
+            console.error("[useDuplicateCourse:lessons]", lErr)
+            throw lErr
+          }
+        }
+      }
+
+      // 3. FAQs.
+      const { data: faqs } = await supabase
+        .from("course_faqs")
+        .select("question, answer, position")
+        .eq("course_id", sourceId)
+      if (faqs && faqs.length) {
+        await supabase
+          .from("course_faqs")
+          .insert(faqs.map((f) => ({ ...f, course_id: newId })))
+      }
+
+      // 4. Prerequisites.
+      const { data: prereqs } = await supabase
+        .from("course_prerequisites")
+        .select("prerequisite_id")
+        .eq("course_id", sourceId)
+      if (prereqs && prereqs.length) {
+        await supabase.from("course_prerequisites").insert(
+          prereqs.map((p) => ({
+            course_id: newId,
+            prerequisite_id: p.prerequisite_id,
+          })),
+        )
+      }
+
+      return newId
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: coursesKeys.all })
+    },
+  })
+}
+
 export function useImportCurriculum(courseId: string) {
   const qc = useQueryClient()
   return useMutation({

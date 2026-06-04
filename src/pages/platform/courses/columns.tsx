@@ -4,6 +4,7 @@ import { format } from "date-fns"
 import { ArrowUpDown, Pencil, Eye, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { CourseRow } from "@/lib/queries/courses.queries"
+import DuplicateCourseButton from "@/pages/platform/courses/DuplicateCourseButton"
 
 export const courseColumns: ColumnDef<CourseRow>[] = [
   {
@@ -80,6 +81,7 @@ export const courseColumns: ColumnDef<CourseRow>[] = [
             <Pencil className="size-4" />
           </Link>
         </Button>
+        <DuplicateCourseButton id={row.original.id} />
       </div>
     ),
   },
