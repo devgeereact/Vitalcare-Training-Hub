@@ -160,7 +160,7 @@ export default function OurCoursesPage(): React.ReactElement {
           !courses.isError &&
           (courses.data?.length ?? 0) > 0 ? (
             <div
-              className="mt-10 flex flex-wrap gap-2"
+              className="mt-10 flex flex-wrap gap-2.5"
               role="group"
               aria-label="Filter courses by category"
             >
@@ -291,6 +291,8 @@ function FilterPill({
   active: boolean
   onClick: () => void
 }): React.ReactElement {
+  const base =
+    "rounded-full border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
   return (
     <button
       type="button"
@@ -298,8 +300,8 @@ function FilterPill({
       aria-pressed={active}
       className={
         active
-          ? "rounded-full bg-brand-navy px-4 py-1.5 text-sm font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
-          : "rounded-full border border-border bg-white px-4 py-1.5 text-sm text-brand-navy transition-colors hover:border-brand-gold hover:bg-brand-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+          ? `${base} border-brand-navy bg-brand-navy text-white shadow-sm`
+          : `${base} border-slate-200 bg-white text-slate-600 hover:border-brand-navy/40 hover:text-brand-navy`
       }
     >
       {label}
