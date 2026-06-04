@@ -85,11 +85,7 @@ export default function ProfilePage(): React.ReactElement {
           onBannerUploaded={(url) => void saveImage("banner_url", url)}
         />
         <ProfileContact profile={profile} organisationName={org.data ?? null} />
-        <ProfileConnections
-          profile={profile}
-          organisationName={org.data ?? null}
-          socialLinks={extras.social_links}
-        />
+        <ProfileConnections socialLinks={extras.social_links} />
         <ProfileDepartments userId={profile.id} />
       </div>
 

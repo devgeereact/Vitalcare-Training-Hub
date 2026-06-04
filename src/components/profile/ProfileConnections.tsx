@@ -4,8 +4,6 @@ import {
   Globe,
   Instagram,
   Linkedin,
-  Mail,
-  Phone,
   Twitter,
   Youtube,
   type LucideIcon,
@@ -18,7 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import type { Profile } from "@/types/database.types"
 import {
   SOCIAL_PLATFORMS,
   type SocialLinks,
@@ -41,99 +38,47 @@ function href(url: string): string {
 }
 
 interface Props {
-  profile: Profile
-  organisationName: string | null
   socialLinks: SocialLinks
 }
 
 /**
- * Connections card: real ways to reach this person. Direct contacts (email,
- * phone, organisation, message) plus any social links they have saved in
- * Settings. Renders only what exists, so it never shows empty placeholders.
+ * Social links only. Contact details (email, phone, organisation) live in the
+ * Contact card, so this card just lists the saved social profiles, and renders
+ * nothing when none are set.
  */
 export default function ProfileConnections({
-  profile,
-  organisationName,
   socialLinks,
-}: Props): React.JSX.Element {
+}: Props): React.JSX.Element | null {
   const socials = SOCIAL_PLATFORMS.filter((p) => socialLinks[p])
+  if (socials.length === 0) return null
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="font-display text-xl">Connections</CardTitle>
-        <CardDescription>Ways to reach this person.</CardDescription>
+        <CardDescription>Find this person elsewhere.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-1.5">
-        {profile.email && (
-          <Row
-            icon={Mail}
-            label={profile.email}
-            href={`mailto:${profile.email}`}
-          />
-        )}
-        {profile.phone && (
-          <Row icon={Phone} label={profile.phone} href={`tel:${profile.phone}`} />
-        )}
-        {organisationName && (
-          <Row icon={Building2} label={organisationName} />
-        )}
-
-        {socials.length > 0 && (
-          <div className="mt-2 border-t border-border pt-2">
-            {socials.map((p) => (
-              <Row
-                key={p}
-                icon={SOCIAL_META[p].icon}
-                label={SOCIAL_META[p].label}
-                href={href(socialLinks[p]!)}
-                external
-              />
-            ))}
-          </div>
-        )}
-
-        {!profile.email && !profile.phone && !organisationName && socials.length === 0 && (
-          <p className="py-2 text-sm text-muted-foreground">
-            No contact details yet. Add links in Settings.
-          </p>
-        )}
+        {socials.map((p) => {
+          const Icon = SOCIAL_META[p].icon
+          return (
+            <a
+              key={p}
+              href={href(socialLinks[p]!)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
+            >
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-navy/5 text-brand-navy">
+                <Icon className="size-4" />
+              </span>
+              <span className="min-w-0 truncate text-sm text-foreground">
+                {SOCIAL_META[p].label}
+              </span>
+            </a>
+          )
+        })}
       </CardContent>
     </Card>
-  )
-}
-
-function Row({
-  icon: Icon,
-  label,
-  href,
-  external,
-}: {
-  icon: LucideIcon
-  label: string
-  href?: string
-  external?: boolean
-}): React.JSX.Element {
-  const inner = (
-    <>
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-navy/5 text-brand-navy">
-        <Icon className="size-4" />
-      </span>
-      <span className="min-w-0 truncate text-sm text-foreground">{label}</span>
-    </>
-  )
-  const cls =
-    "flex items-center gap-3 rounded-lg px-1 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
-  if (!href) {
-    return <div className={cls}>{inner}</div>
-  }
-  return (
-    <a
-      href={href}
-      className={`${cls} hover:bg-muted`}
-      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-    >
-      {inner}
-    </a>
   )
 }
