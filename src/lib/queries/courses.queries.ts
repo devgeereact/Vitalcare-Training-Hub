@@ -665,7 +665,33 @@ export function useMarkLessonComplete(courseId: string, lessonIds: string[]) {
           : { count: 0 }
       const pct =
         total > 0 ? Math.min(100, Math.round(((count ?? 0) / total) * 100)) : 0
-      const done = pct >= 100 && total > 0
+      const lessonsDone = pct >= 100 && total > 0
+
+      // A course is only complete once its published assessment (if any) is
+      // passed. When lessons are done but the assessment is not yet passed, the
+      // enrolment stays in progress and no certificate is issued.
+      let assessmentPending = false
+      let done = lessonsDone
+      if (lessonsDone) {
+        const { data: assess } = await supabase
+          .from("assessments")
+          .select("id")
+          .eq("course_id", courseId)
+          .eq("is_published", true)
+          .limit(1)
+        if (assess && assess.length > 0) {
+          const { data: passed } = await supabase
+            .from("assessment_attempts")
+            .select("id")
+            .eq("assessment_id", assess[0].id)
+            .eq("learner_id", uid)
+            .eq("passed", true)
+            .limit(1)
+          const hasPassed = (passed?.length ?? 0) > 0
+          done = hasPassed
+          assessmentPending = !hasPassed
+        }
+      }
 
       const { data: enrolment } = await supabase
         .from("enrollments")
@@ -705,7 +731,7 @@ export function useMarkLessonComplete(courseId: string, lessonIds: string[]) {
           if (certErr) console.error("[useMarkLessonComplete:cert]", certErr)
         }
       }
-      return { done: done && isEnrolled }
+      return { done: done && isEnrolled, assessmentPending }
     },
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: lessonProgressKey(courseId) })

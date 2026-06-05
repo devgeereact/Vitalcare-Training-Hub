@@ -97,6 +97,10 @@ export default function LessonPlayerPage() {
           toast.success("Course complete", {
             description: "Your certificate has been issued.",
           })
+        } else if (res?.assessmentPending) {
+          toast.success("All lessons done", {
+            description: "Pass the course assessment to earn your certificate.",
+          })
         } else {
           toast.success("Lesson complete")
         }
