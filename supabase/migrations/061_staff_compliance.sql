@@ -4,35 +4,43 @@
 -- Training Matrix module and its live export.
 
 -- ---------------------------------------------------------------------------
--- Role helpers (extend the set in 001_schema.sql)
+-- Role helpers. Defined in the private schema like the other RLS helpers
+-- (migration 056) so they are not exposed as REST RPCs, and because
+-- current_role_value now lives in private.
 -- ---------------------------------------------------------------------------
-create or replace function public.is_manager()
+create schema if not exists private;
+grant usage on schema private to anon, authenticated, service_role;
+
+create or replace function private.is_manager()
 returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = private, public
 as $$
   select coalesce(
-    public.current_role_value() in ('manager', 'admin', 'super_admin'),
+    private.current_role_value() in ('manager', 'admin', 'super_admin'),
     false
   );
 $$;
 
 -- Any internal staff member (everyone who is not a learner or guest).
-create or replace function public.is_internal()
+create or replace function private.is_internal()
 returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = private, public
 as $$
   select coalesce(
-    public.current_role_value() in
+    private.current_role_value() in
       ('content_editor', 'trainer', 'manager', 'admin', 'super_admin'),
     false
   );
 $$;
+
+grant execute on function private.is_manager() to anon, authenticated;
+grant execute on function private.is_internal() to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Course renewal interval
@@ -83,16 +91,16 @@ alter table public.staff_training_records enable row level security;
 
 drop policy if exists str_req_select on public.staff_training_requirements;
 create policy str_req_select on public.staff_training_requirements for select
-  using (public.is_internal());
+  using (private.is_internal());
 
 drop policy if exists str_req_write on public.staff_training_requirements;
 create policy str_req_write on public.staff_training_requirements for all
-  using (public.is_manager()) with check (public.is_manager());
+  using (private.is_manager()) with check (private.is_manager());
 
 drop policy if exists str_rec_select on public.staff_training_records;
 create policy str_rec_select on public.staff_training_records for select
-  using (public.is_internal());
+  using (private.is_internal());
 
 drop policy if exists str_rec_write on public.staff_training_records;
 create policy str_rec_write on public.staff_training_records for all
-  using (public.is_manager()) with check (public.is_manager());
+  using (private.is_manager()) with check (private.is_manager());
