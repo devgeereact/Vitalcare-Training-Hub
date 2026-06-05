@@ -137,7 +137,7 @@ function LearnerSessions() {
                     {format(start, "EEE d MMM yyyy, HH:mm")} – {format(new Date(s.endsAt), "HH:mm")}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {!marked && (
+                    {!marked && !ended && (
                       <Button
                         size="sm"
                         disabled={mark.isPending}
@@ -145,7 +145,13 @@ function LearnerSessions() {
                           mark
                             .mutateAsync(s.sessionId)
                             .then(() => toast.success("Attendance marked, you're in"))
-                            .catch(() => toast.error("Could not mark attendance"))
+                            .catch((e: unknown) =>
+                              toast.error(
+                                e instanceof Error
+                                  ? e.message
+                                  : "Could not mark attendance",
+                              ),
+                            )
                         }
                       >
                         {mark.isPending ? (

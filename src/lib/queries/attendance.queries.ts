@@ -117,6 +117,26 @@ export function useMarkSelfAttendance(learnerId: string | undefined) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (sessionId: string) => {
+      // Only allow self check-in around the session time: from 30 minutes
+      // before the start until 12 hours after the end. Stops marking present
+      // on a session that has not started or finished long ago.
+      const { data: s } = await supabase
+        .from("training_sessions")
+        .select("starts_at, ends_at")
+        .eq("id", sessionId)
+        .single()
+      if (s) {
+        const now = Date.now()
+        const start = new Date(s.starts_at).getTime()
+        const end = new Date(s.ends_at).getTime()
+        if (Number.isFinite(start) && now < start - 30 * 60 * 1000) {
+          throw new Error("This session has not started yet.")
+        }
+        if (Number.isFinite(end) && now > end + 12 * 60 * 60 * 1000) {
+          throw new Error("This session has ended.")
+        }
+      }
+
       const { error } = await supabase.from("attendance_records").upsert(
         {
           session_id: sessionId,
