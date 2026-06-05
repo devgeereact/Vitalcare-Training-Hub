@@ -15,6 +15,7 @@ import { useCertificates } from "@/lib/queries/certificates.queries"
 import { useLearners } from "@/lib/queries/learners.queries"
 import { useInvoices } from "@/lib/queries/invoices.queries"
 import { useAnalyticsSummary } from "@/lib/queries/analytics.queries"
+import { useStaffMatrix } from "@/lib/queries/compliance.queries"
 import { downloadWorkbook } from "@/lib/exports/download"
 import { REPORTS, type ReportId, type ReportMeta } from "@/lib/exports/registry"
 import type { WorkbookSpec } from "@/lib/exports/types"
@@ -22,6 +23,7 @@ import { buildCertificateLogLive } from "@/lib/exports/builders/certificate-log"
 import { buildLearnerProgressLive } from "@/lib/exports/builders/learner-progress"
 import { buildFinanceTrackerLive } from "@/lib/exports/builders/finance-tracker"
 import { buildBusinessOverviewLive } from "@/lib/exports/builders/business-overview"
+import { buildTrainingMatrixLive } from "@/lib/exports/builders/training-matrix"
 
 type Mode = "template" | "live"
 
@@ -30,6 +32,7 @@ export default function ReportsPage(): JSX.Element {
   const learners = useLearners()
   const invoices = useInvoices(true)
   const summary = useAnalyticsSummary()
+  const matrix = useStaffMatrix()
 
   // Key is `${id}:${mode}` so each button tracks its own spinner.
   const [busy, setBusy] = useState<Record<string, boolean>>({})
@@ -45,6 +48,8 @@ export default function ReportsPage(): JSX.Element {
         return invoices.isLoading
       case "business-overview":
         return summary.isLoading || invoices.isLoading
+      case "training-matrix":
+        return matrix.isLoading
       default:
         return false
     }
@@ -66,6 +71,8 @@ export default function ReportsPage(): JSX.Element {
           .reduce((sum, inv) => sum + inv.total_pence, 0)
         return buildBusinessOverviewLive(summary.data, paidPence / 100)
       }
+      case "training-matrix":
+        return matrix.data ? buildTrainingMatrixLive(matrix.data) : null
       default:
         return null
     }
@@ -82,6 +89,8 @@ export default function ReportsPage(): JSX.Element {
         return invoices.data?.length ?? 0
       case "business-overview":
         return summary.data ? 1 : 0
+      case "training-matrix":
+        return matrix.data?.staff.length ?? 0
       default:
         return 0
     }

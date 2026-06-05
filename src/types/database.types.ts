@@ -119,6 +119,25 @@ export type Course = Timestamps & {
   thumbnail_url: string | null
   organisation_id: string | null
   created_by: string | null
+  renewal_months: number | null
+}
+
+export type StaffTrainingRequirement = Timestamps & {
+  id: string
+  course_id: string
+  role: UserRole | null
+  department_id: string | null
+}
+
+export type StaffTrainingRecord = Timestamps & {
+  id: string
+  staff_id: string
+  course_id: string
+  completed_on: string
+  renewal_months: number | null
+  trainer_id: string | null
+  certificate_id: string | null
+  notes: string | null
 }
 
 export type Module = Timestamps & {
@@ -658,6 +677,11 @@ export type Database = {
       >
       certificate_templates: TableShape<CertificateTemplate, "name">
       learner_certificates: TableShape<LearnerCertificate, "learner_id">
+      staff_training_requirements: TableShape<StaffTrainingRequirement, "course_id">
+      staff_training_records: TableShape<
+        StaffTrainingRecord,
+        "staff_id" | "course_id" | "completed_on"
+      >
       subscription_plans: TableShape<SubscriptionPlan, "name">
       subscriptions: TableShape<Subscription, "organisation_id">
       notifications: TableShape<Notification, "user_id" | "title">

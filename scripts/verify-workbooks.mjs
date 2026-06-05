@@ -5,7 +5,7 @@ import { buildBookingRegister } from "../src/lib/exports/builders/booking-regist
 import { buildCertificateLogTemplate, buildCertificateLogLive } from "../src/lib/exports/builders/certificate-log.ts"
 import { buildFinanceTrackerTemplate, buildFinanceTrackerLive } from "../src/lib/exports/builders/finance-tracker.ts"
 import { buildLearnerProgressTemplate } from "../src/lib/exports/builders/learner-progress.ts"
-import { buildTrainingMatrix } from "../src/lib/exports/builders/training-matrix.ts"
+import { buildTrainingMatrix, buildTrainingMatrixLive } from "../src/lib/exports/builders/training-matrix.ts"
 import { buildBusinessOverviewTemplate } from "../src/lib/exports/builders/business-overview.ts"
 
 function renderSpec(spec) {
@@ -108,6 +108,30 @@ console.log("\n# targeted assertions")
   const re = new ExcelJS.Workbook(); await re.xlsx.load(buf)
   const m = re.getWorksheet("Matrix")
   check("Matrix BLS status AND formula", String(m.getRow(2).getCell(5).value?.formula).startsWith('IF(AND(C2<>""'))
+}
+
+{
+  const matrix = {
+    courses: [
+      { courseId: "c-bls", title: "BLS", renewalMonths: 12 },
+      { courseId: "c-ipc", title: "IPC", renewalMonths: 12 },
+    ],
+    staff: [
+      { id: "s1", name: "Sarah Okonkwo", role: "trainer", cells: {
+        "c-bls": { completedOn: "2026-01-10", dueOn: "2027-01-10", status: "current" },
+        "c-ipc": { completedOn: "2024-01-10", dueOn: "2025-01-10", status: "overdue" },
+      } },
+    ],
+  }
+  const wb = renderSpec(buildTrainingMatrixLive(matrix))
+  const buf = await wb.xlsx.writeBuffer()
+  const re = new ExcelJS.Workbook(); await re.xlsx.load(buf)
+  const m = re.getWorksheet("Matrix")
+  check("live matrix header generalised (BLS Completed)", m.getRow(1).getCell(3).value === "BLS Completed")
+  check("live matrix BLS status value Current", m.getRow(2).getCell(5).value === "✓ Current")
+  check("live matrix IPC status value Overdue", m.getRow(2).getCell(8).value === "⚠ Overdue")
+  check("live matrix overall compliance count = 1", m.getRow(2).getCell(9).value === 1)
+  check("live matrix header navy fill", m.getRow(1).getCell(1).fill?.fgColor?.argb === "FF1b2e6b")
 }
 
 console.log(failures === 0 ? "\nALL CHECKS PASSED" : `\n${failures} CHECK(S) FAILED`)

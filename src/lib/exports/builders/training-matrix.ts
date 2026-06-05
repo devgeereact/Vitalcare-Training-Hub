@@ -3,9 +3,15 @@
  * table yet. Each course block carries Due/Completed/Status, where Status
  * computes "✓ Current", "⚠ Overdue" or "Pending" from the two dates.
  */
-import type { WorkbookSpec } from "../types"
+import type {
+  ComplianceStatus,
+  MatrixCell,
+  StaffMatrix,
+} from "@/lib/queries/compliance.queries"
+import type { ColumnSpec, WorkbookSpec } from "../types"
 import { sheet } from "../engine"
 import { FMT_DATE } from "../theme"
+import { toDate } from "../format"
 import { CREATOR, JOB_ROLES } from "./shared"
 
 interface MatrixRow {
@@ -113,5 +119,138 @@ export function buildTrainingMatrix(): WorkbookSpec {
     fileName: "Vitalcare-Training-Matrix.xlsx",
     creator: CREATOR,
     sheets: [matrixSheet(), summarySheet()],
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Live export — generalised to N mandatory courses
+// ---------------------------------------------------------------------------
+
+interface LiveMatrixRow {
+  staff: string
+  role: string
+  cells: Record<string, MatrixCell>
+}
+
+const STATUS_LABEL: Record<ComplianceStatus, string> = {
+  current: "✓ Current",
+  due_soon: "◷ Due soon",
+  overdue: "⚠ Overdue",
+  not_recorded: "Pending",
+}
+
+function liveMatrixSheet(matrix: StaffMatrix) {
+  const columns: ColumnSpec<LiveMatrixRow>[] = [
+    { header: "Staff Name", width: 20, value: (r) => r.staff },
+    { header: "Job Role", width: 22, value: (r) => r.role },
+  ]
+  for (const course of matrix.courses) {
+    const id = course.courseId
+    columns.push(
+      {
+        header: `${course.title} Completed`,
+        width: 16,
+        numFmt: FMT_DATE,
+        value: (r) => toDate(r.cells[id]?.completedOn ?? null),
+      },
+      {
+        header: `${course.title} Due`,
+        width: 14,
+        numFmt: FMT_DATE,
+        value: (r) => toDate(r.cells[id]?.dueOn ?? null),
+      },
+      {
+        header: `${course.title} Status`,
+        width: 14,
+        align: "center",
+        value: (r) => {
+          const status = r.cells[id]?.status ?? "not_recorded"
+          return STATUS_LABEL[status]
+        },
+      },
+    )
+  }
+  columns.push({
+    header: "Overall Compliance",
+    width: 18,
+    align: "center",
+    value: (r) =>
+      matrix.courses.filter((c) => r.cells[c.courseId]?.status === "current")
+        .length,
+  })
+
+  const rows: LiveMatrixRow[] = matrix.staff.map((s) => ({
+    staff: s.name,
+    role: s.role,
+    cells: s.cells,
+  }))
+
+  return sheet<LiveMatrixRow>({
+    name: "Matrix",
+    templateRowCount: 12,
+    rows,
+    columns,
+  })
+}
+
+interface LiveSummaryRow {
+  title: string
+  current: number
+  dueSoon: number
+  overdue: number
+  pending: number
+  total: number
+}
+
+function liveSummarySheet(matrix: StaffMatrix) {
+  const rows: LiveSummaryRow[] = matrix.courses.map((c) => {
+    let current = 0
+    let dueSoon = 0
+    let overdue = 0
+    let pending = 0
+    for (const s of matrix.staff) {
+      const status = s.cells[c.courseId]?.status ?? "not_recorded"
+      if (status === "current") current += 1
+      else if (status === "due_soon") dueSoon += 1
+      else if (status === "overdue") overdue += 1
+      else pending += 1
+    }
+    return {
+      title: c.title,
+      current,
+      dueSoon,
+      overdue,
+      pending,
+      total: matrix.staff.length,
+    }
+  })
+  return sheet<LiveSummaryRow>({
+    name: "Summary",
+    rows,
+    columns: [
+      { header: "Course", width: 24, value: (r) => r.title },
+      { header: "Total Staff", width: 12, align: "center", value: (r) => r.total },
+      { header: "Current", width: 12, align: "center", value: (r) => r.current },
+      { header: "Due Soon", width: 12, align: "center", value: (r) => r.dueSoon },
+      { header: "Overdue", width: 12, align: "center", value: (r) => r.overdue },
+      { header: "Pending", width: 12, align: "center", value: (r) => r.pending },
+      {
+        header: "Compliance %",
+        width: 14,
+        align: "center",
+        numFmt: "0%",
+        value: (_r, i) => `=IFERROR(C${i + 2}/B${i + 2},0)`,
+      },
+    ],
+  })
+}
+
+export function buildTrainingMatrixLive(matrix: StaffMatrix): WorkbookSpec {
+  // No mandatory courses configured yet: fall back to the styled template.
+  if (matrix.courses.length === 0) return buildTrainingMatrix()
+  return {
+    fileName: "Vitalcare-Training-Matrix.xlsx",
+    creator: CREATOR,
+    sheets: [liveMatrixSheet(matrix), liveSummarySheet(matrix)],
   }
 }

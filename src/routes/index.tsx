@@ -33,6 +33,7 @@ import AnnouncementsPage from "@/pages/platform/announcements/AnnouncementsPage"
 import TrainersListPage from "@/pages/platform/trainers/TrainersListPage"
 import AnalyticsPage from "@/pages/platform/analytics/AnalyticsPage"
 import ReportsPage from "@/pages/platform/reports/ReportsPage"
+import ComplianceMatrixPage from "@/pages/platform/compliance/ComplianceMatrixPage"
 import AuditLogPage from "@/pages/platform/audit/AuditLogPage"
 import PaymentsPage from "@/pages/platform/payments/PaymentsPage"
 import FeesReceiptsPage from "@/pages/platform/payments/FeesReceiptsPage"
@@ -391,6 +392,18 @@ export const router = createBrowserRouter (
           element: (
             <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <ReportsPage />
+            </RoleGuard>
+          ),
+        },
+
+        // ✅ TRAINING COMPLIANCE (staff read, manager write)
+        {
+          path: "compliance",
+          element: (
+            <RoleGuard
+              roles={["super_admin", "admin", "manager", "trainer", "content_editor"]}
+            >
+              <ComplianceMatrixPage />
             </RoleGuard>
           ),
         },

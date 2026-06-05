@@ -68,7 +68,7 @@ export const REPORTS: ReadonlyArray<ReportMeta> = [
     description:
       "Staff compliance across mandatory courses, with current and overdue status at a glance.",
     template: buildTrainingMatrix,
-    live: false,
+    live: true,
   },
   {
     id: "business-overview",

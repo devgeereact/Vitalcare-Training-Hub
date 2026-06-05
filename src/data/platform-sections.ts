@@ -180,6 +180,7 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
     items: [
       { label: "Departments", to: "/platform/departments", prefix: "/platform/departments", roles: MGMT },
       { label: "Staff", to: "/platform/staff", prefix: "/platform/staff", roles: MGMT },
+      { label: "Compliance", to: "/platform/compliance", prefix: "/platform/compliance", roles: STAFF },
       { label: "Plan", to: "/platform/payments", prefix: "/platform/payments", roles: ADMINS },
       { label: "Invoices", to: "/platform/invoices", prefix: "/platform/invoices", roles: MGMT },
       { label: "Payroll", to: "/platform/payroll", prefix: "/platform/payroll", roles: STAFF },
