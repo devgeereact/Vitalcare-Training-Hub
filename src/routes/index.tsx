@@ -32,6 +32,7 @@ import MessagesPage from "@/pages/platform/messages/MessagesPage"
 import AnnouncementsPage from "@/pages/platform/announcements/AnnouncementsPage"
 import TrainersListPage from "@/pages/platform/trainers/TrainersListPage"
 import AnalyticsPage from "@/pages/platform/analytics/AnalyticsPage"
+import ReportsPage from "@/pages/platform/reports/ReportsPage"
 import AuditLogPage from "@/pages/platform/audit/AuditLogPage"
 import PaymentsPage from "@/pages/platform/payments/PaymentsPage"
 import FeesReceiptsPage from "@/pages/platform/payments/FeesReceiptsPage"
@@ -380,6 +381,16 @@ export const router = createBrowserRouter (
           element: (
             <RoleGuard roles={["admin", "super_admin", "manager"]}>
               <AnalyticsPage />
+            </RoleGuard>
+          ),
+        },
+
+        // 📑 REPORTS & TEMPLATES (admin / manager)
+        {
+          path: "reports",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
+              <ReportsPage />
             </RoleGuard>
           ),
         },

@@ -60,6 +60,7 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
     items: [
       { label: "Dashboard", to: "/platform/dashboard", prefix: "/platform/dashboard" },
       { label: "Analytics", to: "/platform/analytics", prefix: "/platform/analytics", roles: MGMT_T },
+      { label: "Reports", to: "/platform/reports", prefix: "/platform/reports", roles: MGMT },
     ],
   },
   {
