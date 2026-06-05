@@ -179,6 +179,16 @@ export function useCreateOrder(buyerId: string | undefined) {
         quantity: 1,
         unit_price_pence: input.product.price_pence,
       })
+      // Count the coupon use so max_uses is enforced (RLS blocks a direct
+      // update by the buyer, so this goes through a SECURITY DEFINER RPC).
+      if (coupon) {
+        const rpc = supabase.rpc as unknown as (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ error: { message: string } | null }>
+        const { error: rErr } = await rpc("redeem_coupon", { p_code: coupon })
+        if (rErr) console.error("[useCreateOrder:redeem]", rErr)
+      }
       return order.id as string
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["store", "orders"] }),
