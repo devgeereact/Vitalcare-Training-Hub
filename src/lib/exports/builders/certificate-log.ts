@@ -29,7 +29,7 @@ interface SummaryRow {
 }
 
 const EXPIRY_FORMULA = {
-  template: "=DATE(YEAR(B{r})+3,MONTH(B{r}),DAY(B{r}))",
+  template: '=IF(B{r}="","",DATE(YEAR(B{r})+3,MONTH(B{r}),DAY(B{r})))',
 }
 
 function logSheet(rows: ReadonlyArray<CertLogRow>) {

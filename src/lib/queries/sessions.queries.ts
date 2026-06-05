@@ -547,15 +547,51 @@ export function useRosterMutations(sessionId: string) {
 export async function selfCheckIn(sessionId: string): Promise<void> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) throw new Error("Not signed in")
-  const { error } = await supabase
+  const uid = auth.user.id
+
+  // Only valid around the session time (30 min before start to 12 h after end).
+  const { data: s } = await supabase
+    .from("training_sessions")
+    .select("starts_at, ends_at")
+    .eq("id", sessionId)
+    .single()
+  if (s) {
+    const now = Date.now()
+    const start = new Date(s.starts_at).getTime()
+    const end = new Date(s.ends_at).getTime()
+    if (Number.isFinite(start) && now < start - 30 * 60 * 1000) {
+      throw new Error("This session has not started yet.")
+    }
+    if (Number.isFinite(end) && now > end + 12 * 60 * 60 * 1000) {
+      throw new Error("This session has ended.")
+    }
+  }
+
+  // Mark the booking attended (walk-ins are booked on the spot)…
+  const { error: bErr } = await supabase
     .from("session_bookings")
     .upsert(
-      { session_id: sessionId, learner_id: auth.user.id, status: "attended" },
+      { session_id: sessionId, learner_id: uid, status: "attended" },
       { onConflict: "session_id,learner_id" },
     )
-  if (error) {
-    console.error("[selfCheckIn]", error)
-    throw error
+  if (bErr) {
+    console.error("[selfCheckIn:booking]", bErr)
+    throw bErr
+  }
+  // …and write the attendance record so it shows in the log and register.
+  const { error: aErr } = await supabase.from("attendance_records").upsert(
+    {
+      session_id: sessionId,
+      learner_id: uid,
+      status: "present",
+      marked_by: uid,
+      marked_at: new Date().toISOString(),
+    },
+    { onConflict: "session_id,learner_id" },
+  )
+  if (aErr) {
+    console.error("[selfCheckIn:attendance]", aErr)
+    throw aErr
   }
 }
 
