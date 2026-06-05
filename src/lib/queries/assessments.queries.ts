@@ -17,6 +17,60 @@ export const assessmentsKeys = {
   detail: (id: string) => [...assessmentsKeys.all, "detail", id] as const,
   questions: (id: string) => [...assessmentsKeys.all, "questions", id] as const,
   results: (id: string | null) => [...assessmentsKeys.all, "results", id] as const,
+  byCourse: (courseId: string) =>
+    [...assessmentsKeys.all, "by-course", courseId] as const,
+}
+
+export interface CourseAssessment {
+  id: string
+  title: string
+  passMark: number
+  passed: boolean
+}
+
+/**
+ * The published assessment linked to a course (if any), plus whether the
+ * current learner has already passed it. Used on the course overview so a
+ * learner can take the assessment that gates their certificate.
+ */
+export function useCourseAssessment(courseId: string | undefined) {
+  return useQuery({
+    queryKey: assessmentsKeys.byCourse(courseId ?? "none"),
+    enabled: !!courseId,
+    queryFn: async (): Promise<CourseAssessment | null> => {
+      const { data, error } = await supabase
+        .from("assessments")
+        .select("id, title, pass_mark")
+        .eq("course_id", courseId!)
+        .eq("is_published", true)
+        .limit(1)
+        .maybeSingle()
+      if (error) {
+        console.error("[useCourseAssessment]", error)
+        throw error
+      }
+      if (!data) return null
+
+      const { data: auth } = await supabase.auth.getUser()
+      let passed = false
+      if (auth.user) {
+        const { data: pass } = await supabase
+          .from("assessment_attempts")
+          .select("id")
+          .eq("assessment_id", data.id)
+          .eq("learner_id", auth.user.id)
+          .eq("passed", true)
+          .limit(1)
+        passed = (pass?.length ?? 0) > 0
+      }
+      return {
+        id: data.id,
+        title: data.title,
+        passMark: data.pass_mark,
+        passed,
+      }
+    },
+  })
 }
 
 // ─── List ────────────────────────────────────────────────────────────────────

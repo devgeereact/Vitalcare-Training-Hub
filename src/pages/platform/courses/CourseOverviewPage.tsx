@@ -38,6 +38,7 @@ import CourseReviews from "@/components/courses/CourseReviews"
 import CourseFaqs from "@/components/courses/CourseFaqs"
 import { driveImageUrl } from "@/lib/drive-image"
 import { usePrerequisites } from "@/lib/queries/course-extras.queries"
+import { useCourseAssessment } from "@/lib/queries/assessments.queries"
 import { useAuth } from "@/hooks/use-auth"
 import { CheckCircle2, Circle, Lock } from "lucide-react"
 
@@ -49,6 +50,7 @@ export default function CourseOverviewPage() {
   const myCourses = useMyCourses()
   const enrol = useEnrolSelf()
   const prereqs = usePrerequisites(id, user?.id)
+  const assessment = useCourseAssessment(id)
   const categoryNames = useCategoryNameMap()
 
   const mine = myCourses.data?.find((m) => m.course.id === id)
@@ -227,6 +229,28 @@ export default function CourseOverviewPage() {
                     ? "Complete prerequisites first"
                     : "Enrol on this course"}
                 </Button>
+              )}
+              {mine?.enrolled && assessment.data && (
+                <div className="rounded-lg border border-border bg-muted/40 p-3">
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <FileText className="size-4 text-brand-navy" /> Course assessment
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {assessment.data.passed
+                      ? "Passed — required for your certificate."
+                      : `Pass mark ${assessment.data.passMark}%. Required to earn your certificate.`}
+                  </p>
+                  <Button
+                    asChild
+                    size="sm"
+                    variant={assessment.data.passed ? "outline" : "default"}
+                    className="mt-2 w-full"
+                  >
+                    <Link to={`/platform/assessments/${assessment.data.id}`}>
+                      {assessment.data.passed ? "Review assessment" : "Take assessment"}
+                    </Link>
+                  </Button>
+                </div>
               )}
               <RequestOneToOne courseId={id} courseTitle={c.title} />
             </div>
