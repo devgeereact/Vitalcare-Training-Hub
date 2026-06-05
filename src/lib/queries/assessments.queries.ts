@@ -21,6 +21,24 @@ export const assessmentsKeys = {
     [...assessmentsKeys.all, "by-course", courseId] as const,
 }
 
+/** How many attempts the current learner has used on an assessment. */
+export function useAttemptCount(assessmentId: string) {
+  return useQuery({
+    queryKey: [...assessmentsKeys.all, "attempt-count", assessmentId],
+    enabled: !!assessmentId,
+    queryFn: async (): Promise<number> => {
+      const { data: auth } = await supabase.auth.getUser()
+      if (!auth.user) return 0
+      const { count } = await supabase
+        .from("assessment_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("assessment_id", assessmentId)
+        .eq("learner_id", auth.user.id)
+      return count ?? 0
+    },
+  })
+}
+
 export interface CourseAssessment {
   id: string
   title: string

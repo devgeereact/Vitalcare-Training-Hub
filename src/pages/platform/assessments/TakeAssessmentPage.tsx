@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import {
   useAssessment,
   useQuestions,
+  useAttemptCount,
   submitAttempt,
   type SubmitAnswer,
   type AttemptResult,
@@ -27,6 +28,7 @@ export default function TakeAssessmentPage() {
   const { id = "" } = useParams()
   const assessment = useAssessment(id)
   const questions = useQuestions(id)
+  const attemptCount = useAttemptCount(id)
   const startedAt = useRef(Date.now())
   const [answers, setAnswers] = useState<Record<string, SubmitAnswer>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -88,6 +90,31 @@ export default function TakeAssessmentPage() {
         <Button variant="outline" size="sm" onClick={() => assessment.refetch()}>
           Retry
         </Button>
+      </div>
+    )
+  }
+
+  const maxAttempts = assessment.data?.max_attempts ?? 0
+  const attemptsUsed = attemptCount.data ?? 0
+  // Block a fresh attempt once the cap is reached (0 = unlimited).
+  if (!result && maxAttempts > 0 && attemptsUsed >= maxAttempts) {
+    return (
+      <div className="mx-auto max-w-lg py-10">
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+            <XCircle className="size-12 text-muted-foreground" />
+            <h1 className="font-display text-2xl text-foreground">
+              No attempts left
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              You have used all {maxAttempts} attempt
+              {maxAttempts === 1 ? "" : "s"} for this assessment.
+            </p>
+            <Button asChild variant="outline" className="mt-2">
+              <Link to="/platform/courses">Back to courses</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
