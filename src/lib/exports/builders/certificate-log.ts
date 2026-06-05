@@ -114,10 +114,10 @@ function statusLabel(status: CertRow["status"]): string {
 
 export function buildCertificateLogLive(certs: ReadonlyArray<CertRow>): WorkbookSpec {
   const rows: CertLogRow[] = certs.map((c) => ({
-    certNumber: null,
+    certNumber: c.certificateNumber,
     issueDate: toDate(c.issuedAt),
     learner: c.learnerName,
-    organisation: null,
+    organisation: c.organisation,
     course: c.courseTitle,
     courseDate: null,
     trainer: null,

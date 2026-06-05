@@ -531,6 +531,7 @@ export type LearnerCertificate = Timestamps & {
   course_id: string | null
   template_id: string | null
   verification_uuid: string
+  certificate_number: string | null
   hash: string | null
   cpd_hours: number
   issued_at: string

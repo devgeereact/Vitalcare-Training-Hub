@@ -14,6 +14,8 @@ export interface CertRow {
   id: string
   learnerId: string
   learnerName: string
+  organisation: string | null
+  certificateNumber: string | null
   courseTitle: string
   cpdHours: number
   issuedAt: string
@@ -40,7 +42,9 @@ export function certStatus(expiresAt: string | null): {
 export async function getCertificates(): Promise<CertRow[]> {
   const { data, error } = await supabase
     .from("learner_certificates")
-    .select("id, learner_id, course_id, cpd_hours, issued_at, expires_at, verification_uuid")
+    .select(
+      "id, learner_id, course_id, certificate_number, cpd_hours, issued_at, expires_at, verification_uuid",
+    )
     .is("deleted_at", null)
     .order("issued_at", { ascending: false })
     .limit(500)
@@ -53,7 +57,10 @@ export async function getCertificates(): Promise<CertRow[]> {
   const learnerIds = [...new Set(data.map((d) => d.learner_id))]
   const courseIds = [...new Set(data.map((d) => d.course_id).filter(Boolean))]
   const [profiles, courses] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, first_name, last_name").in("id", learnerIds),
+    supabase
+      .from("profiles")
+      .select("id, full_name, first_name, last_name, organisation_id")
+      .in("id", learnerIds),
     courseIds.length
       ? supabase.from("courses").select("id, title").in("id", courseIds as string[])
       : Promise.resolve({ data: [] as { id: string; title: string }[] }),
@@ -64,6 +71,27 @@ export async function getCertificates(): Promise<CertRow[]> {
       p.full_name || [p.first_name, p.last_name].filter(Boolean).join(" ") || "Unknown",
     ]),
   )
+
+  // Resolve organisation names for the learners that have one.
+  const orgIds = [
+    ...new Set(
+      (profiles.data ?? []).map((p) => p.organisation_id).filter(Boolean),
+    ),
+  ] as string[]
+  const orgById = new Map<string, string>()
+  if (orgIds.length > 0) {
+    const { data: orgs } = await supabase
+      .from("organisations")
+      .select("id, name")
+      .in("id", orgIds)
+    for (const o of orgs ?? []) orgById.set(o.id, o.name)
+  }
+  const orgByLearner = new Map(
+    (profiles.data ?? []).map((p) => [
+      p.id,
+      p.organisation_id ? orgById.get(p.organisation_id) ?? null : null,
+    ]),
+  )
   const titleById = new Map((courses.data ?? []).map((c) => [c.id, c.title]))
 
   return data.map((d) => {
@@ -72,6 +100,8 @@ export async function getCertificates(): Promise<CertRow[]> {
       id: d.id,
       learnerId: d.learner_id,
       learnerName: nameById.get(d.learner_id) ?? "Unknown",
+      organisation: orgByLearner.get(d.learner_id) ?? null,
+      certificateNumber: d.certificate_number,
       courseTitle: d.course_id ? titleById.get(d.course_id) ?? "-" : "Standalone",
       cpdHours: d.cpd_hours,
       issuedAt: d.issued_at,

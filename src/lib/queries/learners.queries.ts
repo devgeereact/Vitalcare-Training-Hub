@@ -25,6 +25,7 @@ export interface LearnerRow {
   name: string
   email: string
   phone: string
+  organisation: string | null
   joined: string
   status: "Active"
 }
@@ -32,7 +33,9 @@ export interface LearnerRow {
 export async function getLearners(): Promise<LearnerRow[]> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, first_name, last_name, full_name, phone, created_at")
+    .select(
+      "id, email, first_name, last_name, full_name, phone, organisation_id, created_at",
+    )
     .eq("role", "learner")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
@@ -40,6 +43,19 @@ export async function getLearners(): Promise<LearnerRow[]> {
   if (error) {
     console.error("[getLearners]", error)
     throw error
+  }
+
+  // Resolve organisation names in one batch.
+  const orgIds = [
+    ...new Set((data ?? []).map((p) => p.organisation_id).filter(Boolean)),
+  ] as string[]
+  const orgById = new Map<string, string>()
+  if (orgIds.length > 0) {
+    const { data: orgs } = await supabase
+      .from("organisations")
+      .select("id, name")
+      .in("id", orgIds)
+    for (const o of orgs ?? []) orgById.set(o.id, o.name)
   }
 
   return (data ?? []).map((p) => ({
@@ -50,6 +66,9 @@ export async function getLearners(): Promise<LearnerRow[]> {
       "Unnamed learner",
     email: p.email,
     phone: p.phone ?? "",
+    organisation: p.organisation_id
+      ? orgById.get(p.organisation_id) ?? null
+      : null,
     joined: p.created_at,
     status: "Active" as const,
   }))

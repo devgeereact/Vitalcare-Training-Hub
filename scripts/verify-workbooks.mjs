@@ -29,8 +29,9 @@ const specs = [
   buildTrainingMatrix(),
   buildBusinessOverviewTemplate(),
   buildCertificateLogLive([
-    { id: "abc12345-x", learnerId: "l1", learnerName: "Sarah Okonkwo", courseTitle: "BLS",
-      cpdHours: 6, issuedAt: "2026-01-15T00:00:00Z", expiresAt: null,
+    { id: "abc12345-x", learnerId: "l1", learnerName: "Sarah Okonkwo",
+      organisation: "Greenfield Care Ltd", certificateNumber: "VC-CERT-2026-0001",
+      courseTitle: "BLS", cpdHours: 6, issuedAt: "2026-01-15T00:00:00Z", expiresAt: null,
       verificationUuid: "OHGI1JNY", status: "active", daysToExpiry: 900 },
   ]),
   buildFinanceTrackerLive([
@@ -88,6 +89,18 @@ console.log("\n# targeted assertions")
   check("Cert expiry guarded formula", String(log.getRow(2).getCell(8).value?.formula).startsWith('IF(B2="","",DATE'))
   const sum = re.getWorksheet("Summary")
   check("Summary COUNTIF cross-sheet quoted", String(sum.getRow(2).getCell(2).value?.formula).includes("'Certificate Log'!E:E"))
+}
+{
+  const wb = renderSpec(buildCertificateLogLive([
+    { id: "abc12345-x", learnerId: "l1", learnerName: "Sarah Okonkwo",
+      organisation: "Greenfield Care Ltd", certificateNumber: "VC-CERT-2026-0001",
+      courseTitle: "BLS", cpdHours: 6, issuedAt: "2026-01-15T00:00:00Z", expiresAt: null,
+      verificationUuid: "OHGI1JNY", status: "active", daysToExpiry: 900 }]))
+  const buf = await wb.xlsx.writeBuffer()
+  const re = new ExcelJS.Workbook(); await re.xlsx.load(buf)
+  const log = re.getWorksheet("Certificate Log")
+  check("live cert number in A2", log.getRow(2).getCell(1).value === "VC-CERT-2026-0001")
+  check("live organisation in D2", log.getRow(2).getCell(4).value === "Greenfield Care Ltd")
 }
 {
   const wb = renderSpec(buildTrainingMatrix())

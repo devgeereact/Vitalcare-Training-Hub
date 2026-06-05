@@ -121,7 +121,7 @@ export function buildLearnerProgressLive(
       learnerId: l.id.slice(0, 8),
       firstName: first,
       lastName: last,
-      organisation: null,
+      organisation: l.organisation,
       email: l.email,
       course: null,
       date: toDate(l.joined),
