@@ -667,7 +667,7 @@ export function useMarkLessonComplete(courseId: string, lessonIds: string[]) {
         total > 0 ? Math.min(100, Math.round(((count ?? 0) / total) * 100)) : 0
       const done = pct >= 100 && total > 0
 
-      await supabase
+      const { data: enrolment } = await supabase
         .from("enrollments")
         .update({
           progress_pct: pct,
@@ -676,10 +676,12 @@ export function useMarkLessonComplete(courseId: string, lessonIds: string[]) {
         })
         .eq("course_id", courseId)
         .eq("learner_id", uid)
+        .select("id")
 
-      // Auto-issue a certificate on first completion (idempotent: skip if one
-      // already exists for this learner + course).
-      if (done) {
+      // Auto-issue a certificate on first completion — only for an actual
+      // enrolment, and idempotent (skip if one already exists).
+      const isEnrolled = (enrolment?.length ?? 0) > 0
+      if (done && isEnrolled) {
         const { data: existing } = await supabase
           .from("learner_certificates")
           .select("id")
@@ -703,7 +705,7 @@ export function useMarkLessonComplete(courseId: string, lessonIds: string[]) {
           if (certErr) console.error("[useMarkLessonComplete:cert]", certErr)
         }
       }
-      return { done }
+      return { done: done && isEnrolled }
     },
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: lessonProgressKey(courseId) })

@@ -14,16 +14,26 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { useUser } from "@/hooks/use-user"
 import {
   useCurriculum,
   useCompletedLessons,
   useMarkLessonComplete,
+  useMyCourses,
 } from "@/lib/queries/courses.queries"
 
 export default function LessonPlayerPage() {
   const { id = "", lessonId = "" } = useParams()
   const navigate = useNavigate()
   const curriculum = useCurriculum(id)
+  const myCourses = useMyCourses()
+  const { isLearner, isGuest } = useUser()
+
+  // Learners must be enrolled to open a lesson (staff can preview). Without this
+  // a learner could reach a lesson by URL, complete it, and trigger a
+  // certificate without ever enrolling.
+  const enrolled = myCourses.data?.some((m) => m.course.id === id && m.enrolled)
+  const mustEnrol = (isLearner || isGuest) && myCourses.isSuccess && !enrolled
 
   const allLessons = curriculum.data?.flatMap((m) => m.lessons) ?? []
   const lessonIds = allLessons.map((l) => l.id)
@@ -36,11 +46,24 @@ export default function LessonPlayerPage() {
   const next = index >= 0 && index < allLessons.length - 1 ? allLessons[index + 1] : null
   const isDone = completed.data?.has(lessonId) ?? false
 
-  if (curriculum.isLoading) {
+  if (curriculum.isLoading || myCourses.isLoading) {
     return (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
         <Skeleton className="h-96 w-full" />
         <Skeleton className="h-96 w-full" />
+      </div>
+    )
+  }
+  if (mustEnrol) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <AlertCircle className="size-8 text-brand-gold" />
+        <p className="text-sm text-muted-foreground">
+          Enrol on this course to start the lessons.
+        </p>
+        <Button asChild size="sm">
+          <Link to={`/platform/courses/${id}`}>Go to course</Link>
+        </Button>
       </div>
     )
   }
