@@ -54,7 +54,9 @@ import {
   useCourse,
   useCreateCourse,
   useUpdateCourse,
+  useCurriculum,
 } from "@/lib/queries/courses.queries"
+import { curriculumReadiness } from "@/lib/courses/readiness"
 
 const EMPTY: CourseFormValues = {
   title: "",
@@ -85,6 +87,12 @@ export default function CourseBuilderPage() {
   })
   const [previewOpen, setPreviewOpen] = useState(false)
 
+  // Readiness drives publish-gating: a course with empty modules or lessons
+  // missing content cannot be flipped to published.
+  const curriculum = useCurriculum(id ?? "")
+  const readiness = curriculumReadiness(curriculum.data ?? [])
+  const wantsPublish = form.watch("is_published")
+
   useEffect(() => {
     if (isEdit && course.data) {
       form.reset({
@@ -103,6 +111,13 @@ export default function CourseBuilderPage() {
   }, [course.data, isEdit])
 
   async function onSubmit(values: CourseFormValues) {
+    // Block publishing a course whose curriculum is not ready.
+    if (isEdit && values.is_published && !readiness.ready) {
+      toast.error("Cannot publish yet", {
+        description: readiness.parts.join(", ") || "Add curriculum content first.",
+      })
+      return
+    }
     try {
       if (isEdit) {
         await updateCourse.mutateAsync(values)
@@ -356,6 +371,13 @@ export default function CourseBuilderPage() {
                   )}
                 />
               </div>
+
+              {isEdit && wantsPublish && !readiness.ready && (
+                <p className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  <span>Curriculum is not ready: {readiness.parts.join(", ")}. Fix these below before publishing.</span>
+                </p>
+              )}
 
               <div className="flex justify-end gap-2 pt-2">
                 <Button asChild variant="outline" type="button">

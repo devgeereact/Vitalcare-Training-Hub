@@ -30,24 +30,8 @@ import {
 } from "@/lib/queries/courses.queries"
 import type { Lesson } from "@/types/database.types"
 import type { LessonFormValues } from "@/lib/validations/course.schema"
+import { lessonComplete, curriculumReadiness } from "@/lib/courses/readiness"
 import LessonDialog from "./LessonDialog"
-
-/** A lesson is complete when its type's required content field is filled. */
-function lessonComplete(lesson: Lesson): boolean {
-  switch (lesson.type) {
-    case "text":
-      return !!lesson.content?.trim()
-    case "video":
-      return !!lesson.video_url?.trim()
-    case "document":
-      return !!lesson.document_url?.trim()
-    case "scorm":
-    case "h5p":
-      return !!lesson.scorm_url?.trim()
-    default:
-      return true
-  }
-}
 
 function SortableRow({
   id,
@@ -150,31 +134,20 @@ export default function CurriculumBuilder({ courseId }: { courseId: string }) {
   }
 
   const mods = modules ?? []
-  const emptyModules = mods.filter((mod) => mod.lessons.length === 0).length
-  const incompleteLessons = mods.reduce(
-    (n, mod) => n + mod.lessons.filter((l) => !lessonComplete(l)).length,
-    0,
-  )
-  const totalLessons = mods.reduce((n, mod) => n + mod.lessons.length, 0)
-  const issues = emptyModules + incompleteLessons
-  const readinessParts: string[] = []
-  if (emptyModules > 0)
-    readinessParts.push(`${emptyModules} module${emptyModules > 1 ? "s" : ""} with no lessons`)
-  if (incompleteLessons > 0)
-    readinessParts.push(`${incompleteLessons} lesson${incompleteLessons > 1 ? "s" : ""} missing content`)
+  const r = curriculumReadiness(mods)
 
   return (
     <div className="space-y-4">
       {mods.length > 0 &&
-        (issues === 0 ? (
+        (r.ready ? (
           <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
             <CheckCircle2 className="size-4 shrink-0" />
-            <span>Ready to publish. {totalLessons} lesson{totalLessons === 1 ? "" : "s"} across {mods.length} module{mods.length === 1 ? "" : "s"}.</span>
+            <span>Ready to publish. {r.totalLessons} lesson{r.totalLessons === 1 ? "" : "s"} across {mods.length} module{mods.length === 1 ? "" : "s"}.</span>
           </div>
         ) : (
           <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-            <span>Not ready to publish: {readinessParts.join(", ")}.</span>
+            <span>Not ready to publish: {r.parts.join(", ")}.</span>
           </div>
         ))}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onModuleDragEnd}>
