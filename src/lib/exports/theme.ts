@@ -20,7 +20,7 @@ const HEADER_FILL: Fill = {
   pattern: "solid",
   fgColor: { argb: NAVY_ARGB },
 }
-const HEADER_FONT: Font = {
+const HEADER_FONT: Partial<Font> = {
   name: "Arial",
   size: 11,
   bold: true,
@@ -31,8 +31,8 @@ const GOLD_FILL: Fill = {
   pattern: "solid",
   fgColor: { argb: GOLD_ARGB },
 }
-const GOLD_FONT: Font = { name: "Arial", size: 11, bold: true }
-const BODY_FONT: Font = { name: "Arial", size: 11 }
+const GOLD_FONT: Partial<Font> = { name: "Arial", size: 11, bold: true }
+const BODY_FONT: Partial<Font> = { name: "Arial", size: 11 }
 
 function thinBorder(): Partial<Borders> {
   const side = { style: "thin" as const, color: { argb: BORDER_ARGB } }
