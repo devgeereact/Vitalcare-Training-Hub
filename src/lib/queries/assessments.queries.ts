@@ -348,87 +348,41 @@ export interface AttemptResult {
   autoGraded: boolean
 }
 
+/**
+ * Submit an assessment attempt. Grading happens server-side in the
+ * `submit_assessment_attempt` RPC (the only write path to assessment_attempts),
+ * so the score and passed flag cannot be forged from the client.
+ */
 export async function submitAttempt(
   assessmentId: string,
-  passMark: number,
-  questions: QuestionWithOptions[],
   answers: Map<string, SubmitAnswer>,
   timeTakenSecs: number,
 ): Promise<AttemptResult> {
-  const { data: auth } = await supabase.auth.getUser()
-  if (!auth.user) throw new Error("Not signed in")
-  const uid = auth.user.id
-
-  let earned = 0
-  let total = 0
-  let hasEssay = false
-  const answerRows: {
-    question_id: string
-    response: string | null
-    is_correct: boolean | null
-  }[] = []
-
-  for (const q of questions) {
-    total += q.points
-    const ans = answers.get(q.id)
-    if (q.type === "free_text") {
-      hasEssay = true
-      answerRows.push({
-        question_id: q.id,
-        response: ans?.textResponse ?? "",
-        is_correct: null,
-      })
-      continue
+  const payload: Record<
+    string,
+    { selectedOptionIds: string[]; textResponse: string }
+  > = {}
+  for (const [qid, a] of answers) {
+    payload[qid] = {
+      selectedOptionIds: a.selectedOptionIds ?? [],
+      textResponse: a.textResponse ?? "",
     }
-    let correct = false
-    if (q.type === "mcq" || q.type === "true_false") {
-      const correctIds = q.options.filter((o) => o.is_correct).map((o) => o.id).sort()
-      const chosen = [...(ans?.selectedOptionIds ?? [])].sort()
-      correct =
-        correctIds.length > 0 &&
-        correctIds.length === chosen.length &&
-        correctIds.every((id, i) => id === chosen[i])
-      answerRows.push({
-        question_id: q.id,
-        response: chosen.join(","),
-        is_correct: correct,
-      })
-    } else if (q.type === "fill_blank") {
-      const accepted = q.options.map((o) => o.label.trim().toLowerCase())
-      const given = (ans?.textResponse ?? "").trim().toLowerCase()
-      correct = accepted.includes(given) && given.length > 0
-      answerRows.push({ question_id: q.id, response: ans?.textResponse ?? "", is_correct: correct })
-    }
-    if (correct) earned += q.points
   }
 
-  const score = total > 0 ? Math.round((earned / total) * 100) : 0
-  const passed = score >= passMark
-
-  const { data: attempt, error: attErr } = await supabase
-    .from("assessment_attempts")
-    .insert({
-      assessment_id: assessmentId,
-      learner_id: uid,
-      score,
-      passed,
-      time_taken_secs: timeTakenSecs,
-      completed_at: new Date().toISOString(),
-    })
-    .select("id")
-    .single()
-  if (attErr) {
-    console.error("[submitAttempt]", attErr)
-    throw attErr
+  const rpc = supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>
+  const { data, error } = await rpc("submit_assessment_attempt", {
+    p_assessment: assessmentId,
+    p_answers: payload,
+    p_time_taken: timeTakenSecs,
+  })
+  if (error) {
+    console.error("[submitAttempt]", error)
+    throw new Error(error.message)
   }
-
-  if (answerRows.length > 0) {
-    await supabase
-      .from("attempt_answers")
-      .insert(answerRows.map((r) => ({ ...r, attempt_id: attempt.id })))
-  }
-
-  return { score, passed, autoGraded: !hasEssay }
+  return data as AttemptResult
 }
 
 // ─── Results / grade book ────────────────────────────────────────────────────

@@ -61,8 +61,6 @@ export default function TakeAssessmentPage() {
       const map = new Map(Object.entries(answers))
       const res = await submitAttempt(
         id,
-        assessment.data.pass_mark,
-        qs,
         map,
         Math.round((Date.now() - startedAt.current) / 1000),
       )
