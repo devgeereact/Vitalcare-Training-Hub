@@ -24,7 +24,7 @@ returns table (
   id          uuid,
   question_id uuid,
   label       text,
-  position    integer,
+  "position"  integer,
   is_correct  boolean
 )
 language sql
