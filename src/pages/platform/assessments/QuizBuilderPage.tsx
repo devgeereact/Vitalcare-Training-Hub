@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useNavigate, useParams, Link } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom"
 import { toast } from "sonner"
 import { ArrowLeft, Plus, Pencil, Trash2, AlertCircle } from "lucide-react"
 
@@ -70,6 +70,10 @@ export default function QuizBuilderPage() {
   const id = params.id && params.id !== "new" ? params.id : undefined
   const isEdit = !!id
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  // When a quiz is started from a course builder, the course id arrives as
+  // ?course=<id> so the new assessment is pre-linked to that course.
+  const courseParam = searchParams.get("course") ?? ""
 
   const courses = useCourses()
   const assessment = useAssessment(id ?? "")
@@ -82,8 +86,12 @@ export default function QuizBuilderPage() {
 
   const form = useForm<AssessmentFormValues>({
     resolver: zodResolver(assessmentFormSchema) as Resolver<AssessmentFormValues>,
-    defaultValues: EMPTY,
+    defaultValues: { ...EMPTY, course_id: courseParam },
   })
+
+  // The course this quiz belongs to, for the "back to course" link: the saved
+  // link when editing, otherwise the course passed in via the query string.
+  const linkedCourseId = (isEdit ? assessment.data?.course_id : courseParam) || ""
 
   useEffect(() => {
     if (isEdit && assessment.data) {
@@ -158,8 +166,15 @@ export default function QuizBuilderPage() {
       <div className="space-y-6">
         <AuthoringHeader />
         <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link to="/platform/assessments/builder">
-          <ArrowLeft className="mr-1.5 size-4" /> Back to assessments
+        <Link
+          to={
+            linkedCourseId
+              ? `/platform/courses/builder/${linkedCourseId}`
+              : "/platform/assessments/builder"
+          }
+        >
+          <ArrowLeft className="mr-1.5 size-4" />
+          {linkedCourseId ? "Back to course" : "Back to assessments"}
         </Link>
       </Button>
 

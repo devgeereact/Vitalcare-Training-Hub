@@ -3,7 +3,16 @@ import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigate, useParams, Link } from "react-router-dom"
 import { toast } from "sonner"
-import { ArrowLeft, AlertCircle, GraduationCap, ListTree, Eye } from "lucide-react"
+import {
+  ArrowLeft,
+  AlertCircle,
+  GraduationCap,
+  ListTree,
+  Eye,
+  ClipboardCheck,
+  CheckCircle2,
+  FileText,
+} from "lucide-react"
 
 import CoursePreviewDialog from "@/components/courses/CoursePreviewDialog"
 
@@ -45,7 +54,9 @@ import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
 import MediaUpload from "@/components/courses/MediaUpload"
 import CourseExtrasEditor from "@/components/courses/CourseExtrasEditor"
 import CourseMaterialsEditor from "@/components/courses/CourseMaterialsEditor"
+import CourseAssessmentPanel from "@/components/courses/CourseAssessmentPanel"
 import SaveToDriveButton from "@/components/courses/SaveToDriveButton"
+import { cn } from "@/lib/utils"
 import ImportCurriculumDialog from "@/components/courses/ImportCurriculumDialog"
 import {
   courseFormSchema,
@@ -59,6 +70,15 @@ import {
   useCurriculum,
 } from "@/lib/queries/courses.queries"
 import { curriculumReadiness } from "@/lib/courses/readiness"
+
+const STAGES = [
+  { key: "details", label: "Details" },
+  { key: "curriculum", label: "Curriculum" },
+  { key: "assessment", label: "Assessment" },
+  { key: "materials", label: "Workbooks" },
+  { key: "review", label: "Review & publish" },
+] as const
+type Stage = (typeof STAGES)[number]["key"]
 
 const EMPTY: CourseFormValues = {
   title: "",
@@ -88,6 +108,7 @@ export default function CourseBuilderPage() {
     defaultValues: EMPTY,
   })
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [stage, setStage] = useState<Stage>("details")
 
   // Readiness drives publish-gating: a course with empty modules or lessons
   // missing content cannot be flipped to published.
@@ -172,19 +193,47 @@ export default function CourseBuilderPage() {
               <ArrowLeft className="mr-1.5 size-4" /> Back to courses
             </Link>
           </Button>
-          <div className="flex items-center gap-2">
-            {isEdit && <SaveToDriveButton courseId={id!} />}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setPreviewOpen(true)}
-            >
-              <Eye className="mr-1.5 size-4" /> Preview
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPreviewOpen(true)}
+          >
+            <Eye className="mr-1.5 size-4" /> Preview
+          </Button>
         </div>
 
+        {/* Stage nav: walk the author through the course in order. The steps
+            after Details unlock once the course exists. */}
+        <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-muted/40 p-1">
+          {STAGES.map((s) => {
+            const locked = !isEdit && s.key !== "details"
+            return (
+              <button
+                key={s.key}
+                type="button"
+                disabled={locked}
+                onClick={() => setStage(s.key)}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  stage === s.key
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                  locked && "cursor-not-allowed opacity-40",
+                )}
+              >
+                {s.label}
+              </button>
+            )
+          })}
+        </div>
+        {!isEdit && (
+          <p className="text-xs text-muted-foreground">
+            Save the course to unlock curriculum, assessment, workbooks and publishing.
+          </p>
+        )}
+
+      <div className={cn(stage !== "details" && "hidden")}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display text-2xl">
@@ -396,32 +445,111 @@ export default function CourseBuilderPage() {
           </Form>
         </CardContent>
       </Card>
+      </div>
 
       {isEdit && (
-        <Card>
-          <CardHeader>
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <CardTitle className="flex items-center gap-2 font-display text-xl">
-                  <ListTree className="size-5 text-brand-navy" />
-                  Curriculum
-                </CardTitle>
-                <CardDescription>
-                  Drag to reorder modules and lessons. Changes save automatically.
-                </CardDescription>
+        <div className={cn(stage !== "curriculum" && "hidden")}>
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <CardTitle className="flex items-center gap-2 font-display text-xl">
+                    <ListTree className="size-5 text-brand-navy" />
+                    Curriculum
+                  </CardTitle>
+                  <CardDescription>
+                    Drag to reorder modules and lessons. Changes save automatically.
+                  </CardDescription>
+                </div>
+                <ImportCurriculumDialog courseId={id!} />
               </div>
-              <ImportCurriculumDialog courseId={id!} />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <CurriculumBuilder courseId={id!} />
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <CurriculumBuilder courseId={id!} />
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-        {isEdit && <CourseMaterialsEditor courseId={id!} />}
+      {isEdit && (
+        <div className={cn(stage !== "assessment" && "hidden")}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-display text-xl">
+                <ClipboardCheck className="size-5 text-brand-navy" />
+                Assessment
+              </CardTitle>
+              <CardDescription>
+                The quiz learners must pass to earn the certificate. Questions are
+                built in the Quiz Builder.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CourseAssessmentPanel courseId={id!} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        {isEdit && <CourseExtrasEditor courseId={id!} />}
+      {isEdit && (
+        <div className={cn("space-y-6", stage !== "materials" && "hidden")}>
+          <CourseMaterialsEditor courseId={id!} />
+          <CourseExtrasEditor courseId={id!} />
+        </div>
+      )}
+
+      {isEdit && (
+        <div className={cn("space-y-4", stage !== "review" && "hidden")}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-display text-xl">
+                <CheckCircle2 className="size-5 text-brand-navy" />
+                Review and publish
+              </CardTitle>
+              <CardDescription>
+                Final check before learners can see this course.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {readiness.ready ? (
+                <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  <span>Curriculum is ready. {readiness.totalLessons} lessons.</span>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  <span>Not ready: {readiness.parts.join(", ")}. Fix in the earlier steps.</span>
+                </div>
+              )}
+
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <FileText className="size-4 shrink-0" />
+                Published status:{" "}
+                <span className="font-medium text-foreground">
+                  {course.data?.is_published ? "Published" : "Draft"}
+                </span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Toggle Published in the Details step to make this course visible. It can
+                only be published once the curriculum is ready.
+              </p>
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <SaveToDriveButton courseId={id!} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPreviewOpen(true)}
+                >
+                  <Eye className="mr-1.5 size-4" /> Preview
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       </div>
 
       <CoursePreviewDialog
