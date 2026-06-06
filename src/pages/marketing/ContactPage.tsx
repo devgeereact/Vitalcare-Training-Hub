@@ -1,3 +1,4 @@
+import { useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -30,6 +31,9 @@ export default function ContactPage(): React.ReactElement {
     formState: { errors, isSubmitting },
   } = useForm<ContactValues>({ resolver: zodResolver(contactSchema) })
 
+  // Honeypot: a hidden field humans never fill. Bots do; the server drops those.
+  const honeypot = useRef<HTMLInputElement>(null)
+
   const onSubmit = async (values: ContactValues): Promise<void> => {
     try {
       const { error } = await supabase.functions.invoke("contact-form", {
@@ -39,6 +43,7 @@ export default function ContactPage(): React.ReactElement {
           phone: values.phone ?? "",
           subject: values.subject,
           message: values.message,
+          website: honeypot.current?.value ?? "",
         },
       })
       if (error) {
@@ -174,6 +179,16 @@ export default function ContactPage(): React.ReactElement {
               noValidate
               className="mt-6 grid gap-5"
             >
+              {/* Honeypot: hidden from users and screen readers; bots fill it. */}
+              <input
+                ref={honeypot}
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="hidden"
+              />
               <div className="grid gap-2">
                 <Label htmlFor="name">Name *</Label>
                 <Input
