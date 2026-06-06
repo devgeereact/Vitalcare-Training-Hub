@@ -158,6 +158,24 @@ export default function CourseBuilderPage() {
 
   const saving = createCourse.isPending || updateCourse.isPending
 
+  // Publish / unpublish straight from the Review step. Publishing is blocked
+  // until the curriculum is ready; unpublishing is always allowed.
+  async function setPublished(next: boolean) {
+    if (next && !readiness.ready) {
+      toast.error("Cannot publish yet", {
+        description: readiness.parts.join(", ") || "Add curriculum content first.",
+      })
+      return
+    }
+    try {
+      await updateCourse.mutateAsync({ ...form.getValues(), is_published: next })
+      form.setValue("is_published", next)
+      toast.success(next ? "Course published" : "Course moved to draft")
+    } catch {
+      toast.error(next ? "Could not publish" : "Could not unpublish")
+    }
+  }
+
   if (isEdit && course.isLoading) {
     return (
       <div className="space-y-6">
@@ -541,6 +559,27 @@ export default function CourseBuilderPage() {
               </p>
 
               <div className="flex flex-wrap gap-2 pt-1">
+                {wantsPublish ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={saving}
+                    onClick={() => setPublished(false)}
+                  >
+                    Unpublish
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={saving || !readiness.ready}
+                    title={!readiness.ready ? readiness.parts.join(", ") : undefined}
+                    onClick={() => setPublished(true)}
+                  >
+                    <CheckCircle2 className="mr-1.5 size-4" /> Publish course
+                  </Button>
+                )}
                 <SaveToDriveButton courseId={id!} />
                 <Button
                   type="button"

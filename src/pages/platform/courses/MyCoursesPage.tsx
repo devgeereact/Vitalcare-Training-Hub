@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
 import {
@@ -18,6 +18,13 @@ import { Link as RLink } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DataTable } from "@/components/data-table"
 import {
@@ -78,12 +85,39 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
   const [staffView, setStaffView] = useState<StaffView>(initialStaffView)
   const [selected, setSelected] = useState<CardData | null>(null)
   const [query, setQuery] = useState("")
+  const [sort, setSort] = useState<"recent" | "title_az" | "title_za" | "cpd">("recent")
+  const [category, setCategory] = useState<string>("all")
   const [page, setPage] = useState(0)
   const PER_PAGE = 12
 
-  const filtered = (data ?? []).filter((c) =>
-    c.course.title.toLowerCase().includes(query.toLowerCase()),
-  )
+  // Categories present in the catalogue, for the filter dropdown.
+  const categoryOptions = useMemo(() => {
+    const ids = new Set<string>()
+    for (const c of data ?? []) if (c.course.category_id) ids.add(c.course.category_id)
+    return [...ids]
+      .map((id) => ({ id, name: categoryNames.get(id) ?? "Uncategorised" }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [data, categoryNames])
+
+  const filtered = (data ?? [])
+    .filter((c) => c.course.title.toLowerCase().includes(query.toLowerCase()))
+    .filter((c) => category === "all" || c.course.category_id === category)
+    .sort((a, b) => {
+      switch (sort) {
+        case "title_az":
+          return a.course.title.localeCompare(b.course.title)
+        case "title_za":
+          return b.course.title.localeCompare(a.course.title)
+        case "cpd":
+          return b.course.cpd_hours - a.course.cpd_hours
+        case "recent":
+        default:
+          return (
+            new Date(b.course.created_at).getTime() -
+            new Date(a.course.created_at).getTime()
+          )
+      }
+    })
   const pageCount = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
   const safePage = Math.min(page, pageCount - 1)
   const paged = filtered.slice(safePage * PER_PAGE, safePage * PER_PAGE + PER_PAGE)
@@ -142,6 +176,44 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
                   className="w-44 pl-9 sm:w-56"
                 />
               </div>
+              <Select
+                value={sort}
+                onValueChange={(v) => {
+                  setSort(v as typeof sort)
+                  setPage(0)
+                }}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Most recent</SelectItem>
+                  <SelectItem value="title_az">Title A to Z</SelectItem>
+                  <SelectItem value="title_za">Title Z to A</SelectItem>
+                  <SelectItem value="cpd">Most CPD hours</SelectItem>
+                </SelectContent>
+              </Select>
+              {categoryOptions.length > 0 && (
+                <Select
+                  value={category}
+                  onValueChange={(v) => {
+                    setCategory(v)
+                    setPage(0)
+                  }}
+                >
+                  <SelectTrigger className="w-44">
+                    <SelectValue placeholder="All categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {categoryOptions.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <div className="flex rounded-lg border border-border p-0.5">
                 {(
                   [

@@ -5,6 +5,7 @@ import { ArrowUpDown, Pencil, Eye, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { CourseRow } from "@/lib/queries/courses.queries"
 import DuplicateCourseButton from "@/pages/platform/courses/DuplicateCourseButton"
+import PublishCourseButton from "@/pages/platform/courses/PublishCourseButton"
 
 export const courseColumns: ColumnDef<CourseRow>[] = [
   {
@@ -81,6 +82,10 @@ export const courseColumns: ColumnDef<CourseRow>[] = [
             <Pencil className="size-4" />
           </Link>
         </Button>
+        <PublishCourseButton
+          id={row.original.id}
+          published={row.original.status === "Published"}
+        />
         <DuplicateCourseButton id={row.original.id} />
       </div>
     ),
