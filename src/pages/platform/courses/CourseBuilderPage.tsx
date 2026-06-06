@@ -45,6 +45,7 @@ import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
 import MediaUpload from "@/components/courses/MediaUpload"
 import CourseExtrasEditor from "@/components/courses/CourseExtrasEditor"
 import CourseMaterialsEditor from "@/components/courses/CourseMaterialsEditor"
+import SaveToDriveButton from "@/components/courses/SaveToDriveButton"
 import ImportCurriculumDialog from "@/components/courses/ImportCurriculumDialog"
 import {
   courseFormSchema,
@@ -171,14 +172,17 @@ export default function CourseBuilderPage() {
               <ArrowLeft className="mr-1.5 size-4" /> Back to courses
             </Link>
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setPreviewOpen(true)}
-          >
-            <Eye className="mr-1.5 size-4" /> Preview
-          </Button>
+          <div className="flex items-center gap-2">
+            {isEdit && <SaveToDriveButton courseId={id!} />}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPreviewOpen(true)}
+            >
+              <Eye className="mr-1.5 size-4" /> Preview
+            </Button>
+          </div>
         </div>
 
       <Card>

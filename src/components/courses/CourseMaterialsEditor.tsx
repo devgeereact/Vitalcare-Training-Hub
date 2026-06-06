@@ -97,7 +97,8 @@ export default function CourseMaterialsEditor({ courseId }: { courseId: string }
         </CardTitle>
         <CardDescription>
           Attach the Learner Workbook, Trainer Workbook, and any resources. Trainer
-          materials are never visible to learners.
+          materials are never visible to learners. Uploads are also saved to the
+          admin Google Drive folder for review.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
