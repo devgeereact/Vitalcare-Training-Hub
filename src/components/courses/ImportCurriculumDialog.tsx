@@ -73,16 +73,17 @@ export default function ImportCurriculumDialog({ courseId }: { courseId: string 
         <DialogHeader>
           <DialogTitle>Import curriculum</DialogTitle>
           <DialogDescription>
-            Upload a Word (.docx), Markdown (.md) or text (.txt) file. Heading 1
-            (or “# ”) becomes a module; Heading 2 (or “## ”) becomes a lesson;
-            paragraphs become lesson content.
+            Upload a Word (.docx), Markdown (.md), text (.txt) or LearnPress /
+            WordPress export (.xml) file. In documents, Heading 1 (or “# ”)
+            becomes a module and Heading 2 (or “## ”) a lesson. An .xml export
+            auto-links its lessons into this course.
           </DialogDescription>
         </DialogHeader>
 
         <input
           ref={inputRef}
           type="file"
-          accept=".docx,.md,.txt,.markdown"
+          accept=".docx,.md,.txt,.markdown,.xml"
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0]
