@@ -22,6 +22,8 @@ import {
   useMarkLessonComplete,
   useMyCourses,
 } from "@/lib/queries/courses.queries"
+import { useCourseAssessment } from "@/lib/queries/assessments.queries"
+import { Award, FileText } from "lucide-react"
 
 export default function LessonPlayerPage() {
   const { id = "", lessonId = "" } = useParams()
@@ -40,6 +42,7 @@ export default function LessonPlayerPage() {
   const lessonIds = allLessons.map((l) => l.id)
   const completed = useCompletedLessons(id, lessonIds)
   const markComplete = useMarkLessonComplete(id, lessonIds)
+  const assessment = useCourseAssessment(id)
 
   const index = allLessons.findIndex((l) => l.id === lessonId)
   const lesson = index >= 0 ? allLessons[index] : null
@@ -57,6 +60,7 @@ export default function LessonPlayerPage() {
   const isLockedIndex = (i: number) => lockProgression && i > unlockedThrough
   const currentLocked = index >= 0 && isLockedIndex(index)
   const firstLockedTarget = allLessons[Math.min(unlockedThrough, allLessons.length - 1)]
+  const allLessonsDone = allLessons.length > 0 && firstIncomplete === -1
 
   if (curriculum.isLoading || myCourses.isLoading) {
     return (
@@ -128,6 +132,41 @@ export default function LessonPlayerPage() {
           <ArrowLeft className="mr-1.5 size-4" /> Back to course
         </Link>
       </Button>
+
+      {/* End-of-course step: once every lesson is done, point the learner at
+          the course assessment (or confirm the certificate is earned). */}
+      {allLessonsDone && (isLearner || isGuest) && assessment.data && (
+        <Card className="border-brand-gold/40 bg-brand-gold/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div className="flex items-start gap-3">
+              {assessment.data.passed ? (
+                <Award className="mt-0.5 size-5 text-success" />
+              ) : (
+                <FileText className="mt-0.5 size-5 text-brand-navy" />
+              )}
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {assessment.data.passed
+                    ? "Course complete. Your certificate has been issued."
+                    : "All lessons done. One step left: the course assessment."}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {assessment.data.passed
+                    ? "Download it from your certificates."
+                    : `Pass mark ${assessment.data.passMark}%. Required to earn your certificate.`}
+                </p>
+              </div>
+            </div>
+            <Button asChild size="sm" variant={assessment.data.passed ? "outline" : "default"}>
+              {assessment.data.passed ? (
+                <Link to="/platform/certificates">View certificate</Link>
+              ) : (
+                <Link to={`/platform/assessments/${assessment.data.id}`}>Take assessment</Link>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
         {/* Lesson list */}
