@@ -40,10 +40,18 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: "Invalid JSON" }, 400)
   }
+  // Honeypot: a hidden "website" field no human fills. Bots do. Pretend success
+  // so they do not retry, but send nothing.
+  if ((body.website ?? "").trim() !== "") return json({ ok: true })
+
   const name = (body.name ?? "").trim()
   const email = (body.email ?? "").trim()
   const message = (body.message ?? "").trim()
   if (!name || !email || !message) return json({ error: "Missing fields" }, 400)
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: "Invalid email" }, 400)
+  if (name.length > 200 || email.length > 200 || message.length > 5000) {
+    return json({ error: "Input too long" }, 400)
+  }
 
   const to = [admin, ...(adminSecondary ? [adminSecondary] : [])]
   const html = `

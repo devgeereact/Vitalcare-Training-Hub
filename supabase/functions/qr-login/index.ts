@@ -47,10 +47,25 @@ Deno.serve(async (req) => {
   }
   const email = userData.user.email
 
+  // Only allow redirecting back to our own app. An unvalidated redirectTo would
+  // let an attacker craft a QR whose magic link (a real auth token) lands on
+  // their domain, leaking the session.
+  const appUrl = (Deno.env.get("APP_URL") ?? "https://vitalcare.uk").replace(/\/$/, "")
+  function safeRedirect(raw: string): string {
+    if (!raw) return ""
+    try {
+      if (raw.startsWith("/")) return appUrl + raw
+      if (new URL(raw).origin === new URL(appUrl).origin) return raw
+    } catch {
+      /* malformed */
+    }
+    return ""
+  }
+
   let redirectTo = ""
   try {
     const body = (await req.json()) as { redirectTo?: string }
-    redirectTo = typeof body?.redirectTo === "string" ? body.redirectTo : ""
+    redirectTo = safeRedirect(typeof body?.redirectTo === "string" ? body.redirectTo : "")
   } catch {
     redirectTo = ""
   }

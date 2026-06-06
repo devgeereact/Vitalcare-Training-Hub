@@ -51,7 +51,11 @@ function parseJson<T>(raw: string): T {
   const first = s.indexOf("{")
   const last = s.lastIndexOf("}")
   if (first > 0 || last < s.length - 1) s = s.slice(first, last + 1)
-  return JSON.parse(s) as T
+  try {
+    return JSON.parse(s) as T
+  } catch {
+    throw new Error("The AI returned malformed data. Please try generating again.")
+  }
 }
 
 async function aiJson<T>(prompt: string, maxTokens = 4096): Promise<T> {
@@ -253,6 +257,23 @@ export async function persistGeneratedCourse(
   if (cErr || !course) throw cErr ?? new Error("Could not create course")
   const courseId = course.id as string
 
+  try {
+    return await persistRest(g, courseId, uid, onProgress)
+  } catch (err) {
+    // No transaction across these inserts, so a mid-way failure would leave a
+    // half-built course. Delete it (FKs cascade to modules/lessons/assessment)
+    // so generation is all-or-nothing from the user's view.
+    await supabase.from("courses").delete().eq("id", courseId)
+    throw err
+  }
+}
+
+async function persistRest(
+  g: GeneratedCourse,
+  courseId: string,
+  uid: string | null,
+  onProgress: Progress,
+): Promise<string> {
   onProgress("Adding the curriculum")
   for (let mi = 0; mi < g.modules.length; mi++) {
     const m = g.modules[mi]
