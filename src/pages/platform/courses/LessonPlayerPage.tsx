@@ -8,6 +8,7 @@ import {
   ChevronRight,
   ExternalLink,
   AlertCircle,
+  Lock,
 } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
@@ -45,6 +46,17 @@ export default function LessonPlayerPage() {
   const prev = index > 0 ? allLessons[index - 1] : null
   const next = index >= 0 && index < allLessons.length - 1 ? allLessons[index + 1] : null
   const isDone = completed.data?.has(lessonId) ?? false
+
+  // Sequential progression (LearnPress-style): enrolled learners must finish a
+  // lesson before the next unlocks. Staff preview freely. The furthest a
+  // learner can reach is the first lesson they have not yet completed.
+  const lockProgression = isLearner || isGuest
+  const firstIncomplete = allLessons.findIndex((l) => !(completed.data?.has(l.id) ?? false))
+  // -1 means every lesson is complete, so nothing is locked.
+  const unlockedThrough = firstIncomplete === -1 ? allLessons.length - 1 : firstIncomplete
+  const isLockedIndex = (i: number) => lockProgression && i > unlockedThrough
+  const currentLocked = index >= 0 && isLockedIndex(index)
+  const firstLockedTarget = allLessons[Math.min(unlockedThrough, allLessons.length - 1)]
 
   if (curriculum.isLoading || myCourses.isLoading) {
     return (
@@ -131,6 +143,20 @@ export default function LessonPlayerPage() {
                     {mod.lessons.map((l) => {
                       const done = completed.data?.has(l.id)
                       const active = l.id === lessonId
+                      const locked = isLockedIndex(allLessons.findIndex((x) => x.id === l.id))
+                      if (locked) {
+                        return (
+                          <li key={l.id}>
+                            <span
+                              className="flex cursor-not-allowed items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground/50"
+                              title="Complete the previous lesson to unlock"
+                            >
+                              <Lock className="size-4 shrink-0" />
+                              <span className="truncate">{l.title}</span>
+                            </span>
+                          </li>
+                        )
+                      }
                       return (
                         <li key={l.id}>
                           <Link
@@ -163,6 +189,22 @@ export default function LessonPlayerPage() {
         <Card>
           <CardContent className="p-6">
             <h1 className="font-display text-2xl text-foreground">{lesson.title}</h1>
+            {currentLocked ? (
+              <div className="mt-6 flex flex-col items-center gap-3 py-12 text-center">
+                <Lock className="size-8 text-brand-gold" />
+                <p className="text-sm text-muted-foreground">
+                  Complete the earlier lessons to unlock this one.
+                </p>
+                {firstLockedTarget && (
+                  <Button asChild size="sm">
+                    <Link to={`/platform/courses/${id}/learn/${firstLockedTarget.id}`}>
+                      Continue where you left off
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
             <div className="mt-4">
               {lesson.type === "text" && lesson.content ? (
                 <div
@@ -227,12 +269,17 @@ export default function LessonPlayerPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={!next}
+                disabled={!next || (lockProgression && !isDone)}
+                title={
+                  lockProgression && !isDone ? "Mark this lesson complete to continue" : undefined
+                }
                 onClick={() => next && navigate(`/platform/courses/${id}/learn/${next.id}`)}
               >
                 Next <ChevronRight className="ml-1 size-4" />
               </Button>
             </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
