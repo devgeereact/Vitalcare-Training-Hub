@@ -43,6 +43,7 @@ import {
   useEnrolSelf,
   useCategoryNameMap,
   useCourses,
+  useEnrolmentCounts,
 } from "@/lib/queries/courses.queries"
 import { CourseCard } from "@/components/courses/CourseCard"
 import { courseColumns } from "./columns"
@@ -85,8 +86,11 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
   const [staffView, setStaffView] = useState<StaffView>(initialStaffView)
   const [selected, setSelected] = useState<CardData | null>(null)
   const [query, setQuery] = useState("")
-  const [sort, setSort] = useState<"recent" | "title_az" | "title_za" | "cpd">("recent")
+  const [sort, setSort] = useState<
+    "recommended" | "recent" | "title_az" | "title_za" | "cpd"
+  >("recommended")
   const [category, setCategory] = useState<string>("all")
+  const enrolmentCounts = useEnrolmentCounts()
   const [page, setPage] = useState(0)
   const PER_PAGE = 12
 
@@ -110,6 +114,16 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
           return b.course.title.localeCompare(a.course.title)
         case "cpd":
           return b.course.cpd_hours - a.course.cpd_hours
+        case "recommended": {
+          // Most enrolled first; fall back to newest on a tie.
+          const ca = enrolmentCounts.data?.get(a.course.id) ?? 0
+          const cb = enrolmentCounts.data?.get(b.course.id) ?? 0
+          if (cb !== ca) return cb - ca
+          return (
+            new Date(b.course.created_at).getTime() -
+            new Date(a.course.created_at).getTime()
+          )
+        }
         case "recent":
         default:
           return (
@@ -187,6 +201,7 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="recommended">Most recommended</SelectItem>
                   <SelectItem value="recent">Most recent</SelectItem>
                   <SelectItem value="title_az">Title A to Z</SelectItem>
                   <SelectItem value="title_za">Title Z to A</SelectItem>

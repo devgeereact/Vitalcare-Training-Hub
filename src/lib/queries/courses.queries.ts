@@ -43,6 +43,27 @@ export function useCategories() {
   })
 }
 
+/** Global enrolment count per course, for the "Most recommended" sort.
+ *  Backed by the SECURITY DEFINER function course_enrolment_counts (migration
+ *  066), which returns aggregate counts only. */
+export function useEnrolmentCounts() {
+  return useQuery({
+    queryKey: [...coursesKeys.all, "enrolment-counts"],
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<Map<string, number>> => {
+      const rpc = supabase.rpc as unknown as (
+        fn: string,
+      ) => Promise<{ data: { course_id: string; total: number }[] | null; error: unknown }>
+      const { data, error } = await rpc("course_enrolment_counts")
+      if (error) {
+        console.error("[useEnrolmentCounts]", error)
+        return new Map()
+      }
+      return new Map((data ?? []).map((r) => [r.course_id, Number(r.total)]))
+    },
+  })
+}
+
 /**
  * Map of category id -> category name, for resolving a course's category name
  * in card grids. Returns an empty map while loading.
