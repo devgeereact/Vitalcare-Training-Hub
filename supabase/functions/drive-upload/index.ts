@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
   const clientSecret = await getSecret(admin, "GDRIVE_CLIENT_SECRET")
   const refreshToken = await getSecret(admin, "GDRIVE_REFRESH_TOKEN")
   const folderId = await getSecret(admin, "GDRIVE_FOLDER_ID")
+  const reviewFolderId = await getSecret(admin, "GDRIVE_REVIEW_FOLDER_ID")
   if (!clientId || !clientSecret || !refreshToken) {
     return json({ error: "Drive not connected", notConfigured: true }, 400)
   }
@@ -79,12 +80,18 @@ Deno.serve(async (req) => {
   if (!(file instanceof File)) return json({ error: "No file" }, 400)
   if (file.size > 50 * 1024 * 1024) return json({ error: "File too large (50MB max)" }, 400)
 
+  // target=review routes course/assessment review docs to the dedicated review
+  // folder when one is configured; everything else uses the default folder.
+  const target = form.get("target")
+  const destFolderId =
+    target === "review" && reviewFolderId ? reviewFolderId : folderId
+
   const at = await accessToken(clientId, clientSecret, refreshToken)
   if (!at) return json({ error: "Could not refresh Drive token" }, 502)
 
   // Multipart upload (metadata + bytes).
   const meta: Record<string, unknown> = { name: file.name }
-  if (folderId) meta.parents = [folderId]
+  if (destFolderId) meta.parents = [destFolderId]
   const boundary = `vc${crypto.randomUUID()}`
   const enc = new TextEncoder()
   const pre = enc.encode(

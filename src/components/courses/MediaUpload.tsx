@@ -17,6 +17,8 @@ interface Props {
   accept?: string
   /** Sub-folder inside the bucket, e.g. "courses" or "lessons". */
   folder?: string
+  /** Drive routing target. "review" sends to the course review folder. */
+  driveTarget?: string
 }
 
 /** Upload a file to Supabase Storage and return its public URL. */
@@ -26,6 +28,7 @@ export default function MediaUpload({
   variant = "image",
   accept = "image/*",
   folder = "courses",
+  driveTarget,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
@@ -42,6 +45,7 @@ export default function MediaUpload({
       try {
         const fd = new FormData()
         fd.append("file", file)
+        if (driveTarget) fd.append("target", driveTarget)
         const { data: drive, error: driveErr } = await supabase.functions.invoke(
           "drive-upload",
           { body: fd },

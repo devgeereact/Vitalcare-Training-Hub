@@ -225,6 +225,7 @@ export default function CourseMaterialsEditor({ courseId }: { courseId: string }
               variant="file"
               accept={accept}
               folder="materials"
+              driveTarget="review"
             />
           )}
 

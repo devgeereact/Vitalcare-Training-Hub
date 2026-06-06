@@ -88,6 +88,7 @@ async function uploadToDrive(
   try {
     const fd = new FormData()
     fd.append("file", file)
+    fd.append("target", "review") // route to the dedicated course review folder
     const { data, error } = await supabase.functions.invoke("drive-upload", { body: fd })
     if (error) return "failed"
     if (data?.notConfigured) return "notConfigured"
