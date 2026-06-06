@@ -39,8 +39,10 @@ import CourseFaqs from "@/components/courses/CourseFaqs"
 import { driveImageUrl } from "@/lib/drive-image"
 import { usePrerequisites } from "@/lib/queries/course-extras.queries"
 import { useCourseAssessment } from "@/lib/queries/assessments.queries"
+import { useMyResources } from "@/lib/queries/library.queries"
 import { useAuth } from "@/hooks/use-auth"
-import { CheckCircle2, Circle, Lock } from "lucide-react"
+import { useUser } from "@/hooks/use-user"
+import { CheckCircle2, Circle, Lock, Download } from "lucide-react"
 
 export default function CourseOverviewPage() {
   const { id = "" } = useParams()
@@ -52,6 +54,12 @@ export default function CourseOverviewPage() {
   const prereqs = usePrerequisites(id, user?.id)
   const assessment = useCourseAssessment(id)
   const categoryNames = useCategoryNameMap()
+  const { isLearner, isGuest } = useUser()
+  // Trainers and staff see trainer + both; learners see learner + both. RLS is
+  // the real gate (migration 065); this just asks for the right slice.
+  const materialAudience = isLearner || isGuest ? "learner" : "trainer"
+  const resources = useMyResources(materialAudience)
+  const courseMaterials = (resources.data ?? []).filter((r) => r.courseId === id)
 
   const mine = myCourses.data?.find((m) => m.course.id === id)
   const allLessons = curriculum.data?.flatMap((m) => m.lessons) ?? []
@@ -250,6 +258,28 @@ export default function CourseOverviewPage() {
                       {assessment.data.passed ? "Review assessment" : "Take assessment"}
                     </Link>
                   </Button>
+                </div>
+              )}
+              {mine?.enrolled && courseMaterials.length > 0 && (
+                <div className="rounded-lg border border-border bg-muted/40 p-3">
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <FileText className="size-4 text-brand-navy" /> Course materials
+                  </p>
+                  <ul className="mt-2 space-y-1.5">
+                    {courseMaterials.map((r) => (
+                      <li key={r.id}>
+                        <a
+                          href={r.fileUrl || r.linkUrl || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <Download className="size-4 shrink-0" />
+                          <span className="truncate">{r.title}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
               <RequestOneToOne courseId={id} courseTitle={c.title} />

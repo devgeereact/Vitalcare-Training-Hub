@@ -44,6 +44,7 @@ import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import CurriculumBuilder from "@/components/courses/CurriculumBuilder"
 import MediaUpload from "@/components/courses/MediaUpload"
 import CourseExtrasEditor from "@/components/courses/CourseExtrasEditor"
+import CourseMaterialsEditor from "@/components/courses/CourseMaterialsEditor"
 import ImportCurriculumDialog from "@/components/courses/ImportCurriculumDialog"
 import {
   courseFormSchema,
@@ -413,6 +414,8 @@ export default function CourseBuilderPage() {
           </CardContent>
         </Card>
       )}
+
+        {isEdit && <CourseMaterialsEditor courseId={id!} />}
 
         {isEdit && <CourseExtrasEditor courseId={id!} />}
       </div>
