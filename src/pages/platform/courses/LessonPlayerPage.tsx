@@ -23,6 +23,7 @@ import {
   useMyCourses,
 } from "@/lib/queries/courses.queries"
 import { useCourseAssessment } from "@/lib/queries/assessments.queries"
+import { sanitizeHtml } from "@/lib/sanitize"
 import { Award, FileText } from "lucide-react"
 
 export default function LessonPlayerPage() {
@@ -248,7 +249,7 @@ export default function LessonPlayerPage() {
               {lesson.type === "text" && lesson.content ? (
                 <div
                   className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: lesson.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.content) }}
                 />
               ) : lesson.type === "video" && lesson.video_url ? (
                 <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">

@@ -40,6 +40,7 @@ import { driveImageUrl } from "@/lib/drive-image"
 import { usePrerequisites } from "@/lib/queries/course-extras.queries"
 import { useCourseAssessment } from "@/lib/queries/assessments.queries"
 import { useMyResources } from "@/lib/queries/library.queries"
+import { sanitizeHtml } from "@/lib/sanitize"
 import { useAuth } from "@/hooks/use-auth"
 import { useUser } from "@/hooks/use-user"
 import { CheckCircle2, Circle, Lock, Download } from "lucide-react"
@@ -313,7 +314,7 @@ export default function CourseOverviewPage() {
           {c.description && (
             <div
               className="prose prose-sm max-w-[65ch]"
-              dangerouslySetInnerHTML={{ __html: c.description }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.description) }}
             />
           )}
 

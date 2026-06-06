@@ -38,6 +38,7 @@ import {
 import { Clock, Award, ShieldCheck as ShieldIcon, PlayCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { driveImageUrl } from "@/lib/drive-image"
+import { sanitizeHtml } from "@/lib/sanitize"
 import {
   useMyCourses,
   useEnrolSelf,
@@ -526,7 +527,7 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
               {selected.course.description && (
                 <div
                   className="prose prose-sm mt-1 max-w-none text-sm text-muted-foreground"
-                  dangerouslySetInnerHTML={{ __html: selected.course.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(selected.course.description) }}
                 />
               )}
 

@@ -24,6 +24,7 @@ import {
 } from "@/lib/queries/public-courses.queries"
 import { useCategories } from "@/lib/queries/courses.queries"
 import { COURSES, getCategory } from "@/data/courses"
+import { sanitizeHtml } from "@/lib/sanitize"
 
 function Crumbs({ title }: { title: string }): React.ReactElement {
   return (
@@ -312,7 +313,7 @@ export default function CourseDetailPage(): React.ReactElement {
                 {description ? (
                   <div
                     className="prose prose-slate max-w-none"
-                    dangerouslySetInnerHTML={{ __html: description }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
                   />
                 ) : null}
                 {!summary && !description ? (

@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCourseDuration } from "@/lib/utils"
+import { sanitizeHtml } from "@/lib/sanitize"
 import { driveImageUrl } from "@/lib/drive-image"
 import { useCurriculum } from "@/lib/queries/courses.queries"
 
@@ -99,7 +100,7 @@ export default function CoursePreviewDialog({
           <div
             className="prose prose-sm max-w-none text-foreground [&_a]:text-brand-navy"
             // Description is author-entered rich text stored as HTML.
-            dangerouslySetInnerHTML={{ __html: values.description }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(values.description) }}
           />
         )}
 

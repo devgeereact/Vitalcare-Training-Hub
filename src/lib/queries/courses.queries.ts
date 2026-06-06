@@ -725,34 +725,24 @@ export function useMarkLessonComplete(courseId: string, lessonIds: string[]) {
         .eq("learner_id", uid)
         .select("id")
 
-      // Auto-issue a certificate on first completion — only for an actual
-      // enrolment, and idempotent (skip if one already exists).
+      // Issue the certificate server-side. The browser cannot insert into
+      // learner_certificates (RLS is staff-only), so we call a SECURITY DEFINER
+      // function that re-validates enrolment, lesson completion and the
+      // assessment pass, and is idempotent. Returns the cert id or null.
       const isEnrolled = (enrolment?.length ?? 0) > 0
+      let issued = false
       if (done && isEnrolled) {
-        const { data: existing } = await supabase
-          .from("learner_certificates")
-          .select("id")
-          .eq("learner_id", uid)
-          .eq("course_id", courseId)
-          .limit(1)
-        if (!existing || existing.length === 0) {
-          const { data: course } = await supabase
-            .from("courses")
-            .select("cpd_hours")
-            .eq("id", courseId)
-            .single()
-          const { error: certErr } = await supabase
-            .from("learner_certificates")
-            .insert({
-              learner_id: uid,
-              course_id: courseId,
-              cpd_hours: course?.cpd_hours ?? 0,
-              expires_at: null,
-            })
-          if (certErr) console.error("[useMarkLessonComplete:cert]", certErr)
-        }
+        const rpc = supabase.rpc as unknown as (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ data: string | null; error: unknown }>
+        const { data: certId, error: certErr } = await rpc("issue_course_certificate", {
+          p_course: courseId,
+        })
+        if (certErr) console.error("[useMarkLessonComplete:cert]", certErr)
+        issued = !!certId
       }
-      return { done: done && isEnrolled, assessmentPending }
+      return { done: issued, assessmentPending }
     },
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: lessonProgressKey(courseId) })
