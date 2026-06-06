@@ -9,7 +9,7 @@ import type { Assessment, Course, QuestionOption } from "@/types/database.types"
 // so they live in Drive from the moment they are added; this covers the Full
 // Course and each Assessment, which otherwise exist only in the database.
 
-function esc(s: string): string {
+export function esc(s: string): string {
   return s.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c] ?? c))
 }
 
@@ -18,7 +18,7 @@ function safeName(s: string): string {
 }
 
 /** Wrap body HTML in a Word-openable .doc file. */
-function docFile(title: string, bodyHtml: string): File {
+export function docFile(title: string, bodyHtml: string): File {
   const html =
     "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
     "xmlns:w='urn:schemas-microsoft-com:office:word'>" +
@@ -82,21 +82,24 @@ function buildAssessmentDoc(
   return docFile(title, body)
 }
 
-async function uploadToDrive(
-  file: File,
-): Promise<"ok" | "notConfigured" | "failed"> {
+export interface DriveUpload {
+  status: "ok" | "notConfigured" | "failed"
+  url?: string
+}
+
+export async function uploadToDrive(file: File): Promise<DriveUpload> {
   try {
     const fd = new FormData()
     fd.append("file", file)
     fd.append("target", "review") // route to the dedicated course review folder
     const { data, error } = await supabase.functions.invoke("drive-upload", { body: fd })
-    if (error) return "failed"
-    if (data?.notConfigured) return "notConfigured"
-    if (data?.url) return "ok"
-    return "failed"
+    if (error) return { status: "failed" }
+    if (data?.notConfigured) return { status: "notConfigured" }
+    if (data?.url) return { status: "ok", url: data.url as string }
+    return { status: "failed" }
   } catch (err) {
     console.error("[uploadToDrive]", err)
-    return "failed"
+    return { status: "failed" }
   }
 }
 
@@ -127,8 +130,8 @@ export async function exportCourseToDrive(
   let failed = 0
   for (const file of files) {
     const r = await uploadToDrive(file)
-    if (r === "notConfigured") return { uploaded, failed, notConfigured: true }
-    if (r === "ok") uploaded += 1
+    if (r.status === "notConfigured") return { uploaded, failed, notConfigured: true }
+    if (r.status === "ok") uploaded += 1
     else failed += 1
   }
   return { uploaded, failed, notConfigured: false }

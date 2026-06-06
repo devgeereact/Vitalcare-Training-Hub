@@ -55,6 +55,7 @@ import MediaUpload from "@/components/courses/MediaUpload"
 import CourseExtrasEditor from "@/components/courses/CourseExtrasEditor"
 import CourseMaterialsEditor from "@/components/courses/CourseMaterialsEditor"
 import CourseAssessmentPanel from "@/components/courses/CourseAssessmentPanel"
+import AiCourseGenerator from "@/components/courses/AiCourseGenerator"
 import SaveToDriveButton from "@/components/courses/SaveToDriveButton"
 import { cn } from "@/lib/utils"
 import ImportCurriculumDialog from "@/components/courses/ImportCurriculumDialog"
@@ -232,6 +233,10 @@ export default function CourseBuilderPage() {
             Save the course to unlock curriculum, assessment, workbooks and publishing.
           </p>
         )}
+
+      {!isEdit && stage === "details" && (
+        <AiCourseGenerator />
+      )}
 
       <div className={cn(stage !== "details" && "hidden")}>
       <Card>

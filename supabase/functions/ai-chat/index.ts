@@ -33,7 +33,17 @@ function json(body: unknown, status = 200) {
   })
 }
 
-async function tryGemini(admin: SupabaseClient, messages: ChatMessage[]): Promise<string | null> {
+interface GenOpts {
+  json?: boolean
+  maxTokens?: number
+  system?: string
+}
+
+async function tryGemini(
+  admin: SupabaseClient,
+  messages: ChatMessage[],
+  opts: GenOpts = {},
+): Promise<string | null> {
   const key = await getSecret(admin, "GOOGLE_AI_API_KEY")
   if (!key) return null
   const model = (await getSecret(admin, "GOOGLE_AI_MODEL")) ?? "gemini-2.0-flash"
@@ -41,15 +51,20 @@ async function tryGemini(admin: SupabaseClient, messages: ChatMessage[]): Promis
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
   }))
+  const generationConfig: Record<string, unknown> = {
+    temperature: 0.6,
+    maxOutputTokens: Math.min(opts.maxTokens ?? 1024, 8192),
+  }
+  if (opts.json) generationConfig.responseMimeType = "application/json"
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: opts.system || SYSTEM_PROMPT }] },
         contents,
-        generationConfig: { temperature: 0.6, maxOutputTokens: 1024 },
+        generationConfig,
       }),
     },
   )
@@ -62,21 +77,27 @@ async function tryGemini(admin: SupabaseClient, messages: ChatMessage[]): Promis
   return typeof text === "string" ? text : null
 }
 
-async function tryOpenRouter(admin: SupabaseClient, messages: ChatMessage[]): Promise<string | null> {
+async function tryOpenRouter(
+  admin: SupabaseClient,
+  messages: ChatMessage[],
+  opts: GenOpts = {},
+): Promise<string | null> {
   const key = await getSecret(admin, "OPENROUTER_API_KEY")
   if (!key) return null
   const model = (await getSecret(admin, "OR_MODEL")) ?? "anthropic/claude-3.5-haiku"
+  const body: Record<string, unknown> = {
+    model,
+    messages: [
+      { role: "system", content: opts.system || SYSTEM_PROMPT },
+      ...messages.map((m) => ({ role: m.role, content: m.content })),
+    ],
+    max_tokens: Math.min(opts.maxTokens ?? 1024, 8192),
+  }
+  if (opts.json) body.response_format = { type: "json_object" }
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...messages.map((m) => ({ role: m.role, content: m.content })),
-      ],
-      max_tokens: 1024,
-    }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     console.error("[openrouter]", res.status, await res.text())
@@ -92,9 +113,15 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
 
   let messages: ChatMessage[]
+  let opts: GenOpts = {}
   try {
     const body = await req.json()
     messages = Array.isArray(body?.messages) ? body.messages.slice(-20) : []
+    opts = {
+      json: body?.json === true,
+      maxTokens: typeof body?.maxTokens === "number" ? body.maxTokens : undefined,
+      system: typeof body?.system === "string" ? body.system : undefined,
+    }
   } catch {
     return json({ error: "Invalid JSON" }, 400)
   }
@@ -105,10 +132,10 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   )
 
-  let reply = await tryGemini(admin, messages)
+  let reply = await tryGemini(admin, messages, opts)
   let provider = "gemini"
   if (!reply) {
-    reply = await tryOpenRouter(admin, messages)
+    reply = await tryOpenRouter(admin, messages, opts)
     provider = "openrouter"
   }
   if (!reply) {
