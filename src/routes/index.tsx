@@ -70,6 +70,7 @@ import PayrollPage from "@/pages/platform/payroll/PayrollPage"
 import PasswordSettingsPage from "@/pages/platform/account/PasswordSettingsPage"
 import InvoicesPage from "@/pages/platform/invoices/InvoicesPage"
 import FileManagerPage2 from "@/pages/platform/files/FileManagerPage"
+import MyFilesPage from "@/pages/platform/files/MyFilesPage"
 import { RoleGuard } from "@/guards/RoleGuard"
 import AuthLayout from "@/layouts/AuthLayout"
 
@@ -357,6 +358,9 @@ export const router = createBrowserRouter (
           ),
         },
         { path: "certificates/verify", element: <CertVerifyPage /> },
+
+        // 📁 MY FILES (learner certificates + completed-course workbooks)
+        { path: "my-files", element: <MyFilesPage /> },
 
         // 🤖 AI ASSISTANT
         {

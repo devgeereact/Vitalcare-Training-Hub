@@ -110,6 +110,7 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
     icon: Award,
     items: [
       { label: "Certificates", to: "/platform/certificates", prefix: "/platform/certificates" },
+      { label: "My Files", to: "/platform/my-files", prefix: "/platform/my-files" },
       { label: "Verification", to: "/platform/certificates/verify", prefix: "/platform/certificates/verify" },
       { label: "Templates", to: "/platform/certificates/templates", prefix: "/platform/certificates/templates", roles: CONTENT },
     ],
