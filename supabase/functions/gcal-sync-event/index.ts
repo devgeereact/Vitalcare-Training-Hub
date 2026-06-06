@@ -14,6 +14,8 @@
 //   3. Share the Google Calendar with the service-account email
 //      ("Make changes to events"). Put the JSON in GOOGLE_SA_JSON.
 
+import { requireStaff } from "../_shared/auth.ts"
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -87,6 +89,7 @@ async function getAccessToken(sa: { client_email: string; private_key: string })
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
+  if (!(await requireStaff(req))) return json({ error: "Forbidden" }, 403)
 
   const saRaw = Deno.env.get("GOOGLE_SA_JSON")
   const calendarId = Deno.env.get("GCAL_CALENDAR_ID")

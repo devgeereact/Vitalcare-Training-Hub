@@ -168,15 +168,31 @@ export async function getQuestions(assessmentId: string): Promise<QuestionWithOp
     throw error
   }
   if (!questions || questions.length === 0) return []
-  const qIds = questions.map((q) => q.id)
-  const { data: options } = await supabase
-    .from("question_options")
-    .select("*")
-    .in("question_id", qIds)
-    .order("position", { ascending: true })
+  // Options come through get_question_options (migration 068): it masks
+  // is_correct for non-staff so learners cannot read the answer key, while the
+  // staff Quiz Builder still sees the real answers.
+  const rpc = supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{
+    data:
+      | { id: string; question_id: string; label: string; position: number; is_correct: boolean }[]
+      | null
+    error: unknown
+  }>
+  const { data: optRows, error: optErr } = await rpc("get_question_options", {
+    p_assessment: assessmentId,
+  })
+  if (optErr) console.error("[getQuestions:options]", optErr)
+  const options = (optRows ?? []).map((o) => ({
+    ...o,
+    created_at: "",
+    updated_at: "",
+    deleted_at: null,
+  })) as unknown as QuestionOption[]
   return (questions as Question[]).map((q) => ({
     ...q,
-    options: ((options ?? []) as QuestionOption[]).filter((o) => o.question_id === q.id),
+    options: options.filter((o) => o.question_id === q.id),
   }))
 }
 

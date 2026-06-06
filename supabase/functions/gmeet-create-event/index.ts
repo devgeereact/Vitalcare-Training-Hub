@@ -8,6 +8,7 @@
 //          (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY auto-provided)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { requireStaff } from "../_shared/auth.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,6 +47,7 @@ async function accessTokenFromRefresh(refresh: string): Promise<string | null> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
+  if (!(await requireStaff(req))) return json({ error: "Forbidden" }, 403)
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")

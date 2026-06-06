@@ -5,6 +5,8 @@
 // Deploy:  supabase functions deploy zoom-create-meeting
 // Secrets: ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET
 
+import { requireStaff } from "../_shared/auth.ts"
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -39,6 +41,7 @@ async function getToken(): Promise<string | null> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
+  if (!(await requireStaff(req))) return json({ error: "Forbidden" }, 403)
 
   let body: { topic?: string; start_time?: string; duration?: number }
   try {

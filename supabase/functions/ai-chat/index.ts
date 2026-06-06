@@ -10,6 +10,7 @@
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getSecret } from "../_shared/secrets.ts"
+import { requireStaff } from "../_shared/auth.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -111,6 +112,11 @@ async function tryOpenRouter(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405)
+
+  // Staff only: the function spends the shared, paid AI quota and accepts a
+  // caller-supplied system prompt, so it must not be reachable with the public
+  // anon key by learners or anonymous callers.
+  if (!(await requireStaff(req))) return json({ error: "Forbidden" }, 403)
 
   let messages: ChatMessage[]
   let opts: GenOpts = {}
