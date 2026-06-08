@@ -8,6 +8,7 @@ import { ArrowLeft, AlertCircle, Loader2, Save, Send } from "lucide-react"
 import AuthoringHeader from "@/components/authoring/AuthoringHeader"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import AiAssistButton from "@/components/ai/AiAssistButton"
+import MediaUpload from "@/components/courses/MediaUpload"
 import {
   Card,
   CardContent,
@@ -195,12 +196,13 @@ export default function BlogEditPage(): React.ReactElement {
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="feature_image_url">Feature image URL (optional)</Label>
-          <Input
-            id="feature_image_url"
-            placeholder="https://…"
-            className={FOCUS}
-            {...register("feature_image_url")}
+          <Label>Feature image (optional)</Label>
+          <MediaUpload
+            value={watch("feature_image_url") ?? ""}
+            onChange={(url) => setValue("feature_image_url", url)}
+            variant="image"
+            accept="image/*"
+            folder="blog"
           />
           {errors.feature_image_url ? (
             <p className="text-sm text-destructive">
