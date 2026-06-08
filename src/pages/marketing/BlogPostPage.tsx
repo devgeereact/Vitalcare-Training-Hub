@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import {
   ArrowLeft,
@@ -12,11 +12,11 @@ import {
 import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { driveImageUrl } from "@/lib/drive-image"
-import { useAuth } from "@/hooks/use-auth"
 import {
   usePublishedPost,
-  usePostLikes,
-  useToggleLike,
+  useToggleBlogLike,
+  isPostLiked,
+  setPostLiked,
   incrementBlogView,
 } from "@/lib/queries/blog.queries"
 
@@ -31,15 +31,19 @@ function formatDate(iso: string): string {
 export default function BlogPostPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>()
   const { data: post, isLoading } = usePublishedPost(slug)
-  const { session } = useAuth()
-  const userId = session?.user.id
+  const toggle = useToggleBlogLike()
 
-  const likes = usePostLikes(post?.id ?? null, userId)
-  const toggle = useToggleLike(post?.id ?? null, userId)
+  // Like state lives in localStorage (one like per browser, no sign-in needed).
+  const [liked, setLiked] = useState(false)
+  const [likeBump, setLikeBump] = useState(0)
 
-  // Register a view once the post resolves.
+  // Register a view, and load this browser's liked state, once the post resolves.
   useEffect(() => {
-    if (post?.slug) void incrementBlogView(post.slug)
+    if (post?.slug) {
+      void incrementBlogView(post.slug)
+      setLiked(isPostLiked(post.slug))
+      setLikeBump(0)
+    }
   }, [post?.slug])
 
   if (isLoading) {
@@ -73,18 +77,27 @@ export default function BlogPostPage(): React.ReactElement {
 
   const paragraphs = post.body.split(/\n{2,}/).filter(Boolean)
   const canLike = Boolean(post.id)
-  const liked = likes.data?.liked ?? false
-  const likeCount = likes.data?.count ?? 0
+  const likeCount = Math.max(0, post.likeCount + likeBump)
 
   function onLike() {
-    if (!userId) {
-      toast.error("Sign in to like this article")
-      return
-    }
-    toggle.mutate(liked, {
-      onError: (e) =>
-        toast.error(e instanceof Error ? e.message : "Could not update"),
-    })
+    if (!post || toggle.isPending) return
+    const next = !liked
+    // Optimistic: flip the heart and nudge the count straight away.
+    setLiked(next)
+    setLikeBump((b) => b + (next ? 1 : -1))
+    setPostLiked(post.slug, next)
+    toggle.mutate(
+      { slug: post.slug, liked: next },
+      {
+        onError: (e) => {
+          // Roll back on failure.
+          setLiked(!next)
+          setLikeBump((b) => b - (next ? 1 : -1))
+          setPostLiked(post.slug, !next)
+          toast.error(e instanceof Error ? e.message : "Could not update")
+        },
+      },
+    )
   }
 
   async function onShare() {
