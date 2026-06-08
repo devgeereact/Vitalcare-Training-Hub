@@ -20,6 +20,7 @@ import { CategoryGrid } from "@/components/marketing/CategoryGrid"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { EventCard } from "@/components/marketing/EventCard"
+import { Testimonials } from "@/components/marketing/Testimonials"
 import { CourseCard } from "@/components/courses/CourseCard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TOTAL_COURSE_COUNT, COURSE_CATEGORIES } from "@/data/courses"
@@ -551,6 +552,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Approved learner testimonials (hidden until enough are approved) */}
+      <Testimonials />
 
       {/* Closing navy banner band */}
       <BannerBand

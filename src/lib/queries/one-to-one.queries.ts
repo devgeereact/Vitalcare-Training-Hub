@@ -258,6 +258,13 @@ export function useDecideOneToOne(deciderId: string | undefined) {
           link: "/platform/one-to-one",
         })),
       )
+
+      // Email the learner (and trainer) the meeting details. Recipients are
+      // resolved server-side. Fire and forget so a mail hiccup never blocks the
+      // approval itself.
+      void supabase.functions
+        .invoke("one-to-one-email", { body: { requestId: input.id } })
+        .catch((e) => console.error("[useDecideOneToOne:email]", e))
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: o2oKeys.all }),
   })

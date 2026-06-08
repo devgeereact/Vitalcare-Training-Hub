@@ -10,6 +10,7 @@ import {
   Video,
   Loader2,
   Search,
+  ShieldCheck,
   Paperclip,
   X,
   FileText,
@@ -39,6 +40,7 @@ import { useVerifiedUserIds } from "@/lib/queries/verification.queries"
 import { VerifiedTick } from "@/components/platform/Verification"
 import {
   useThreads,
+  useAdminContacts,
   useThread,
   useSendMessage,
   useMarkThreadRead,
@@ -417,6 +419,7 @@ function ScheduleMeetingButton({
 export default function MessagesPage() {
   const { user, profile } = useAuth()
   const { data, isLoading, isError, refetch } = useThreads(user?.id)
+  const adminContactsQ = useAdminContacts(user?.id)
   const verifiedIds = useVerifiedUserIds()
   const myName =
     profile?.full_name ||
@@ -428,6 +431,12 @@ export default function MessagesPage() {
   const threads = (data ?? []).filter((t) =>
     t.otherName.toLowerCase().includes(q.toLowerCase()),
   )
+  // Admins the user can start a fresh chat with (those without an existing
+  // thread), so support is one tap away. Filtered by the same search box.
+  const threadIds = new Set((data ?? []).map((t) => t.otherId))
+  const adminContacts = (adminContactsQ.data ?? [])
+    .filter((a) => !threadIds.has(a.id))
+    .filter((a) => a.name.toLowerCase().includes(q.toLowerCase()))
 
   // Open a thread directly from a contact (Message button -> ?to=&name=).
   useEffect(() => {
@@ -499,7 +508,7 @@ export default function MessagesPage() {
                   Retry
                 </Button>
               </div>
-            ) : (data?.length ?? 0) === 0 ? (
+            ) : threads.length === 0 && adminContacts.length === 0 ? (
               <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
                 <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
                   <MessageSquare className="size-6" />
@@ -509,46 +518,84 @@ export default function MessagesPage() {
                 </p>
               </div>
             ) : (
-              <ul className="divide-y divide-border">
-                {threads.map((t) => (
-                  <li key={t.otherId}>
-                    <button
-                      type="button"
-                      onClick={() => setActive({ id: t.otherId, name: t.otherName })}
-                      className={cn(
-                        "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold",
-                        active?.id === t.otherId && "bg-muted",
-                      )}
-                    >
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
-                        {t.otherName.slice(0, 1).toUpperCase()}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="flex min-w-0 items-center gap-1 text-sm font-medium">
-                            <span className="truncate">{t.otherName}</span>
-                            <VerifiedTick
-                              verified={!!verifiedIds.data?.has(t.otherId)}
-                              className="[&_svg]:size-3.5"
-                            />
+              <>
+                {threads.length > 0 && (
+                  <ul className="divide-y divide-border">
+                    {threads.map((t) => (
+                      <li key={t.otherId}>
+                        <button
+                          type="button"
+                          onClick={() => setActive({ id: t.otherId, name: t.otherName })}
+                          className={cn(
+                            "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold",
+                            active?.id === t.otherId && "bg-muted",
+                          )}
+                        >
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 text-sm font-semibold text-brand-navy">
+                            {t.otherName.slice(0, 1).toUpperCase()}
                           </span>
-                          <span className="shrink-0 text-[10px] text-muted-foreground">
-                            {relativeLabel(t.lastAt)}
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center justify-between gap-2">
+                              <span className="flex min-w-0 items-center gap-1 text-sm font-medium">
+                                <span className="truncate">{t.otherName}</span>
+                                <VerifiedTick
+                                  verified={!!verifiedIds.data?.has(t.otherId)}
+                                  className="[&_svg]:size-3.5"
+                                />
+                              </span>
+                              <span className="shrink-0 text-[10px] text-muted-foreground">
+                                {relativeLabel(t.lastAt)}
+                              </span>
+                            </span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {t.lastBody}
+                            </span>
                           </span>
-                        </span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {t.lastBody}
-                        </span>
-                      </span>
-                      {t.unread > 0 && (
-                        <span className="flex size-5 items-center justify-center rounded-full bg-brand-gold text-[10px] font-bold text-brand-navy">
-                          {t.unread}
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                          {t.unread > 0 && (
+                            <span className="flex size-5 items-center justify-center rounded-full bg-brand-gold text-[10px] font-bold text-brand-navy">
+                              {t.unread}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {adminContacts.length > 0 && (
+                  <div>
+                    <p className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Message an admin
+                    </p>
+                    <ul className="divide-y divide-border">
+                      {adminContacts.map((a) => (
+                        <li key={a.id}>
+                          <button
+                            type="button"
+                            onClick={() => setActive({ id: a.id, name: a.name })}
+                            className={cn(
+                              "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold",
+                              active?.id === a.id && "bg-muted",
+                            )}
+                          >
+                            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-gold/15 text-brand-navy">
+                              <ShieldCheck className="size-5" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium">
+                                {a.name}
+                              </span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {a.role === "super_admin" ? "Administrator" : "Admin"} · tap to start a chat
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
             )}
             </div>
           </div>

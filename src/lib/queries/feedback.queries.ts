@@ -28,6 +28,65 @@ function feedbackTable(): FeedbackBuilder {
   return supabase.from("feedback_responses") as unknown as FeedbackBuilder
 }
 
+export interface Testimonial {
+  id: string
+  rating: number
+  comment: string
+  authorName: string
+  source: FeedbackSource
+}
+
+/**
+ * Approved feedback for the public marketing site. RLS exposes rows with
+ * status = 'approved' to everyone (including anonymous visitors), so only
+ * admin-approved testimonials are ever shown. Only rows with a comment and a
+ * strong rating are surfaced.
+ */
+export function usePublicTestimonials(limit = 9) {
+  return useQuery({
+    queryKey: ["feedback", "testimonials", limit],
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<Testimonial[]> => {
+      // status/source live in migration 039 and are not in the generated type,
+      // so the filter chain is reached through a narrow typed cast.
+      interface Row {
+        id: string
+        rating: number | null
+        comment: string | null
+        author_name: string | null
+        source: FeedbackSource
+      }
+      interface SelectChain {
+        eq(c: string, v: unknown): SelectChain
+        not(c: string, op: string, v: unknown): SelectChain
+        order(c: string, o: { ascending: boolean }): SelectChain
+        limit(n: number): PromiseLike<{ data: Row[] | null; error: { message: string } | null }>
+      }
+      const chain = supabase
+        .from("feedback_responses")
+        .select("id, rating, comment, author_name, source") as unknown as SelectChain
+      const { data, error } = await chain
+        .eq("status", "approved")
+        .not("comment", "is", null)
+        .order("approved_at", { ascending: false })
+        .limit(limit)
+      if (error) {
+        console.error("[usePublicTestimonials]", error)
+        return []
+      }
+      return (data ?? [])
+        .filter((r) => r.comment && (r.rating ?? 0) >= 4)
+        .map((r) => ({
+          id: r.id,
+          rating: r.rating ?? 5,
+          comment: r.comment as string,
+          authorName: r.author_name?.trim() || "Verified learner",
+          source: r.source,
+        }))
+    },
+  })
+}
+
 export interface SubmitFeedbackInput {
   nps: number
   rating: number

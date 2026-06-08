@@ -113,6 +113,37 @@ export interface MessageThread {
 }
 
 /** Group flat messages into per-correspondent threads for the inbox list. */
+export interface AdminContact {
+  id: string
+  name: string
+  role: string
+}
+
+/**
+ * Admins a signed-in user can start a chat with, for quick support. Resolved
+ * through a security-definer RPC (list_admin_contacts) because profiles RLS
+ * hides other users' rows from learners. Returns only id, name and role.
+ */
+export function useAdminContacts(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["admin-contacts", userId ?? "anon"],
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async (): Promise<AdminContact[]> => {
+      const rpc = supabase.rpc as unknown as (
+        fn: string,
+        args?: Record<string, unknown>,
+      ) => Promise<{ data: AdminContact[] | null; error: { message: string } | null }>
+      const { data, error } = await rpc("list_admin_contacts")
+      if (error) {
+        console.error("[useAdminContacts]", error)
+        return []
+      }
+      return data ?? []
+    },
+  })
+}
+
 export function useThreads(userId: string | undefined) {
   return useQuery({
     queryKey: commKeys.threads(userId ?? "anon"),
