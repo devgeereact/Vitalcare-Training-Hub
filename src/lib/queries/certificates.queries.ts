@@ -186,6 +186,34 @@ export async function verifyByCode(code: string): Promise<VerifyResult | null> {
   return data?.[0] ?? null
 }
 
+/** The signed-in learner's certificate for a course, with its approval state. */
+export function useMyCourseCertificate(
+  courseId: string,
+  learnerId: string | undefined,
+) {
+  return useQuery({
+    queryKey: ["cert", "course", courseId, learnerId ?? "none"],
+    enabled: !!courseId && !!learnerId,
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<{ approved: boolean } | null> => {
+      const { data, error } = await supabase
+        .from("learner_certificates")
+        .select("approved")
+        .eq("course_id", courseId)
+        .eq("learner_id", learnerId!)
+        .is("deleted_at", null)
+        .order("issued_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (error) {
+        console.error("[useMyCourseCertificate]", error)
+        return null
+      }
+      return data ? { approved: Boolean(data.approved) } : null
+    },
+  })
+}
+
 /** Admin approves a pending certificate (RPC added in migration 083). */
 export function useApproveCertificate() {
   const qc = useQueryClient()

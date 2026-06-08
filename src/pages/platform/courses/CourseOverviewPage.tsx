@@ -39,6 +39,7 @@ import CourseFaqs from "@/components/courses/CourseFaqs"
 import { driveImageUrl } from "@/lib/drive-image"
 import { usePrerequisites } from "@/lib/queries/course-extras.queries"
 import { useCourseAssessment } from "@/lib/queries/assessments.queries"
+import { useMyCourseCertificate } from "@/lib/queries/certificates.queries"
 import { useMyResources } from "@/lib/queries/library.queries"
 import { sanitizeHtml } from "@/lib/sanitize"
 import { useAuth } from "@/hooks/use-auth"
@@ -54,6 +55,7 @@ export default function CourseOverviewPage() {
   const enrol = useEnrolSelf()
   const prereqs = usePrerequisites(id, user?.id)
   const assessment = useCourseAssessment(id)
+  const myCert = useMyCourseCertificate(id, user?.id)
   const categoryNames = useCategoryNameMap()
   const { isLearner, isGuest } = useUser()
   // Trainers and staff see trainer + both; learners see learner + both. RLS is
@@ -196,11 +198,16 @@ export default function CourseOverviewPage() {
                         <span className="font-medium text-foreground">
                           {courseComplete ? "Completed" : `${progressPct}% complete`}
                         </span>
-                        {courseComplete && (
-                          <span className="inline-flex items-center gap-1 text-success">
-                            <CheckCircle2 className="size-3.5" /> Certificate issued
-                          </span>
-                        )}
+                        {courseComplete &&
+                          (myCert.data?.approved ? (
+                            <span className="inline-flex items-center gap-1 text-success">
+                              <CheckCircle2 className="size-3.5" /> Certificate issued
+                            </span>
+                          ) : myCert.data ? (
+                            <span className="inline-flex items-center gap-1 text-warning">
+                              <Circle className="size-3.5" /> Certificate pending approval
+                            </span>
+                          ) : null)}
                       </div>
                       <Progress value={progressPct} className="h-2" />
                     </div>
