@@ -52,7 +52,13 @@ const CATALOGUE: { id: string; label: string; keys: string[] }[] = [
       "GDRIVE_CLIENT_SECRET",
       "GDRIVE_REFRESH_TOKEN",
       "GDRIVE_FOLDER_ID",
+      "GDRIVE_REVIEW_FOLDER_ID",
     ],
+  },
+  {
+    id: "turnstile",
+    label: "Cloudflare Turnstile (CAPTCHA)",
+    keys: ["TURNSTILE_SITE_KEY", "TURNSTILE_SECRET"],
   },
   { id: "webpush", label: "Web push notifications", keys: ["VAPID_JWK", "VAPID_SUBJECT"] },
   {

@@ -10,7 +10,12 @@ import { AuthProvider } from "@/contexts/AuthContext"
 
 import { router } from "@/routes"
 import { registerServiceWorker } from "@/lib/push"
+import { loadPublicConfig } from "@/lib/turnstile"
 import "@/index.css"
+
+// Load public runtime config (Turnstile site key) early so pre-auth forms can
+// render the CAPTCHA. Fire-and-forget; the widget re-checks once it resolves.
+void loadPublicConfig()
 
 // Register the service worker so the app is installable and can receive push.
 if (typeof window !== "undefined") {
