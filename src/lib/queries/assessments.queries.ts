@@ -348,6 +348,73 @@ export function useQuestionMutations(assessmentId: string) {
   return { saveQuestion, deleteQuestion }
 }
 
+// ─── Review (questions + correct answers, after attempting) ──────────────────
+export interface ReviewOption {
+  id: string
+  label: string
+  isCorrect: boolean
+  selected: boolean
+}
+export interface ReviewQuestion {
+  id: string
+  prompt: string
+  type: string
+  options: ReviewOption[]
+}
+
+interface ReviewRow {
+  question_id: string
+  prompt: string
+  q_type: string
+  option_id: string | null
+  option_label: string | null
+  is_correct: boolean | null
+  selected: boolean | null
+}
+
+/**
+ * Questions with the correct answers and the learner's own selections. The
+ * get_assessment_review RPC (migration 084) only returns data to staff or to a
+ * learner who has attempted the assessment, so the answer key stays hidden
+ * during the quiz.
+ */
+export function useAssessmentReview(assessmentId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["assessment", "review", assessmentId],
+    enabled: enabled && !!assessmentId,
+    queryFn: async (): Promise<ReviewQuestion[]> => {
+      const rpc = supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: ReviewRow[] | null; error: { message: string } | null }>
+      const { data, error } = await rpc("get_assessment_review", {
+        p_assessment: assessmentId,
+      })
+      if (error) {
+        console.error("[useAssessmentReview]", error)
+        return []
+      }
+      const byQ = new Map<string, ReviewQuestion>()
+      for (const r of data ?? []) {
+        let q = byQ.get(r.question_id)
+        if (!q) {
+          q = { id: r.question_id, prompt: r.prompt, type: r.q_type, options: [] }
+          byQ.set(r.question_id, q)
+        }
+        if (r.option_id) {
+          q.options.push({
+            id: r.option_id,
+            label: r.option_label ?? "",
+            isCorrect: Boolean(r.is_correct),
+            selected: Boolean(r.selected),
+          })
+        }
+      }
+      return [...byQ.values()]
+    },
+  })
+}
+
 // ─── Take + auto-grade ───────────────────────────────────────────────────────
 // NOTE: graded client-side for MVP. question_options.is_correct is readable by
 // learners (RLS), so this is not exam-secure. Secure server-side grading via an

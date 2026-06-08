@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import { toast } from "sonner"
-import { ArrowLeft, AlertCircle, CheckCircle2, XCircle } from "lucide-react"
+import { ArrowLeft, AlertCircle, CheckCircle2, XCircle, Check, X, ListChecks } from "lucide-react"
 
 import {
   Card,
@@ -15,10 +15,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 import {
   useAssessment,
   useQuestions,
   useAttemptCount,
+  useAssessmentReview,
   submitAttempt,
   type SubmitAnswer,
   type AttemptResult,
@@ -33,6 +35,8 @@ export default function TakeAssessmentPage() {
   const [answers, setAnswers] = useState<Record<string, SubmitAnswer>>({})
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<AttemptResult | null>(null)
+  const [showReview, setShowReview] = useState(false)
+  const review = useAssessmentReview(id, showReview)
 
   const qs = useMemo(() => questions.data ?? [], [questions.data])
 
@@ -108,11 +112,88 @@ export default function TakeAssessmentPage() {
               You have used all {maxAttempts} attempt
               {maxAttempts === 1 ? "" : "s"} for this assessment.
             </p>
-            <Button asChild variant="outline" className="mt-2">
-              <Link to="/platform/courses">Back to courses</Link>
-            </Button>
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+              <Button variant="outline" onClick={() => setShowReview(true)}>
+                <ListChecks className="mr-1.5 size-4" /> Review answers
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/platform/courses">Back to courses</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
+      </div>
+    )
+  }
+
+  if (showReview) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6 py-2">
+        <Button variant="ghost" size="sm" className="-ml-2" onClick={() => setShowReview(false)}>
+          <ArrowLeft className="mr-1.5 size-4" /> Back
+        </Button>
+        <div>
+          <h1 className="font-display text-3xl text-foreground">Review answers</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The correct answers are marked in green. Your selections are highlighted.
+          </p>
+        </div>
+        {review.isLoading ? (
+          <Skeleton className="h-64 w-full" />
+        ) : (review.data?.length ?? 0) === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              No review available for this assessment.
+            </CardContent>
+          </Card>
+        ) : (
+          review.data!.map((q, i) => (
+            <Card key={q.id}>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  {i + 1}. {q.prompt}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {q.options.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Open response question, graded by a trainer.
+                  </p>
+                ) : (
+                  q.options.map((o) => (
+                    <div
+                      key={o.id}
+                      className={cn(
+                        "flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm",
+                        o.isCorrect
+                          ? "border-success/40 bg-success/10"
+                          : o.selected
+                            ? "border-destructive/40 bg-destructive/10"
+                            : "border-border",
+                      )}
+                    >
+                      <span className="flex items-center gap-2">
+                        {o.isCorrect ? (
+                          <Check className="size-4 text-success" />
+                        ) : o.selected ? (
+                          <X className="size-4 text-destructive" />
+                        ) : (
+                          <span className="size-4" />
+                        )}
+                        {o.label}
+                      </span>
+                      {o.selected ? (
+                        <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                          Your answer
+                        </span>
+                      ) : null}
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     )
   }
@@ -136,9 +217,14 @@ export default function TakeAssessmentPage() {
                 Essay answers will be graded manually and may adjust your final mark.
               </p>
             )}
-            <Button asChild className="mt-2">
-              <Link to="/platform/courses">Back to courses</Link>
-            </Button>
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+              <Button variant="outline" onClick={() => setShowReview(true)}>
+                <ListChecks className="mr-1.5 size-4" /> Review answers
+              </Button>
+              <Button asChild>
+                <Link to="/platform/courses">Back to courses</Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -161,6 +247,16 @@ export default function TakeAssessmentPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Pass mark {assessment.data!.pass_mark}% · {qs.length} question{qs.length === 1 ? "" : "s"}
         </p>
+        {attemptsUsed > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => setShowReview(true)}
+          >
+            <ListChecks className="mr-1.5 size-4" /> Review previous answers
+          </Button>
+        )}
       </div>
 
       {qs.length === 0 ? (
