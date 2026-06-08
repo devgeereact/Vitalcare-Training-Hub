@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { Award, AlertCircle, Download, Plus, BadgeCheck, Clock, Eye } from "lucide-react"
+import { Award, AlertCircle, Download, Plus, BadgeCheck, Clock, Eye, CheckCircle2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table"
 import {
   useCertificates,
+  useApproveCertificate,
   useIssueCertificate,
   useDefaultTemplate,
   DEFAULT_TEMPLATE,
@@ -204,6 +205,7 @@ export default function CertificatesListPage() {
   const { isAdmin, isTrainer } = useUser()
   const isStaff = isAdmin || isTrainer
   const { data, isLoading, isError, refetch } = useCertificates()
+  const approve = useApproveCertificate()
   const template = useDefaultTemplate()
   const [signatory, setSignatory] = useState("")
   const [signatoryRole, setSignatoryRole] = useState("")
@@ -342,6 +344,23 @@ export default function CertificatesListPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
+                        {!c.approved && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 text-success"
+                            disabled={approve.isPending}
+                            onClick={() =>
+                              approve.mutate(c.id, {
+                                onSuccess: () => toast.success("Certificate approved"),
+                                onError: (e) =>
+                                  toast.error(e instanceof Error ? e.message : "Could not approve"),
+                              })
+                            }
+                          >
+                            <CheckCircle2 className="size-4" /> Approve
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"

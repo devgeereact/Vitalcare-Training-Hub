@@ -111,27 +111,39 @@ export default function MyFilesPage() {
                   <Badge
                     variant="outline"
                     className={
-                      c.status === "expired"
-                        ? "text-[10px] border-destructive/30 bg-destructive/10 text-destructive"
-                        : "text-[10px] border-success/30 bg-success/10 text-success"
+                      !c.approved
+                        ? "text-[10px] border-warning/30 bg-warning/10 text-warning"
+                        : c.status === "expired"
+                          ? "text-[10px] border-destructive/30 bg-destructive/10 text-destructive"
+                          : "text-[10px] border-success/30 bg-success/10 text-success"
                     }
                   >
-                    {c.status === "expired" ? "Expired" : "Active"}
+                    {!c.approved
+                      ? "Awaiting approval"
+                      : c.status === "expired"
+                        ? "Expired"
+                        : "Active"}
                   </Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="ml-auto"
-                    disabled={downloading === c.id}
-                    onClick={() => downloadCert(c)}
-                  >
-                    {downloading === c.id ? (
-                      <Loader2 className="mr-1.5 size-4 animate-spin" />
-                    ) : (
-                      <Download className="mr-1.5 size-4" />
-                    )}
-                    Download
-                  </Button>
+                  {c.approved ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="ml-auto"
+                      disabled={downloading === c.id}
+                      onClick={() => downloadCert(c)}
+                    >
+                      {downloading === c.id ? (
+                        <Loader2 className="mr-1.5 size-4 animate-spin" />
+                      ) : (
+                        <Download className="mr-1.5 size-4" />
+                      )}
+                      Download
+                    </Button>
+                  ) : (
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      An admin will approve this shortly.
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

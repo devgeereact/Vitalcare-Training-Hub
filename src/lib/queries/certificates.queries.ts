@@ -22,6 +22,7 @@ export interface CertRow {
   expiresAt: string | null
   verificationUuid: string
   verificationCode: string
+  approved: boolean
   status: CertStatus
   daysToExpiry: number | null
 }
@@ -44,7 +45,7 @@ export async function getCertificates(): Promise<CertRow[]> {
   const { data, error } = await supabase
     .from("learner_certificates")
     .select(
-      "id, learner_id, course_id, certificate_number, cpd_hours, issued_at, expires_at, verification_uuid, verification_code",
+      "id, learner_id, course_id, certificate_number, cpd_hours, issued_at, expires_at, verification_uuid, verification_code, approved",
     )
     .is("deleted_at", null)
     .order("issued_at", { ascending: false })
@@ -111,6 +112,7 @@ export async function getCertificates(): Promise<CertRow[]> {
       // verification_code is added in migration 081, not yet in generated types.
       verificationCode:
         (d as { verification_code?: string | null }).verification_code ?? "",
+      approved: (d as { approved?: boolean }).approved ?? true,
       status,
       daysToExpiry,
     }
@@ -182,6 +184,22 @@ export async function verifyByCode(code: string): Promise<VerifyResult | null> {
     throw new Error(error.message)
   }
   return data?.[0] ?? null
+}
+
+/** Admin approves a pending certificate (RPC added in migration 083). */
+export function useApproveCertificate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (certId: string) => {
+      const rpc = supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ error: { message: string } | null }>
+      const { error } = await rpc("approve_certificate", { p_id: certId })
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: certsKeys.all }),
+  })
 }
 
 export interface IssueCertInput {

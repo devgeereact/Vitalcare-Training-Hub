@@ -156,6 +156,7 @@ export interface LearnerCertificate {
   expiresAt: string | null
   verificationUuid: string
   verificationCode: string
+  approved: boolean
 }
 
 export async function getLearnerCertificates(
@@ -163,7 +164,7 @@ export async function getLearnerCertificates(
 ): Promise<LearnerCertificate[]> {
   const { data, error } = await supabase
     .from("learner_certificates")
-    .select("id, course_id, cpd_hours, issued_at, expires_at, verification_uuid, verification_code")
+    .select("id, course_id, cpd_hours, issued_at, expires_at, verification_uuid, verification_code, approved")
     .eq("learner_id", learnerId)
     .is("deleted_at", null)
     .order("issued_at", { ascending: false })
@@ -192,6 +193,7 @@ export async function getLearnerCertificates(
     verificationUuid: d.verification_uuid,
     verificationCode:
       (d as { verification_code?: string | null }).verification_code ?? "",
+    approved: (d as { approved?: boolean }).approved ?? true,
   }))
 }
 

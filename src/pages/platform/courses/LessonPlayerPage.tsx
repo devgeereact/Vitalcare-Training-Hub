@@ -115,7 +115,8 @@ export default function LessonPlayerPage() {
       .then((res) => {
         if (res?.done) {
           toast.success("Course complete", {
-            description: "Your certificate has been issued.",
+            description:
+              "Your certificate is pending admin approval. You will be notified when it is ready.",
           })
         } else if (res?.assessmentPending) {
           toast.success("All lessons done", {
