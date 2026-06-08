@@ -178,8 +178,8 @@ export default function StoreCataloguePage() {
         )}
       </div>
 
-      {/* Store overview dashboard */}
-      <StoreDashboard staff={isAdmin} buyerId={user?.id} />
+      {/* Store metrics are staff only. Learners see just the catalogue. */}
+      {isAdmin && <StoreDashboard staff buyerId={user?.id} />}
 
       {/* Catalogue list */}
       <div className="space-y-4">

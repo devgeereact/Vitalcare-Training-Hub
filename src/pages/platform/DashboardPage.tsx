@@ -16,6 +16,7 @@ import {
   Trophy,
   Banknote,
   CheckCircle2,
+  PlayCircle,
 } from "lucide-react"
 import { format } from "date-fns"
 
@@ -728,6 +729,43 @@ function LearnerDashboard({
           />
         </div>
       )}
+
+      {/* Continue learning: resume the course closest to completion. */}
+      {inProgress.length > 0 &&
+        (() => {
+          const top = [...inProgress].sort((a, b) => b.progressPct - a.progressPct)[0]
+          return (
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1b2e6b] via-[#16265a] to-[#0f1b41] p-6 shadow-sm sm:p-8">
+              <div
+                className="pointer-events-none absolute -right-12 -top-12 size-48 rounded-full bg-brand-gold/15 blur-3xl"
+                aria-hidden
+              />
+              <p className="relative text-xs font-semibold uppercase tracking-[0.18em] text-brand-gold">
+                Continue learning
+              </p>
+              <h2 className="relative mt-2 max-w-2xl font-display text-2xl text-white">
+                {top.course.title}
+              </h2>
+              <div className="relative mt-4 max-w-md">
+                <div className="flex items-center justify-between text-xs text-white/80">
+                  <span>{top.progressPct}% complete</span>
+                  <span>{100 - top.progressPct}% to go</span>
+                </div>
+                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/15">
+                  <div
+                    className="h-full rounded-full bg-brand-gold"
+                    style={{ width: `${top.progressPct}%` }}
+                  />
+                </div>
+              </div>
+              <Button asChild className="relative mt-5 bg-white text-brand-navy hover:bg-white/90">
+                <Link to={`/platform/courses/${top.course.id}`}>
+                  <PlayCircle className="mr-2 size-4" /> Resume
+                </Link>
+              </Button>
+            </div>
+          )
+        })()}
 
       {/* Quick actions */}
       <section className="space-y-4">
