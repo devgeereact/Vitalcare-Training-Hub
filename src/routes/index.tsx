@@ -42,6 +42,7 @@ import StaffPage from "@/pages/platform/staff/StaffPage"
 import DepartmentsPage from "@/pages/platform/departments/DepartmentsPage"
 import VirtualTrainingPage from "@/pages/platform/virtual/VirtualTrainingPage"
 import LibraryPage from "@/pages/platform/library/LibraryPage"
+import MyResourcesPage from "@/pages/platform/library/MyResourcesPage"
 import BlogAdminPage from "@/pages/platform/blog/BlogAdminPage"
 import BlogEditPage from "@/pages/platform/blog/BlogEditPage"
 import LearningPathsPage from "@/pages/platform/courses/LearningPathsPage"
@@ -361,6 +362,7 @@ export const router = createBrowserRouter (
 
         // 📁 MY FILES (learner certificates + completed-course workbooks)
         { path: "my-files", element: <MyFilesPage /> },
+        { path: "my-resources", element: <MyResourcesPage /> },
 
         // 🤖 AI ASSISTANT
         {
