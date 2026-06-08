@@ -47,6 +47,7 @@ import { useLearners } from "@/lib/queries/learners.queries"
 import { useCourses } from "@/lib/queries/courses.queries"
 import { downloadCertificatePdf } from "@/lib/certificates/pdf"
 import { CertificatePreview } from "@/components/certificates/CertificatePreview"
+import VerifyCertDialog from "@/components/certificates/VerifyCertDialog"
 import { useUser } from "@/hooks/use-user"
 
 function ExpiryBadge({ cert }: { cert: CertRow }) {
@@ -206,6 +207,7 @@ export default function CertificatesListPage() {
   const isStaff = isAdmin || isTrainer
   const { data, isLoading, isError, refetch } = useCertificates()
   const approve = useApproveCertificate()
+  const [verifyCode, setVerifyCode] = useState<string | null>(null)
   const template = useDefaultTemplate()
   const [signatory, setSignatory] = useState("")
   const [signatoryRole, setSignatoryRole] = useState("")
@@ -379,10 +381,14 @@ export default function CertificatesListPage() {
                         >
                           <Download className="size-4" />
                         </Button>
-                        <Button asChild variant="ghost" size="icon" className="size-8" aria-label="Verify">
-                          <Link to={`/resources/verify-certificate?id=${c.verificationUuid}`}>
-                            <BadgeCheck className="size-4" />
-                          </Link>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          aria-label="Verify"
+                          onClick={() => setVerifyCode(c.verificationCode || c.verificationUuid)}
+                        >
+                          <BadgeCheck className="size-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -429,6 +435,8 @@ export default function CertificatesListPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VerifyCertDialog code={verifyCode} onClose={() => setVerifyCode(null)} />
     </div>
   )
 }
