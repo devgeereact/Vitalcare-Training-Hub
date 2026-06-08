@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { Outlet, useLocation } from "react-router-dom"
 import { Nav } from "@/components/marketing/Nav"
 import { Footer } from "@/components/marketing/Footer"
+import { WhatsAppButton } from "@/components/marketing/WhatsAppButton"
 
 /** Reset scroll to the top whenever the route changes. */
 function ScrollToTop(): null {
@@ -27,6 +28,7 @@ export default function MarketingLayout() {
         <Outlet />
       </main>
       <Footer />
+      <WhatsAppButton />
     </div>
   )
 }
