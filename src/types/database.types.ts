@@ -827,13 +827,14 @@ export type Database = {
     Views: { [_ in never]: never }
     Functions: {
       verify_certificate: {
-        Args: { p_uuid: string }
+        Args: { p_code: string }
         Returns: {
           learner_name: string
           course_title: string
           cpd_hours: number
           issued_at: string
           expires_at: string | null
+          verification_code: string
           is_valid: boolean
         }[]
       }
