@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import { stripDashes } from "@/lib/text/strip-dashes"
 import type {
   Course,
   CourseCategory,
@@ -185,9 +186,9 @@ export function useCurriculum(courseId: string) {
 // ─── Course mutations ────────────────────────────────────────────────────────
 function toCourseRow(values: CourseFormValues) {
   return {
-    title: values.title,
-    summary: values.summary || null,
-    description: values.description || null,
+    title: stripDashes(values.title),
+    summary: values.summary ? stripDashes(values.summary) : null,
+    description: values.description ? stripDashes(values.description) : null,
     category_id: values.category_id,
     is_cstf_aligned: values.is_cstf_aligned,
     cpd_hours: values.cpd_hours,

@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabase/client"
+import { stripDashes } from "@/lib/text/strip-dashes"
 import { BLOG_POSTS } from "@/data/blog"
 
 // The blog tables are added by migration 051 and are not in the generated
@@ -288,11 +289,12 @@ export function useSavePost(authorId: string | undefined, authorName: string) {
   return useMutation({
     mutationFn: async (input: BlogPostInput): Promise<string> => {
       const now = new Date().toISOString()
+      // Enforce the no-dash house style on save, whatever the source.
       const base = {
-        title: input.title,
+        title: stripDashes(input.title),
         slug: input.slug,
-        excerpt: input.excerpt,
-        body: input.body,
+        excerpt: stripDashes(input.excerpt),
+        body: stripDashes(input.body),
         feature_image_url: input.feature_image_url,
         status: input.status,
         updated_at: now,

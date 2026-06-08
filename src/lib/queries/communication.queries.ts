@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase/client"
+import { stripDashes } from "@/lib/text/strip-dashes"
 import type {
   Announcement,
   Message,
@@ -353,8 +354,8 @@ export function useCreateAnnouncement() {
   return useMutation({
     mutationFn: async (input: AnnouncementCreate) => {
       const { error } = await supabase.from("announcements").insert({
-        title: input.title.trim(),
-        body: input.body.trim(),
+        title: stripDashes(input.title.trim()),
+        body: stripDashes(input.body.trim()),
         author_id: input.authorId,
         published_at: new Date().toISOString(),
         action_at: input.actionAt ? new Date(input.actionAt).toISOString() : null,
