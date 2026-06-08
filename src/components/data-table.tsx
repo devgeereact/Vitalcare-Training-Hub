@@ -2,6 +2,7 @@
 
 import {
   ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -68,7 +69,7 @@ export function DataTable<TData, TValue>({
     pageSize: 10,
   })
 
-  const [columnFilters, setColumnFilters] = useState([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
   const table = useReactTable({
     data,
@@ -78,9 +79,9 @@ export function DataTable<TData, TValue>({
       globalFilter,
       rowSelection,
       pagination,
-      columnFilters,   // 👈 add this
+      columnFilters,
     },
-    // onColumnFiltersChange: setColumnFilters, // 👈 add this
+    onColumnFiltersChange: setColumnFilters,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: setPagination,

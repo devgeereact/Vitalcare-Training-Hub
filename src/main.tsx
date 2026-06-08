@@ -22,6 +22,17 @@ if (typeof window !== "undefined") {
   window.addEventListener("load", () => {
     void registerServiceWorker()
   })
+
+  // After a deploy, hashed chunk filenames change. A tab opened before the
+  // deploy (or a service worker serving a stale index) can request a chunk that
+  // no longer exists, which crashes a lazy-loaded page (e.g. the Store charts)
+  // to a blank screen. Recover by reloading once to pull the fresh assets.
+  window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault()
+    if (sessionStorage.getItem("vc-chunk-reloaded") === "1") return
+    sessionStorage.setItem("vc-chunk-reloaded", "1")
+    window.location.reload()
+  })
 }
 
 const queryClient = new QueryClient({

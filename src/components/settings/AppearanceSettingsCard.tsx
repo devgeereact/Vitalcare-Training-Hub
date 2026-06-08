@@ -8,6 +8,8 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { useUIThemeStore } from "@/store/ui-theme.store"
+import { useAuth } from "@/hooks/use-auth"
+import { useSaveTheme } from "@/lib/queries/appearance.queries"
 
 const VITALCARE_THEMES = [
   {
@@ -33,12 +35,23 @@ const VITALCARE_THEMES = [
  */
 export default function AppearanceSettingsCard(): React.ReactElement {
   const { theme, setTheme } = useUIThemeStore()
+  const { session } = useAuth()
+  const saveTheme = useSaveTheme()
+
+  function choose(id: string): void {
+    setTheme(id)
+    const userId = session?.user.id
+    if (userId) {
+      // Persist to the profile so the choice follows the user across devices.
+      saveTheme.mutate({ userId, theme: id })
+    }
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Appearance</CardTitle>
-        <CardDescription>Choose a theme. Saved on this device.</CardDescription>
+        <CardDescription>Choose a theme. Saved to your account.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -46,7 +59,7 @@ export default function AppearanceSettingsCard(): React.ReactElement {
             <button
               key={t.id}
               type="button"
-              onClick={() => setTheme(t.id)}
+              onClick={() => choose(t.id)}
               aria-pressed={theme === t.id}
               className={`relative h-24 cursor-pointer overflow-hidden rounded-lg transition hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2 ${
                 theme === t.id

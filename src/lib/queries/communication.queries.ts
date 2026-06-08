@@ -345,6 +345,17 @@ export function useUnacknowledged(userId: string | undefined) {
     enabled: !!userId,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<AnnouncementRow[]> => {
+      // A newly signed-up learner should not be shown the backlog of past
+      // announcements. Use their account creation time as the cutoff: only
+      // announcements published on or after they joined, and never acknowledged,
+      // are surfaced as popups.
+      const { data: me } = await supabase
+        .from("profiles")
+        .select("created_at")
+        .eq("id", userId!)
+        .maybeSingle()
+      const joinedAt = me?.created_at ? new Date(me.created_at).getTime() : 0
+
       const { data: anns, error } = await supabase
         .from("announcements")
         .select("*")
@@ -360,7 +371,12 @@ export function useUnacknowledged(userId: string | undefined) {
         .select("announcement_id")
         .eq("user_id", userId!)
       const acked = new Set((acks ?? []).map((a) => a.announcement_id))
-      const rows = ((anns ?? []) as Announcement[]).filter((a) => !acked.has(a.id))
+      const rows = ((anns ?? []) as Announcement[]).filter((a) => {
+        if (acked.has(a.id)) return false
+        // Cutoff by when the announcement went live (published_at, else created_at).
+        const liveAt = new Date(a.published_at ?? a.created_at).getTime()
+        return liveAt >= joinedAt
+      })
       const authorIds = [...new Set(rows.map((r) => r.author_id).filter(Boolean))] as string[]
       const nameById = new Map<string, string>()
       if (authorIds.length) {

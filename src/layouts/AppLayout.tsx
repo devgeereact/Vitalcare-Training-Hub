@@ -5,6 +5,7 @@ import SectionTabs from "@/components/platform/SectionTabs"
 import React from "react"
 import { NotificationDropdown } from "@/components/notification-dropdown"
 import AnnouncementPopup from "@/components/platform/AnnouncementPopup"
+import AppearanceSync from "@/components/platform/AppearanceSync"
 import ProfileCompletionBanner from "@/components/platform/ProfileCompletionBanner"
 import AutoAttendance from "@/components/platform/AutoAttendance"
 import { IdleLockProvider } from "@/components/auth/IdleLock"
@@ -171,6 +172,7 @@ export default function AppLayout() {
         <Footer />
         <BottomTabBar />
         <AnnouncementPopup />
+        <AppearanceSync />
         <AutoAttendance />
       </SidebarInset>
     </SidebarProvider>
