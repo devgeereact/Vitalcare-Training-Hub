@@ -439,10 +439,11 @@ export default function MessagesPage() {
   // them. Existing threads are excluded so they are not listed twice.
   const threadIds = new Set((data ?? []).map((t) => t.otherId))
   const searching = q.trim().length >= 2
-  // While searching, show every match (clicking opens an existing thread or a
-  // new one). In the default view, show admins without an existing thread.
+  // Do not list a person twice: drop search hits that already appear in the
+  // currently-visible (filtered) threads list above.
+  const visibleThreadIds = new Set(threads.map((t) => t.otherId))
   const adminContacts = searching
-    ? contactSearch.data ?? []
+    ? (contactSearch.data ?? []).filter((a) => !visibleThreadIds.has(a.id))
     : (adminContactsQ.data ?? []).filter((a) => !threadIds.has(a.id))
 
   // Open a thread directly from a contact (Message button -> ?to=&name=).

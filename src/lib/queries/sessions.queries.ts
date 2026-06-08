@@ -555,7 +555,7 @@ export async function selfCheckIn(sessionId: string): Promise<CheckInResult> {
   if (!auth.user) throw new Error("Not signed in")
   const uid = auth.user.id
 
-  // Only valid around the session time (30 min before start to 12 h after end).
+  // Check-in opens 5 minutes before the session and closes 2 hours after it ends.
   const { data: s } = await supabase
     .from("training_sessions")
     .select("starts_at, ends_at")
@@ -583,14 +583,18 @@ export async function selfCheckIn(sessionId: string): Promise<CheckInResult> {
     }
   }
 
-  // Was the learner already registered for this session?
+  // Was the learner already registered for this session, and by whom?
   const { data: existing } = await supabase
     .from("attendance_records")
-    .select("status")
+    .select("status, marked_by")
     .eq("session_id", sessionId)
     .eq("learner_id", uid)
     .maybeSingle()
   const alreadyRegistered = Boolean(existing)
+  // A staff-set mark (e.g. absent, late, excused) must not be overwritten by a
+  // self check-in. Only write attendance when there is no record yet, or the
+  // learner set it themselves.
+  const staffMarked = existing != null && existing.marked_by != null && existing.marked_by !== uid
 
   // Mark the booking attended (walk-ins are booked on the spot)…
   const { error: bErr } = await supabase
@@ -602,6 +606,10 @@ export async function selfCheckIn(sessionId: string): Promise<CheckInResult> {
   if (bErr) {
     console.error("[selfCheckIn:booking]", bErr)
     throw bErr
+  }
+  if (staffMarked) {
+    // Already on the register by staff: report it, do not change the status.
+    return { alreadyRegistered }
   }
   // …and write the attendance record so it shows in the log and register.
   const { error: aErr } = await supabase.from("attendance_records").upsert(

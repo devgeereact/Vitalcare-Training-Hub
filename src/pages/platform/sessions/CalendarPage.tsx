@@ -485,7 +485,7 @@ export default function CalendarPage() {
                 </DialogTitle>
                 <DialogDescription>
                   {format(new Date(selected.start), "EEE d MMM yyyy, HH:mm")}
-                  {selected.end && ` – ${format(new Date(selected.end), "HH:mm")}`}
+                  {selected.end && ` to ${format(new Date(selected.end), "HH:mm")}`}
                 </DialogDescription>
               </DialogHeader>
               {selected.description && (

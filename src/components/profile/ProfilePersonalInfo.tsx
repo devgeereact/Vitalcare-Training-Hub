@@ -44,7 +44,7 @@ export default function ProfilePersonalInfo({
   const name =
     [profile.first_name, profile.last_name].filter(Boolean).join(" ") ||
     profile.full_name ||
-    "—"
+    "-"
   const hasBio = !!profile.about?.trim()
 
   return (

@@ -104,7 +104,7 @@ function SlotCard({
         </p>
         <p className="flex items-center gap-1.5">
           <Clock className="size-3.5 shrink-0" />
-          {format(new Date(e.startsAt), "HH:mm")} – {format(new Date(e.endsAt), "HH:mm")}
+          {format(new Date(e.startsAt), "HH:mm")} to {format(new Date(e.endsAt), "HH:mm")}
         </p>
       </div>
     </button>
@@ -147,7 +147,7 @@ export default function TrainerTimetablePage() {
     return {
       weekStart: ws,
       weekEnd: we,
-      label: `${format(ws, "d MMM")} – ${format(we, "d MMM yyyy")}`,
+      label: `${format(ws, "d MMM")} to ${format(we, "d MMM yyyy")}`,
     }
   }, [weekOffset])
 
@@ -347,7 +347,7 @@ export default function TrainerTimetablePage() {
                   </Badge>
                 </DialogTitle>
                 <DialogDescription>
-                  {format(new Date(selected.startsAt), "EEE d MMM yyyy, HH:mm")} –{" "}
+                  {format(new Date(selected.startsAt), "EEE d MMM yyyy, HH:mm")} to{" "}
                   {format(new Date(selected.endsAt), "HH:mm")}
                 </DialogDescription>
               </DialogHeader>

@@ -245,7 +245,7 @@ export default function DepartmentsPage() {
                           </button>
                         </TableCell>
                         <TableCell className="max-w-sm truncate text-sm text-muted-foreground">
-                          {d.description || "—"}
+                          {d.description || "-"}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge variant="secondary">{d.memberCount}</Badge>

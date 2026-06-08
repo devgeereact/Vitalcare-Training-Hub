@@ -113,8 +113,8 @@ Deno.serve(async (req) => {
     <table style="font-family:sans-serif;font-size:14px">
       <tr><td><b>Name</b></td><td>${esc(name)}</td></tr>
       <tr><td><b>Email</b></td><td>${esc(email)}</td></tr>
-      <tr><td><b>Organisation</b></td><td>${esc(body.organisation ?? "—")}</td></tr>
-      <tr><td><b>Phone</b></td><td>${esc(body.phone ?? "—")}</td></tr>
+      <tr><td><b>Organisation</b></td><td>${esc(body.organisation ?? "-")}</td></tr>
+      <tr><td><b>Phone</b></td><td>${esc(body.phone ?? "-")}</td></tr>
     </table>
     <p style="font-family:sans-serif;white-space:pre-wrap">${esc(message)}</p>`
 

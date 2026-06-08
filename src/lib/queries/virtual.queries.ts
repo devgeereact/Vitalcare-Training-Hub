@@ -39,6 +39,10 @@ interface SjrUpdate {
 interface SjrTable {
   select(cols: string): SjrFilter
   insert(v: SjrRow): PromiseLike<{ error: { message: string } | null }>
+  upsert(
+    v: SjrRow,
+    opts: { onConflict: string },
+  ): PromiseLike<{ error: { message: string } | null }>
   update(v: SjrRow): SjrUpdate
 }
 function sjr(): SjrTable {
@@ -128,11 +132,18 @@ export function useRequestJoin(userId: string | undefined) {
   return useMutation({
     mutationFn: async (sessionId: string) => {
       if (!userId) throw new Error("Sign in to request a place")
-      const { error } = await sjr().insert({
-        session_id: sessionId,
-        learner_id: userId,
-        status: "pending",
-      })
+      // Upsert so a learner can re-request (for example after a decline)
+      // without hitting the unique-constraint error. Resets the row to pending.
+      const { error } = await sjr().upsert(
+        {
+          session_id: sessionId,
+          learner_id: userId,
+          status: "pending",
+          decided_by: null,
+          decided_at: null,
+        },
+        { onConflict: "session_id,learner_id" },
+      )
       if (error) throw new Error(error.message)
     },
     onSuccess: () => {

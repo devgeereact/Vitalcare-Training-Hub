@@ -134,7 +134,7 @@ function LearnerSessions() {
                 <CardContent className="space-y-3">
                   <p className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="size-4" />
-                    {format(start, "EEE d MMM yyyy, HH:mm")} – {format(new Date(s.endsAt), "HH:mm")}
+                    {format(start, "EEE d MMM yyyy, HH:mm")} to {format(new Date(s.endsAt), "HH:mm")}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {!marked && !ended && (

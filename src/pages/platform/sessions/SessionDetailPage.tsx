@@ -186,7 +186,7 @@ export default function SessionDetailPage() {
         <CardContent className="space-y-2">
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="size-4" />
-            {format(new Date(s.starts_at), "EEE d MMM yyyy, HH:mm")} –{" "}
+            {format(new Date(s.starts_at), "EEE d MMM yyyy, HH:mm")} to{" "}
             {format(new Date(s.ends_at), "HH:mm")}
           </p>
           {s.venue && (

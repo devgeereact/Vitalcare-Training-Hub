@@ -221,6 +221,11 @@ export default function CertificatesListPage() {
   }
 
   function runDownload(c: CertRow) {
+    // A learner cannot download a certificate that has not been approved.
+    if (!c.approved && !isStaff) {
+      toast.error("This certificate is awaiting admin approval.")
+      return
+    }
     downloadCertificatePdf({
       learnerName: c.learnerName,
       courseTitle: c.courseTitle,
@@ -346,7 +351,7 @@ export default function CertificatesListPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
-                        {!c.approved && (
+                        {!c.approved && isAdmin && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -363,6 +368,9 @@ export default function CertificatesListPage() {
                             <CheckCircle2 className="size-4" /> Approve
                           </Button>
                         )}
+                        {!c.approved && !isStaff && (
+                          <span className="text-xs text-warning">Awaiting approval</span>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -372,15 +380,17 @@ export default function CertificatesListPage() {
                         >
                           <Eye className="size-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          aria-label="Download PDF"
-                          onClick={() => runDownload(c)}
-                        >
-                          <Download className="size-4" />
-                        </Button>
+                        {(c.approved || isStaff) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            aria-label="Download PDF"
+                            onClick={() => runDownload(c)}
+                          >
+                            <Download className="size-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -422,12 +432,13 @@ export default function CertificatesListPage() {
             />
           ) : null}
           <DialogFooter>
-            <Button asChild variant="outline">
-              <Link
-                to={`/resources/verify-certificate?id=${preview?.verificationUuid ?? ""}`}
-              >
-                <BadgeCheck className="mr-2 size-4" /> Verify
-              </Link>
+            <Button
+              variant="outline"
+              onClick={() =>
+                preview && setVerifyCode(preview.verificationCode || preview.verificationUuid)
+              }
+            >
+              <BadgeCheck className="mr-2 size-4" /> Verify
             </Button>
             <Button onClick={() => preview && runDownload(preview)}>
               <Download className="mr-2 size-4" /> Download PDF

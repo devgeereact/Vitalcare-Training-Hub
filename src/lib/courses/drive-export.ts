@@ -32,12 +32,12 @@ function lessonBodyHtml(lesson: CurriculumModule["lessons"][number]): string {
     case "text":
       return lesson.content?.trim() || "<p><em>No content.</em></p>"
     case "video":
-      return `<p>Video: ${esc(lesson.video_url || "—")}</p>`
+      return `<p>Video: ${esc(lesson.video_url || "-")}</p>`
     case "document":
-      return `<p>Document: ${esc(lesson.document_url || "—")}</p>`
+      return `<p>Document: ${esc(lesson.document_url || "-")}</p>`
     case "scorm":
     case "h5p":
-      return `<p>${lesson.type.toUpperCase()} package: ${esc(lesson.scorm_url || "—")}</p>`
+      return `<p>${lesson.type.toUpperCase()} package: ${esc(lesson.scorm_url || "-")}</p>`
     default:
       return ""
   }

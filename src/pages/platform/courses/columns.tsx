@@ -38,7 +38,7 @@ export const courseColumns: ColumnDef<CourseRow>[] = [
           <ShieldCheck className="size-3.5" /> Aligned
         </span>
       ) : (
-        <span className="text-xs text-muted-foreground">—</span>
+        <span className="text-xs text-muted-foreground">-</span>
       ),
   },
   {

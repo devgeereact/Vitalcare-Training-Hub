@@ -109,9 +109,9 @@ export function EventDialog({
             <DateTimePicker value={end} onChange={setEnd} />
           </div>
 
-          {/* Color */}
+          {/* Colour */}
           <div className="space-y-2">
-            <Label>Color</Label>
+            <Label>Colour</Label>
             <div className="flex items-center gap-3">
               <input
                 type="color"

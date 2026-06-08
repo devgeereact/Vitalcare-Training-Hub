@@ -255,7 +255,7 @@ export default function CourseOverviewPage() {
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {assessment.data.passed
-                      ? "Passed — required for your certificate."
+                      ? "Passed, required for your certificate."
                       : `Pass mark ${assessment.data.passMark}%. Required to earn your certificate.`}
                   </p>
                   <Button
