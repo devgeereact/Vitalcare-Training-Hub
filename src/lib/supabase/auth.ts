@@ -124,5 +124,8 @@ function friendlyAuthError(message: string): string {
   if (m.includes("rate limit") || m.includes("too many")) {
     return "Too many attempts. Please wait a moment and try again."
   }
+  if (m.includes("captcha")) {
+    return "The security check could not be verified. Refresh the page and try again."
+  }
   return "Something went wrong. Please try again."
 }
