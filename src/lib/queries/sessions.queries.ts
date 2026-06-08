@@ -565,10 +565,20 @@ export async function selfCheckIn(sessionId: string): Promise<CheckInResult> {
     const now = Date.now()
     const start = new Date(s.starts_at).getTime()
     const end = new Date(s.ends_at).getTime()
-    if (Number.isFinite(start) && now < start - 30 * 60 * 1000) {
-      throw new Error("This session has not started yet.")
+    // Check-in opens 5 minutes before the session and closes 2 hours after it ends.
+    if (Number.isFinite(start) && now < start - 5 * 60 * 1000) {
+      const when = new Date(s.starts_at).toLocaleString("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      throw new Error(
+        `Check-in opens 5 minutes before the session. This session starts on ${when}. Please try again then.`,
+      )
     }
-    if (Number.isFinite(end) && now > end + 12 * 60 * 60 * 1000) {
+    if (Number.isFinite(end) && now > end + 2 * 60 * 60 * 1000) {
       throw new Error("This session has ended.")
     }
   }

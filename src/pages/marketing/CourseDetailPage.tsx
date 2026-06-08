@@ -23,6 +23,7 @@ import {
   usePublicCurriculum,
 } from "@/lib/queries/public-courses.queries"
 import { useCategories } from "@/lib/queries/courses.queries"
+import { useAuth } from "@/hooks/use-auth"
 import { COURSES, getCategory } from "@/data/courses"
 import { sanitizeHtml } from "@/lib/sanitize"
 
@@ -52,6 +53,7 @@ function Crumbs({ title }: { title: string }): React.ReactElement {
  */
 export default function CourseDetailPage(): React.ReactElement {
   const { slug = "" } = useParams<{ slug: string }>()
+  const { session } = useAuth()
   const course = usePublishedCourse(slug)
   const categories = useCategories()
   const curriculum = usePublicCurriculum(course.data?.id)
@@ -274,17 +276,25 @@ export default function CourseDetailPage(): React.ReactElement {
                 )}
 
                 <Link
-                  to="/contact-us"
+                  to={
+                    session
+                      ? c?.id
+                        ? `/platform/courses/${c.id}`
+                        : "/platform/courses"
+                      : "/contact-us"
+                  }
                   className="group inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-navy px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
                 >
-                  Enquire about this course
+                  {session ? "Enrol on this course" : "Enquire about this course"}
                   <ArrowRight
                     className="size-4 transition-transform group-hover:translate-x-0.5"
                     aria-hidden
                   />
                 </Link>
                 <p className="text-center text-xs text-muted-foreground">
-                  Group rates and dates on request.
+                  {session
+                    ? "Go to the course to enrol and start learning."
+                    : "Group rates and dates on request."}
                 </p>
               </div>
             </div>

@@ -736,12 +736,18 @@ function LearnerDashboard({
           description="Check in to a session or jump back into your learning."
         />
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <div className="lg:col-span-1">
-            <QuickCheckIn
-              session={sessions.data?.[0] ?? null}
-              loading={sessions.isLoading}
-            />
-          </div>
+          {(() => {
+            // The QR check-in only appears when the learner has an upcoming
+            // online or virtual session to attend.
+            const virtualSession =
+              (sessions.data ?? []).find((s) => s.isVirtual) ?? null
+            if (!sessions.isLoading && !virtualSession) return null
+            return (
+              <div className="lg:col-span-1">
+                <QuickCheckIn session={virtualSession} loading={sessions.isLoading} />
+              </div>
+            )
+          })()}
           <div className="lg:col-span-2">
             <QuickLinks role="learner" />
           </div>
