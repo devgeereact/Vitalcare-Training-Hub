@@ -117,6 +117,7 @@ export interface MessageThread {
 export interface AdminContact {
   id: string
   name: string
+  email: string
   role: string
 }
 

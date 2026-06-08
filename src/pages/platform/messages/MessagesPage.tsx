@@ -434,9 +434,14 @@ export default function MessagesPage() {
   // Admins the user can start a fresh chat with (those without an existing
   // thread), so support is one tap away. Filtered by the same search box.
   const threadIds = new Set((data ?? []).map((t) => t.otherId))
+  const adminQuery = q.toLowerCase()
   const adminContacts = (adminContactsQ.data ?? [])
     .filter((a) => !threadIds.has(a.id))
-    .filter((a) => a.name.toLowerCase().includes(q.toLowerCase()))
+    .filter(
+      (a) =>
+        a.name.toLowerCase().includes(adminQuery) ||
+        a.email.toLowerCase().includes(adminQuery),
+    )
 
   // Open a thread directly from a contact (Message button -> ?to=&name=).
   useEffect(() => {
@@ -484,7 +489,7 @@ export default function MessagesPage() {
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search chat…"
+                  placeholder="Search chat or admin email…"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   className="rounded-full pl-9"
@@ -586,6 +591,9 @@ export default function MessagesPage() {
                                 {a.name}
                               </span>
                               <span className="block truncate text-xs text-muted-foreground">
+                                {a.email}
+                              </span>
+                              <span className="block truncate text-[11px] text-muted-foreground">
                                 {a.role === "super_admin" ? "Administrator" : "Admin"} · tap to start a chat
                               </span>
                             </span>
