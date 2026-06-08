@@ -3,13 +3,23 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { Loader2, Mail, Phone, MapPin, Clock, ShieldCheck } from "lucide-react"
+import {
+  Loader2,
+  Mail,
+  Phone,
+  MapPin,
+  Clock,
+  ShieldCheck,
+  Linkedin,
+  Instagram,
+  MessageCircle,
+} from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { PageHero } from "@/components/marketing/PageHero"
 import { supabase } from "@/lib/supabase/client"
-import { COMPANY } from "@/lib/constants"
+import { COMPANY, SOCIAL_LINKS } from "@/lib/constants"
 import Turnstile, { type TurnstileHandle } from "@/components/security/Turnstile"
 import { turnstileEnabled } from "@/lib/turnstile"
 
@@ -136,6 +146,35 @@ export default function ContactPage(): React.ReactElement {
                 </a>
               </li>
             </ul>
+
+            {/* WhatsApp + socials */}
+            <div className="mt-7 border-t border-white/10 pt-6">
+              <a
+                href={SOCIAL_LINKS.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-105 ${FOCUS}`}
+              >
+                <MessageCircle className="size-4" /> Chat on WhatsApp
+              </a>
+              <div className="mt-5 flex items-center gap-3">
+                {[
+                  { label: "LinkedIn", href: SOCIAL_LINKS.linkedin, Icon: Linkedin },
+                  { label: "Instagram", href: SOCIAL_LINKS.instagram, Icon: Instagram },
+                ].map(({ label, href, Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className={`flex size-9 items-center justify-center rounded-full border border-white/20 text-white/80 transition-colors hover:border-brand-gold hover:text-brand-gold ${FOCUS}`}
+                  >
+                    <Icon className="size-4" />
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-border bg-white p-7 shadow-sm">
