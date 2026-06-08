@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { signUpWithPassword, signInWithGoogle } from "@/lib/supabase/auth"
+import Turnstile from "@/components/security/Turnstile"
+import { turnstileEnabled } from "@/lib/turnstile"
 import { registerSchema, type RegisterValues } from "@/lib/validations/auth.schema"
 
 const FOCUS =
@@ -21,6 +23,7 @@ export default function CoverRegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState("")
 
   const {
     register,
@@ -35,6 +38,7 @@ export default function CoverRegisterPage() {
       values.password,
       values.firstName,
       values.lastName,
+      captchaToken || undefined,
     )
     if (error) {
       setFormError(error)
@@ -181,7 +185,13 @@ export default function CoverRegisterPage() {
             ) : null}
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className={`w-full ${FOCUS}`}>
+          <Turnstile onVerify={setCaptchaToken} />
+
+          <Button
+            type="submit"
+            disabled={isSubmitting || (turnstileEnabled() && !captchaToken)}
+            className={`w-full ${FOCUS}`}
+          >
             {isSubmitting ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (

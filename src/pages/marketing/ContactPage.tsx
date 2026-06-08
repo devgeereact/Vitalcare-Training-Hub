@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { PageHero } from "@/components/marketing/PageHero"
 import { supabase } from "@/lib/supabase/client"
 import { COMPANY } from "@/lib/constants"
+import Turnstile from "@/components/security/Turnstile"
+import { turnstileEnabled } from "@/lib/turnstile"
 
 const contactSchema = z.object({
   name: z.string().min(2, "Enter your name"),
@@ -17,6 +19,7 @@ const contactSchema = z.object({
   phone: z.string().optional(),
   subject: z.string().min(2, "Enter a subject"),
   message: z.string().min(10, "Tell us a little more (at least 10 characters)"),
+  website: z.string().optional(), // honeypot
 })
 type ContactValues = z.infer<typeof contactSchema>
 
@@ -31,8 +34,7 @@ export default function ContactPage(): React.ReactElement {
     formState: { errors, isSubmitting },
   } = useForm<ContactValues>({ resolver: zodResolver(contactSchema) })
 
-  // Honeypot: a hidden field humans never fill. Bots do; the server drops those.
-  const honeypot = useRef<HTMLInputElement>(null)
+  const [captchaToken, setCaptchaToken] = useState("")
 
   const onSubmit = async (values: ContactValues): Promise<void> => {
     try {
@@ -43,7 +45,8 @@ export default function ContactPage(): React.ReactElement {
           phone: values.phone ?? "",
           subject: values.subject,
           message: values.message,
-          website: honeypot.current?.value ?? "",
+          website: values.website ?? "",
+          turnstileToken: captchaToken,
         },
       })
       if (error) {
@@ -181,13 +184,12 @@ export default function ContactPage(): React.ReactElement {
             >
               {/* Honeypot: hidden from users and screen readers; bots fill it. */}
               <input
-                ref={honeypot}
                 type="text"
-                name="website"
                 tabIndex={-1}
                 autoComplete="off"
                 aria-hidden="true"
                 className="hidden"
+                {...register("website")}
               />
               <div className="grid gap-2">
                 <Label htmlFor="name">Name *</Label>
@@ -262,9 +264,11 @@ export default function ContactPage(): React.ReactElement {
                 ) : null}
               </div>
 
+              <Turnstile onVerify={setCaptchaToken} />
+
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || (turnstileEnabled() && !captchaToken)}
                 className={`w-full sm:w-auto ${FOCUS}`}
               >
                 {isSubmitting ? (

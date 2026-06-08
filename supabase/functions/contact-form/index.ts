@@ -3,7 +3,11 @@
 // via Resend. RESEND_API_KEY stays server-side.
 //
 // Deploy:  supabase functions deploy contact-form --no-verify-jwt
-// Secrets: RESEND_API_KEY, RESEND_FROM, ADMIN_EMAIL, ADMIN_EMAIL_SECONDARY
+// Secrets: RESEND_API_KEY, RESEND_FROM, ADMIN_EMAIL, ADMIN_EMAIL_SECONDARY,
+//          TURNSTILE_SECRET (optional; enforces the CAPTCHA when set)
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { verifyTurnstile } from "../_shared/turnstile.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,6 +47,15 @@ Deno.serve(async (req) => {
   // Honeypot: a hidden "website" field no human fills. Bots do. Pretend success
   // so they do not retry, but send nothing.
   if ((body.website ?? "").trim() !== "") return json({ ok: true })
+
+  // CAPTCHA: enforced only when TURNSTILE_SECRET is configured.
+  const admin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  )
+  const ip = req.headers.get("CF-Connecting-IP") ?? req.headers.get("x-forwarded-for")
+  const human = await verifyTurnstile(admin, body.turnstileToken, ip)
+  if (!human) return json({ error: "Verification failed. Please try again." }, 400)
 
   const name = (body.name ?? "").trim()
   const email = (body.email ?? "").trim()

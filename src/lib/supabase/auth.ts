@@ -5,8 +5,13 @@ import type { Profile } from "@/types/database.types"
 export async function signInWithPassword(
   email: string,
   password: string,
+  captchaToken?: string,
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    options: captchaToken ? { captchaToken } : undefined,
+  })
   if (error) {
     console.error("[signInWithPassword]", error)
     return { error: friendlyAuthError(error.message) }
@@ -20,6 +25,7 @@ export async function signUpWithPassword(
   password: string,
   firstName: string,
   lastName: string,
+  captchaToken?: string,
 ): Promise<{ error: string | null }> {
   const { error } = await supabase.auth.signUp({
     email,
@@ -27,6 +33,7 @@ export async function signUpWithPassword(
     options: {
       data: { first_name: firstName, last_name: lastName },
       emailRedirectTo: `${window.location.origin}/auth/callback`,
+      ...(captchaToken ? { captchaToken } : {}),
     },
   })
   if (error) {
@@ -52,9 +59,11 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
 /** Send a password reset email. */
 export async function sendPasswordReset(
   email: string,
+  captchaToken?: string,
 ): Promise<{ error: string | null }> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/reset-password`,
+    ...(captchaToken ? { captchaToken } : {}),
   })
   if (error) {
     console.error("[sendPasswordReset]", error)

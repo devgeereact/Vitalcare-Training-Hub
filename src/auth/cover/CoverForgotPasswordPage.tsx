@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { sendPasswordReset } from "@/lib/supabase/auth"
+import Turnstile from "@/components/security/Turnstile"
+import { turnstileEnabled } from "@/lib/turnstile"
 import {
   forgotPasswordSchema,
   type ForgotPasswordValues,
@@ -21,6 +23,7 @@ const FOCUS =
 export default function CoverForgotPasswordPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState("")
 
   const {
     register,
@@ -32,7 +35,7 @@ export default function CoverForgotPasswordPage() {
 
   const onSubmit = async (values: ForgotPasswordValues) => {
     setFormError(null)
-    const { error } = await sendPasswordReset(values.email)
+    const { error } = await sendPasswordReset(values.email, captchaToken || undefined)
     if (error) {
       setFormError(error)
       return
@@ -90,9 +93,11 @@ export default function CoverForgotPasswordPage() {
               ) : null}
             </div>
 
+            <Turnstile onVerify={setCaptchaToken} />
+
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (turnstileEnabled() && !captchaToken)}
               className={`w-full ${FOCUS}`}
             >
               {isSubmitting ? (
