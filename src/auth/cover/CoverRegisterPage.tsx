@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { signUpWithPassword, signInWithGoogle } from "@/lib/supabase/auth"
-import Turnstile from "@/components/security/Turnstile"
+import Turnstile, { type TurnstileHandle } from "@/components/security/Turnstile"
 import { turnstileEnabled } from "@/lib/turnstile"
 import { registerSchema, type RegisterValues } from "@/lib/validations/auth.schema"
 
@@ -24,6 +24,7 @@ export default function CoverRegisterPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState("")
+  const captchaRef = useRef<TurnstileHandle>(null)
 
   const {
     register,
@@ -40,6 +41,8 @@ export default function CoverRegisterPage() {
       values.lastName,
       captchaToken || undefined,
     )
+    captchaRef.current?.reset()
+    setCaptchaToken("")
     if (error) {
       setFormError(error)
       return
@@ -185,7 +188,7 @@ export default function CoverRegisterPage() {
             ) : null}
           </div>
 
-          <Turnstile onVerify={setCaptchaToken} />
+          <Turnstile ref={captchaRef} onVerify={setCaptchaToken} />
 
           <Button
             type="submit"

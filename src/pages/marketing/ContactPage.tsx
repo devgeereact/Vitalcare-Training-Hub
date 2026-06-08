@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { PageHero } from "@/components/marketing/PageHero"
 import { supabase } from "@/lib/supabase/client"
 import { COMPANY } from "@/lib/constants"
-import Turnstile from "@/components/security/Turnstile"
+import Turnstile, { type TurnstileHandle } from "@/components/security/Turnstile"
 import { turnstileEnabled } from "@/lib/turnstile"
 
 const contactSchema = z.object({
@@ -35,6 +35,7 @@ export default function ContactPage(): React.ReactElement {
   } = useForm<ContactValues>({ resolver: zodResolver(contactSchema) })
 
   const [captchaToken, setCaptchaToken] = useState("")
+  const captchaRef = useRef<TurnstileHandle>(null)
 
   const onSubmit = async (values: ContactValues): Promise<void> => {
     try {
@@ -49,6 +50,9 @@ export default function ContactPage(): React.ReactElement {
           turnstileToken: captchaToken,
         },
       })
+      // Turnstile tokens are single-use: reset for the next attempt.
+      captchaRef.current?.reset()
+      setCaptchaToken("")
       if (error) {
         console.error("[contact-form]", error)
         toast.error("We could not send your message", {
@@ -264,7 +268,7 @@ export default function ContactPage(): React.ReactElement {
                 ) : null}
               </div>
 
-              <Turnstile onVerify={setCaptchaToken} />
+              <Turnstile ref={captchaRef} onVerify={setCaptchaToken} />
 
               <Button
                 type="submit"

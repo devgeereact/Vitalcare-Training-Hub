@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { sendPasswordReset } from "@/lib/supabase/auth"
-import Turnstile from "@/components/security/Turnstile"
+import Turnstile, { type TurnstileHandle } from "@/components/security/Turnstile"
 import { turnstileEnabled } from "@/lib/turnstile"
 import {
   forgotPasswordSchema,
@@ -24,6 +24,7 @@ export default function CoverForgotPasswordPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
   const [captchaToken, setCaptchaToken] = useState("")
+  const captchaRef = useRef<TurnstileHandle>(null)
 
   const {
     register,
@@ -36,6 +37,8 @@ export default function CoverForgotPasswordPage() {
   const onSubmit = async (values: ForgotPasswordValues) => {
     setFormError(null)
     const { error } = await sendPasswordReset(values.email, captchaToken || undefined)
+    captchaRef.current?.reset()
+    setCaptchaToken("")
     if (error) {
       setFormError(error)
       return
@@ -93,7 +96,7 @@ export default function CoverForgotPasswordPage() {
               ) : null}
             </div>
 
-            <Turnstile onVerify={setCaptchaToken} />
+            <Turnstile ref={captchaRef} onVerify={setCaptchaToken} />
 
             <Button
               type="submit"
