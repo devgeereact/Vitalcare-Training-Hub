@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react"
 import { format } from "date-fns"
 import { toast } from "sonner"
+import { supabase } from "@/lib/supabase/client"
 import {
   FolderOpen,
   AlertCircle,
@@ -75,6 +76,12 @@ export default function FileManagerPage(): React.JSX.Element {
     try {
       const used = await upload.mutateAsync(file)
       toast.success(used === "drive" ? "Uploaded to Google Drive" : "Uploaded")
+      // Notify other staff a new file is in the manager (server-resolved).
+      const rpc = supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ error: unknown }>
+      void rpc("notify_file_uploaded", { p_name: file.name }).catch(() => undefined)
     } catch (err) {
       toast.error("Upload failed", {
         description: err instanceof Error ? err.message : undefined,
