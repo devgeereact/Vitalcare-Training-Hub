@@ -16,6 +16,9 @@ export interface CertificatePdfData {
   /** Optional expiry. When present, shown alongside the issue date. */
   expiresAt?: string | null
   verificationUuid: string
+  /** Human-friendly VC-XXXXXX code printed on the certificate and matched by the
+   *  verifier. Falls back to the UUID-derived short code when absent. */
+  verificationCode?: string
   signatoryName?: string
   signatoryRole?: string
   /** Optional template-driven section copy. Falls back to defaults. */
@@ -322,14 +325,16 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
   doc.text(signRole, cx, 164, { align: "center" })
   doc.text(COMPANY.legalName, cx, 169, { align: "center" })
 
-  // Right: the QR with a verify label, and the short code centred beneath it.
-  const ref = certVerificationRef(data.verificationUuid)
+  // Right: the QR with a verify label, and the code centred beneath it. The
+  // stored VC code is printed and encoded in the QR, so the code on the
+  // certificate is exactly the code the verifier checks.
+  const code = data.verificationCode?.trim() || certVerificationRef(data.verificationUuid).short
   const qrSize = 22
   const qrX = W - 30 - qrSize
   const qrCx = qrX + qrSize / 2
   const qrY = 138
   try {
-    const qrPng = await certQrPngDataUrl(data.verificationUuid)
+    const qrPng = await certQrPngDataUrl(code)
     doc.addImage(qrPng, "PNG", qrX, qrY, qrSize, qrSize)
   } catch (err) {
     console.error("[downloadCertificatePdf:qr]", err)
@@ -344,7 +349,7 @@ export async function downloadCertificatePdf(data: CertificatePdfData): Promise<
   doc.setFont("helvetica", "bold")
   doc.setFontSize(11)
   doc.setTextColor(nr, ng, nb)
-  doc.text(ref.short, qrCx, qrY + qrSize + 10, { align: "center" })
+  doc.text(code, qrCx, qrY + qrSize + 10, { align: "center" })
 
   // Company bar, inset to sit inside the frame.
   doc.setFillColor(246, 247, 251)

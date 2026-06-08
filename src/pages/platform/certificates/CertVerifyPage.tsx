@@ -25,11 +25,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   useCertStats,
-  verifyByUuid,
+  verifyByCode,
   type VerifyResult,
 } from "@/lib/queries/certificates.queries"
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const CODE_RE = /^(VC-[A-Z0-9]{6}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i
 
 type LookupState =
   | { kind: "idle" }
@@ -50,13 +50,13 @@ export default function CertVerifyPage() {
 
   async function lookup() {
     const id = uuid.trim()
-    if (!UUID_RE.test(id)) {
+    if (!CODE_RE.test(id)) {
       setState({ kind: "invalid_input" })
       return
     }
     setState({ kind: "loading" })
     try {
-      const cert = await verifyByUuid(id)
+      const cert = await verifyByCode(id)
       setState(cert ? { kind: "found", cert, id } : { kind: "not_found" })
     } catch {
       setState({ kind: "error" })
@@ -89,7 +89,7 @@ export default function CertVerifyPage() {
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
-              placeholder="00000000-0000-0000-0000-000000000000"
+              placeholder="VC-7K2P9A"
               value={uuid}
               onChange={(e) => setUuid(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && lookup()}

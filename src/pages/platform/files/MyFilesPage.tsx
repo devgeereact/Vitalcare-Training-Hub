@@ -42,6 +42,7 @@ export default function MyFilesPage() {
         issuedAt: c.issuedAt,
         expiresAt: c.expiresAt,
         verificationUuid: c.verificationUuid,
+        verificationCode: c.verificationCode,
       })
     } catch (err) {
       console.error("[MyFiles:downloadCert]", err)

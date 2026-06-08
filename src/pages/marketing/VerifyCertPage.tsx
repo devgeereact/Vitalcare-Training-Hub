@@ -19,6 +19,7 @@ interface CertResult {
   cpd_hours: number
   issued_at: string
   expires_at: string | null
+  verification_code: string
   is_valid: boolean
 }
 
@@ -30,8 +31,8 @@ type State =
   | { kind: "not_found" }
   | { kind: "error" }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+// Accept the VC-XXXXXX code printed on the certificate, or a legacy full UUID.
+const CODE_RE = /^(VC-[A-Z0-9]{6}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
@@ -49,16 +50,19 @@ export default function VerifyCertPage(): React.ReactElement {
   const [value, setValue] = useState(searchParams.get("id") ?? "")
   const [state, setState] = useState<State>({ kind: "idle" })
 
-  const verify = useCallback(async (uuid: string): Promise<void> => {
-    const id = uuid.trim()
-    if (!UUID_RE.test(id)) {
+  const verify = useCallback(async (raw: string): Promise<void> => {
+    const id = raw.trim()
+    if (!CODE_RE.test(id)) {
       setState({ kind: "invalid_input" })
       return
     }
     setState({ kind: "loading" })
-    const { data, error } = await supabase.rpc("verify_certificate", {
-      p_uuid: id,
-    })
+    // verify_certificate(text) is added in migration 081; call it untyped.
+    const rpc = supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ data: CertResult[] | null; error: { message: string } | null }>
+    const { data, error } = await rpc("verify_certificate", { p_code: id })
     if (error) {
       console.error("[verify_certificate]", error)
       setState({ kind: "error" })
@@ -112,7 +116,7 @@ export default function VerifyCertPage(): React.ReactElement {
                 <Input
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
-                  placeholder="Verification code (UUID)"
+                  placeholder="Verification code (e.g. VC-7K2P9A)"
                   aria-label="Certificate verification code"
                   className={`pl-9 font-mono ${FOCUS}`}
                 />
@@ -166,7 +170,11 @@ export default function VerifyCertPage(): React.ReactElement {
                 ) : (
                   <Field label="Expires" value="No expiry" />
                 )}
-                <Field label="Verification code" value={state.id} mono />
+                <Field
+                  label="Verification code"
+                  value={state.cert.verification_code || state.id}
+                  mono
+                />
               </dl>
             </div>
           ) : null}

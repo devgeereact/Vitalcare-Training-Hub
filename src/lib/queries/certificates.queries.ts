@@ -21,6 +21,7 @@ export interface CertRow {
   issuedAt: string
   expiresAt: string | null
   verificationUuid: string
+  verificationCode: string
   status: CertStatus
   daysToExpiry: number | null
 }
@@ -43,7 +44,7 @@ export async function getCertificates(): Promise<CertRow[]> {
   const { data, error } = await supabase
     .from("learner_certificates")
     .select(
-      "id, learner_id, course_id, certificate_number, cpd_hours, issued_at, expires_at, verification_uuid",
+      "id, learner_id, course_id, certificate_number, cpd_hours, issued_at, expires_at, verification_uuid, verification_code",
     )
     .is("deleted_at", null)
     .order("issued_at", { ascending: false })
@@ -107,6 +108,9 @@ export async function getCertificates(): Promise<CertRow[]> {
       issuedAt: d.issued_at,
       expiresAt: d.expires_at,
       verificationUuid: d.verification_uuid,
+      // verification_code is added in migration 081, not yet in generated types.
+      verificationCode:
+        (d as { verification_code?: string | null }).verification_code ?? "",
       status,
       daysToExpiry,
     }
@@ -162,16 +166,22 @@ export interface VerifyResult {
   cpd_hours: number
   issued_at: string
   expires_at: string | null
+  verification_code: string
   is_valid: boolean
 }
 
-export async function verifyByUuid(uuid: string): Promise<VerifyResult | null> {
-  const { data, error } = await supabase.rpc("verify_certificate", { p_uuid: uuid.trim() })
+export async function verifyByCode(code: string): Promise<VerifyResult | null> {
+  // verify_certificate(text) is added in migration 081; call it untyped.
+  const rpc = supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: VerifyResult[] | null; error: { message: string } | null }>
+  const { data, error } = await rpc("verify_certificate", { p_code: code.trim() })
   if (error) {
-    console.error("[verifyByUuid]", error)
-    throw error
+    console.error("[verifyByCode]", error)
+    throw new Error(error.message)
   }
-  return (data?.[0] as VerifyResult) ?? null
+  return data?.[0] ?? null
 }
 
 export interface IssueCertInput {

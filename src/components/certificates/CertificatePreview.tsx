@@ -11,6 +11,8 @@ export interface CertificatePreviewValues {
   /** Optional expiry. When present, shown alongside the issue date. */
   expiresAt?: string | null
   verificationUuid: string
+  /** Stored VC-XXXXXX code; preferred over the UUID-derived short code. */
+  verificationCode?: string
 }
 
 const SAMPLE: CertificatePreviewValues = {
@@ -19,6 +21,7 @@ const SAMPLE: CertificatePreviewValues = {
   issuedAt: new Date().toISOString(),
   expiresAt: null,
   verificationUuid: "00000000-0000-0000-0000-000000000000",
+  verificationCode: "VC-SAMPLE",
 }
 
 /** Cursive handwriting style for the signatory name. */
@@ -48,7 +51,8 @@ export function CertificatePreview({
   className?: string
 }) {
   const v = { ...SAMPLE, ...values }
-  const ref = certVerificationRef(v.verificationUuid)
+  const code = v.verificationCode?.trim() || certVerificationRef(v.verificationUuid).short
+  const ref = { short: code, full: v.verificationUuid }
   const label =
     "font-sans text-[clamp(0.42rem,0.95vw,0.62rem)] font-bold uppercase tracking-[0.08em] text-brand-navy"
 
@@ -161,7 +165,7 @@ export function CertificatePreview({
           <div className="flex flex-col items-end gap-[3%]">
             <div className="rounded-[2px] bg-white p-[2px] ring-1 ring-brand-navy/15">
               <QRCodeSVG
-                value={certVerifyUrl(v.verificationUuid)}
+                value={certVerifyUrl(code)}
                 size={256}
                 level="M"
                 bgColor="#ffffff"

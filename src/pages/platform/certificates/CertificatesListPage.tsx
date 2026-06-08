@@ -223,6 +223,7 @@ export default function CertificatesListPage() {
       issuedAt: c.issuedAt,
       expiresAt: c.expiresAt,
       verificationUuid: c.verificationUuid,
+      verificationCode: c.verificationCode,
       titleText: baseTpl.titleText,
       introText: baseTpl.introText,
       completionText: baseTpl.completionText,
@@ -391,6 +392,7 @@ export default function CertificatesListPage() {
                 issuedAt: preview.issuedAt,
                 expiresAt: preview.expiresAt,
                 verificationUuid: preview.verificationUuid,
+                verificationCode: preview.verificationCode,
               }}
             />
           ) : null}
