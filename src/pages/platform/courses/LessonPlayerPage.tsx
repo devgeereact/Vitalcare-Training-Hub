@@ -24,7 +24,8 @@ import {
 } from "@/lib/queries/courses.queries"
 import { useCourseAssessment } from "@/lib/queries/assessments.queries"
 import { sanitizeHtml } from "@/lib/sanitize"
-import { Award, FileText } from "lucide-react"
+import { downloadLessonHandout } from "@/lib/courses/lesson-handout"
+import { Award, FileText, Download } from "lucide-react"
 
 export default function LessonPlayerPage() {
   const { id = "", lessonId = "" } = useParams()
@@ -39,6 +40,8 @@ export default function LessonPlayerPage() {
   const enrolled = myCourses.data?.some((m) => m.course.id === id && m.enrolled)
   const mustEnrol = (isLearner || isGuest) && myCourses.isSuccess && !enrolled
 
+  const courseTitle =
+    myCourses.data?.find((m) => m.course.id === id)?.course.title ?? "Course"
   const allLessons = curriculum.data?.flatMap((m) => m.lessons) ?? []
   const lessonIds = allLessons.map((l) => l.id)
   const completed = useCompletedLessons(id, lessonIds)
@@ -228,7 +231,24 @@ export default function LessonPlayerPage() {
         {/* Lesson content */}
         <Card>
           <CardContent className="p-6">
-            <h1 className="font-display text-2xl text-foreground">{lesson.title}</h1>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <h1 className="font-display text-2xl text-foreground">{lesson.title}</h1>
+              {!currentLocked && lesson.content ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    downloadLessonHandout({
+                      courseTitle,
+                      lessonTitle: lesson.title,
+                      content: lesson.content as string,
+                    })
+                  }
+                >
+                  <Download className="mr-1.5 size-4" /> Handout
+                </Button>
+              ) : null}
+            </div>
             {currentLocked ? (
               <div className="mt-6 flex flex-col items-center gap-3 py-12 text-center">
                 <Lock className="size-8 text-brand-gold" />
