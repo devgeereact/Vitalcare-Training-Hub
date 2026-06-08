@@ -148,16 +148,19 @@ export default function ContactPage(): React.ReactElement {
             </ul>
 
             {/* WhatsApp + socials */}
-            <div className="mt-7 border-t border-white/10 pt-6">
+            <div className="mt-7 border-t border-border pt-6">
               <a
                 href={SOCIAL_LINKS.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-105 ${FOCUS}`}
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1ebe5d] ${FOCUS}`}
               >
-                <MessageCircle className="size-4" /> Chat on WhatsApp
+                <MessageCircle className="size-5" /> Chat on WhatsApp
               </a>
               <div className="mt-5 flex items-center gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Follow us
+                </span>
                 {[
                   { label: "LinkedIn", href: SOCIAL_LINKS.linkedin, Icon: Linkedin },
                   { label: "Instagram", href: SOCIAL_LINKS.instagram, Icon: Instagram },
@@ -168,7 +171,7 @@ export default function ContactPage(): React.ReactElement {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className={`flex size-9 items-center justify-center rounded-full border border-white/20 text-white/80 transition-colors hover:border-brand-gold hover:text-brand-gold ${FOCUS}`}
+                    className={`flex size-9 items-center justify-center rounded-full border border-border text-brand-navy transition-colors hover:border-brand-navy hover:bg-muted ${FOCUS}`}
                   >
                     <Icon className="size-4" />
                   </a>
