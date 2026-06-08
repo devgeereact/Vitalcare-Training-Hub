@@ -34,9 +34,13 @@ export function QrLoginDialog({ open, onOpenChange }: Props): JSX.Element {
   async function load(): Promise<void> {
     setState({ status: "loading" })
     try {
+      // Route through the dedicated auth callback (same as OAuth) so the session
+      // from the magic link is fully established before landing on a guarded
+      // page. Going straight to /platform/dashboard races the session parse and
+      // can bounce the user to /sign-in (looks like being signed out).
       const redirectTo =
         typeof window !== "undefined"
-          ? `${window.location.origin}/platform/dashboard`
+          ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent("/platform/dashboard")}`
           : undefined
       const { data, error } = await supabase.functions.invoke("qr-login", {
         body: { redirectTo },

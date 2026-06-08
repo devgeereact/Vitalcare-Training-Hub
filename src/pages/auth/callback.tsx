@@ -4,8 +4,10 @@ import { supabase } from "@/lib/supabase/client"
 import { AuthLoading } from "@/guards/AuthLoading"
 
 /**
- * OAuth and email-link callback. The Supabase client parses the session from
- * the URL (detectSessionInUrl), then we route the user onward.
+ * OAuth, magic-link and email-link callback. The Supabase client establishes the
+ * session from the URL (detectSessionInUrl, or a PKCE code exchange), which is
+ * asynchronous. We wait for that to settle before routing onward, so a QR magic
+ * link is not bounced to /sign-in by a race (which reads as being signed out).
  */
 export default function AuthCallback() {
   const navigate = useNavigate()
@@ -14,21 +16,64 @@ export default function AuthCallback() {
 
   useEffect(() => {
     let active = true
+    let settled = false
 
-    supabase.auth.getSession().then(({ data, error: sessionError }) => {
-      if (!active) return
+    const target = (() => {
+      const redirect = searchParams.get("redirect")
+      return redirect ? decodeURIComponent(redirect) : "/platform"
+    })()
+
+    const finish = (signedIn: boolean): void => {
+      if (!active || settled) return
+      settled = true
+      navigate(signedIn ? target : "/sign-in", { replace: true })
+    }
+
+    async function run(): Promise<void> {
+      // PKCE links carry a ?code= to exchange for a session.
+      const code = searchParams.get("code")
+      if (code) {
+        const { error: exErr } = await supabase.auth.exchangeCodeForSession(code)
+        if (exErr) console.error("[AuthCallback] exchange", exErr)
+      }
+
+      // Already have a session (implicit/hash link parsed on init)?
+      const { data, error: sessionError } = await supabase.auth.getSession()
       if (sessionError) {
         console.error("[AuthCallback]", sessionError)
-        setError("We could not complete sign in. Please try again.")
+        if (active) setError("We could not complete sign in. Please try again.")
         return
       }
-      const redirect = searchParams.get("redirect")
-      const target = redirect ? decodeURIComponent(redirect) : "/platform"
-      navigate(data.session ? target : "/sign-in", { replace: true })
-    })
+      if (data.session) {
+        finish(true)
+        return
+      }
+
+      // Otherwise wait for detectSessionInUrl to fire SIGNED_IN, with a timeout
+      // fallback so we never hang.
+      const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+        if (session) finish(true)
+      })
+      const timer = window.setTimeout(async () => {
+        const { data: again } = await supabase.auth.getSession()
+        finish(Boolean(again.session))
+      }, 5000)
+
+      // Clean up the listener/timer once settled or unmounted.
+      const cleanup = () => {
+        sub.subscription.unsubscribe()
+        window.clearTimeout(timer)
+      }
+      if (!active) cleanup()
+      else cleanups.push(cleanup)
+    }
+
+    const cleanups: Array<() => void> = []
+    void run()
 
     return () => {
       active = false
+      cleanups.forEach((c) => c())
     }
   }, [navigate, searchParams])
 

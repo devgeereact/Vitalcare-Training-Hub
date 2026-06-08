@@ -56,25 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null)
   }, [])
 
-  // Auto sign-out after 30 minutes of inactivity (only while signed in).
-  useEffect(() => {
-    if (!session) return
-    const IDLE_MS = 30 * 60 * 1000
-    let timer: ReturnType<typeof setTimeout>
-    const reset = () => {
-      clearTimeout(timer)
-      timer = setTimeout(() => {
-        void handleSignOut()
-      }, IDLE_MS)
-    }
-    const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"]
-    events.forEach((e) => window.addEventListener(e, reset, { passive: true }))
-    reset()
-    return () => {
-      clearTimeout(timer)
-      events.forEach((e) => window.removeEventListener(e, reset))
-    }
-  }, [session, handleSignOut])
+  // Inactivity is handled by IdleLockProvider, which locks the UI behind a
+  // password after 15 minutes while keeping the session valid. A second hard
+  // auto sign-out here used to fight that and log people out unexpectedly
+  // (including after a QR sign-in), so it has been removed for a seamless return.
 
   const refreshProfile = useCallback(async () => {
     await loadProfile(session?.user.id)
