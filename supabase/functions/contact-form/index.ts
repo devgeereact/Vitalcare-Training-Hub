@@ -6,8 +6,7 @@
 // Secrets: RESEND_API_KEY, RESEND_FROM, ADMIN_EMAIL, ADMIN_EMAIL_SECONDARY,
 //          TURNSTILE_SECRET (optional; enforces the CAPTCHA when set)
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-import { verifyTurnstile } from "../_shared/turnstile.ts"
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +16,48 @@ const corsHeaders = {
 
 function esc(s: string) {
   return s.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c] ?? c))
+}
+
+// Inlined (no shared import) to keep this public function self-contained.
+async function getSecretInline(
+  admin: SupabaseClient,
+  name: string,
+): Promise<string | undefined> {
+  try {
+    const { data } = await admin
+      .from("integration_settings")
+      .select("value")
+      .eq("name", name)
+      .maybeSingle()
+    if (data?.value) return data.value as string
+  } catch {
+    /* fall through to env */
+  }
+  return Deno.env.get(name) ?? undefined
+}
+
+async function verifyTurnstile(
+  admin: SupabaseClient,
+  token: string | undefined,
+  remoteIp?: string | null,
+): Promise<boolean> {
+  const secret = await getSecretInline(admin, "TURNSTILE_SECRET")
+  if (!secret) return true // not configured -> do not block
+  if (!token) return false
+  try {
+    const params = new URLSearchParams({ secret, response: token })
+    if (remoteIp) params.append("remoteip", remoteIp)
+    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params,
+    })
+    const data = await res.json()
+    return data?.success === true
+  } catch (err) {
+    console.error("[verifyTurnstile]", err)
+    return false
+  }
 }
 
 function json(body: unknown, status = 200) {
@@ -49,12 +90,12 @@ Deno.serve(async (req) => {
   if ((body.website ?? "").trim() !== "") return json({ ok: true })
 
   // CAPTCHA: enforced only when TURNSTILE_SECRET is configured.
-  const admin = createClient(
+  const supa = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   )
   const ip = req.headers.get("CF-Connecting-IP") ?? req.headers.get("x-forwarded-for")
-  const human = await verifyTurnstile(admin, body.turnstileToken, ip)
+  const human = await verifyTurnstile(supa, body.turnstileToken, ip)
   if (!human) return json({ error: "Verification failed. Please try again." }, 400)
 
   const name = (body.name ?? "").trim()
