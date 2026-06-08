@@ -1,15 +1,19 @@
+import { useEffect } from "react"
 import { useRouteError, Link } from "react-router-dom"
 import { AlertTriangle, RefreshCw, Home } from "lucide-react"
+import { isChunkLoadError, reloadOnceForChunk } from "@/lib/chunk-reload"
 
 export default function ErrorPage() {
   const error = useRouteError() as { statusText?: string; message?: string } | null
   const detail = error?.statusText || error?.message || "Unexpected error"
 
   // A failed dynamic import (stale chunk after a deploy) is recoverable with a
-  // reload. Detect it so the reload button is the obvious next step.
-  const isChunkError = /loading chunk|dynamically imported module|importing a module/i.test(
-    detail,
-  )
+  // reload. Auto-reload once when we detect it, and surface a manual fallback.
+  const isChunkError = isChunkLoadError(detail)
+
+  useEffect(() => {
+    if (isChunkError) reloadOnceForChunk()
+  }, [isChunkError])
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">

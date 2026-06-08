@@ -1,4 +1,5 @@
-import { lazy, Suspense } from "react"
+import { Suspense } from "react"
+import { lazyWithReload } from "@/lib/chunk-reload"
 import type { JSX } from "react"
 import { Link } from "react-router-dom"
 import {
@@ -66,10 +67,10 @@ import { useMyCourses } from "@/lib/queries/courses.queries"
 import { useMyAttendanceRegister } from "@/lib/queries/attendance.queries"
 import { gbp } from "@/lib/queries/invoices.queries"
 
-const CompletionTrendChart = lazy(
+const CompletionTrendChart = lazyWithReload(
   () => import("@/components/dashboard/CompletionTrendChart"),
 )
-const RevenueChart = lazy(() => import("@/components/dashboard/RevenueChart"))
+const RevenueChart = lazyWithReload(() => import("@/components/dashboard/RevenueChart"))
 
 // ─── Shared state helpers ────────────────────────────────────────────────────
 

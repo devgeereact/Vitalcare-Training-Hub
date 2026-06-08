@@ -11,6 +11,7 @@ import { AuthProvider } from "@/contexts/AuthContext"
 import { router } from "@/routes"
 import { registerServiceWorker } from "@/lib/push"
 import { loadPublicConfig } from "@/lib/turnstile"
+import { CHUNK_RELOAD_KEY, reloadOnceForChunk } from "@/lib/chunk-reload"
 import "@/index.css"
 
 // Load public runtime config (Turnstile site key) early so pre-auth forms can
@@ -24,15 +25,24 @@ if (typeof window !== "undefined") {
   })
 
   // After a deploy, hashed chunk filenames change. A tab opened before the
-  // deploy (or a service worker serving a stale index) can request a chunk that
-  // no longer exists, which crashes a lazy-loaded page (e.g. the Store charts)
-  // to a blank screen. Recover by reloading once to pull the fresh assets.
+  // deploy can request a chunk that no longer exists, which crashes a
+  // lazy-loaded page (e.g. the dashboard or store charts). Recover by reloading
+  // once to pull the fresh assets.
   window.addEventListener("vite:preloadError", (event) => {
     event.preventDefault()
-    if (sessionStorage.getItem("vc-chunk-reloaded") === "1") return
-    sessionStorage.setItem("vc-chunk-reloaded", "1")
-    window.location.reload()
+    reloadOnceForChunk()
   })
+
+  // The app has loaded fine: clear the one-shot reload guard after a short
+  // healthy run so a later deploy in this same long-lived session can recover
+  // too, without ever looping.
+  window.setTimeout(() => {
+    try {
+      sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+    } catch {
+      /* sessionStorage unavailable */
+    }
+  }, 10_000)
 }
 
 const queryClient = new QueryClient({

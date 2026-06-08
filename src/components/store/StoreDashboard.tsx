@@ -1,4 +1,5 @@
-import { lazy, Suspense, type JSX } from "react"
+import { Suspense, type JSX } from "react"
+import { lazyWithReload } from "@/lib/chunk-reload"
 import { Link } from "react-router-dom"
 import {
   Package,
@@ -25,10 +26,10 @@ import {
 } from "@/lib/queries/store.queries"
 import type { OrderStatus } from "@/types/database.types"
 
-const OrdersTrendChart = lazy(
+const OrdersTrendChart = lazyWithReload(
   () => import("@/components/store/OrdersTrendChart"),
 )
-const CatalogueStatusChart = lazy(
+const CatalogueStatusChart = lazyWithReload(
   () => import("@/components/store/CatalogueStatusChart"),
 )
 
