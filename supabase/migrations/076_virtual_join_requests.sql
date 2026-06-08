@@ -22,9 +22,11 @@ create index if not exists sjr_status_idx on public.session_join_requests (statu
 alter table public.session_join_requests enable row level security;
 
 -- Learners see their own requests; staff see all.
+-- NB: the RLS helpers live in the `private` schema (migration 056 moved them
+-- out of public), so reference them as private.is_staff() / private.is_admin().
 drop policy if exists sjr_select on public.session_join_requests;
 create policy sjr_select on public.session_join_requests for select
-  using (learner_id = auth.uid() or public.is_staff());
+  using (learner_id = auth.uid() or private.is_staff());
 
 -- A learner may raise a request only for themselves.
 drop policy if exists sjr_insert on public.session_join_requests;
@@ -34,7 +36,7 @@ create policy sjr_insert on public.session_join_requests for insert
 -- Only admins / super_admins approve or decline.
 drop policy if exists sjr_update on public.session_join_requests;
 create policy sjr_update on public.session_join_requests for update
-  using (public.is_admin()) with check (public.is_admin());
+  using (private.is_admin()) with check (private.is_admin());
 
 -- Return a session's join links only to staff, or to a learner with an approved
 -- request for a session that has not yet ended. Otherwise return nothing, so an
@@ -46,7 +48,7 @@ security definer
 set search_path = public
 as $$
 begin
-  if public.is_staff() or exists (
+  if private.is_staff() or exists (
     select 1
     from public.session_join_requests r
     join public.training_sessions s on s.id = r.session_id
