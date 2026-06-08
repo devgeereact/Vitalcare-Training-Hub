@@ -146,6 +146,32 @@ export function useAdminContacts(userId: string | undefined) {
   })
 }
 
+/**
+ * Search staff contacts (admins, managers, trainers) by name or email, so a
+ * learner can find someone and start a chat immediately. Backed by the
+ * search_contacts RPC because profiles RLS hides other users from learners.
+ */
+export function useSearchContacts(query: string) {
+  const q = query.trim()
+  return useQuery({
+    queryKey: ["contacts", "search", q.toLowerCase()],
+    enabled: q.length >= 2,
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<AdminContact[]> => {
+      const rpc = supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: AdminContact[] | null; error: { message: string } | null }>
+      const { data, error } = await rpc("search_contacts", { p_query: q })
+      if (error) {
+        console.error("[useSearchContacts]", error)
+        return []
+      }
+      return data ?? []
+    },
+  })
+}
+
 export function useThreads(userId: string | undefined) {
   return useQuery({
     queryKey: commKeys.threads(userId ?? "anon"),

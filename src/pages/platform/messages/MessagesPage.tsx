@@ -41,6 +41,7 @@ import { VerifiedTick } from "@/components/platform/Verification"
 import {
   useThreads,
   useAdminContacts,
+  useSearchContacts,
   useThread,
   useSendMessage,
   useMarkThreadRead,
@@ -427,21 +428,22 @@ export default function MessagesPage() {
     "You"
   const [active, setActive] = useState<{ id: string; name: string } | null>(null)
   const [q, setQ] = useState("")
+  const contactSearch = useSearchContacts(q)
   const [params, setParams] = useSearchParams()
   const threads = (data ?? []).filter((t) =>
     t.otherName.toLowerCase().includes(q.toLowerCase()),
   )
-  // Admins the user can start a fresh chat with (those without an existing
-  // thread), so support is one tap away. Filtered by the same search box.
+  // Contacts a learner can start a fresh chat with. With no search, show admins
+  // for quick support. While searching, hit the server (search_contacts) so any
+  // staff member is findable by name or email even though profiles RLS hides
+  // them. Existing threads are excluded so they are not listed twice.
   const threadIds = new Set((data ?? []).map((t) => t.otherId))
-  const adminQuery = q.toLowerCase()
-  const adminContacts = (adminContactsQ.data ?? [])
-    .filter((a) => !threadIds.has(a.id))
-    .filter(
-      (a) =>
-        a.name.toLowerCase().includes(adminQuery) ||
-        a.email.toLowerCase().includes(adminQuery),
-    )
+  const searching = q.trim().length >= 2
+  // While searching, show every match (clicking opens an existing thread or a
+  // new one). In the default view, show admins without an existing thread.
+  const adminContacts = searching
+    ? contactSearch.data ?? []
+    : (adminContactsQ.data ?? []).filter((a) => !threadIds.has(a.id))
 
   // Open a thread directly from a contact (Message button -> ?to=&name=).
   useEffect(() => {
@@ -519,7 +521,9 @@ export default function MessagesPage() {
                   <MessageSquare className="size-6" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  No conversations yet. Messages you send or receive will appear here.
+                  {searching
+                    ? "No contacts match your search."
+                    : "No conversations yet. Messages you send or receive will appear here."}
                 </p>
               </div>
             ) : (
@@ -570,7 +574,7 @@ export default function MessagesPage() {
                 {adminContacts.length > 0 && (
                   <div>
                     <p className="px-4 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      Message an admin
+                      {searching ? "Search results" : "Message an admin"}
                     </p>
                     <ul className="divide-y divide-border">
                       {adminContacts.map((a) => (
