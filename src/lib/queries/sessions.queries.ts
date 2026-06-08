@@ -543,8 +543,14 @@ export function useRosterMutations(sessionId: string) {
   return { addBooking, removeBooking, markAttendance }
 }
 
+export interface CheckInResult {
+  /** True when an attendance record for this learner already existed. */
+  alreadyRegistered: boolean
+}
+
 // Learner self check-in (QR): set own booking -> attended (RLS allows own).
-export async function selfCheckIn(sessionId: string): Promise<void> {
+// Reports whether the learner was already registered so the UI can tell them.
+export async function selfCheckIn(sessionId: string): Promise<CheckInResult> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) throw new Error("Not signed in")
   const uid = auth.user.id
@@ -566,6 +572,15 @@ export async function selfCheckIn(sessionId: string): Promise<void> {
       throw new Error("This session has ended.")
     }
   }
+
+  // Was the learner already registered for this session?
+  const { data: existing } = await supabase
+    .from("attendance_records")
+    .select("status")
+    .eq("session_id", sessionId)
+    .eq("learner_id", uid)
+    .maybeSingle()
+  const alreadyRegistered = Boolean(existing)
 
   // Mark the booking attended (walk-ins are booked on the spot)…
   const { error: bErr } = await supabase
@@ -593,6 +608,7 @@ export async function selfCheckIn(sessionId: string): Promise<void> {
     console.error("[selfCheckIn:attendance]", aErr)
     throw aErr
   }
+  return { alreadyRegistered }
 }
 
 // ─── Attendance log ──────────────────────────────────────────────────────────

@@ -47,6 +47,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { useAuth } from "@/hooks/use-auth"
+import { useUser } from "@/hooks/use-user"
 import AiFieldsButton from "@/components/ai/AiFieldsButton"
 import { useCalendarSessions, useCreateSession, useTrainers } from "@/lib/queries/sessions.queries"
 import { useCourses } from "@/lib/queries/courses.queries"
@@ -89,6 +90,8 @@ function toLocalInput(d: Date) {
 
 export default function CalendarPage() {
   const { user } = useAuth()
+  const { isAdmin, isTrainer } = useUser()
+  const canManage = isAdmin || isTrainer
   const sessions = useCalendarSessions()
   const customEvents = useCalendarEvents()
   const mut = useCalendarEventMutations()
@@ -127,8 +130,12 @@ export default function CalendarPage() {
   const [fPublic, setFPublic] = useState(false)
 
   const events: EventInput[] = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity -- time-based filter is intentional
+    const nowMs = Date.now()
     const out: EventInput[] = []
     for (const s of sessions.data ?? []) {
+      // Learners do not see past sessions on their calendar; staff still do.
+      if (!canManage && new Date(s.endsAt).getTime() < nowMs) continue
       out.push({
         id: `session:${s.id}`,
         title: s.title,
@@ -202,7 +209,7 @@ export default function CalendarPage() {
       })
     }
     return out
-  }, [sessions.data, customEvents.data, holidays.data, orgHolidays.data, oneToOnes.data, user?.id])
+  }, [sessions.data, customEvents.data, holidays.data, orgHolidays.data, oneToOnes.data, user?.id, canManage])
 
   const upcoming = useMemo(() => {
     // eslint-disable-next-line react-hooks/purity -- time-based filter is intentional
@@ -454,13 +461,20 @@ export default function CalendarPage() {
                 </p>
               )}
               <DialogFooter>
-                {selected.kind === "session" && (
-                  <Button asChild>
-                    <Link to={`/platform/sessions/${selected.id}`}>
-                      <ExternalLink className="mr-2 size-4" /> Open session
-                    </Link>
-                  </Button>
-                )}
+                {selected.kind === "session" &&
+                  (canManage ? (
+                    <Button asChild>
+                      <Link to={`/platform/sessions/${selected.id}`}>
+                        <ExternalLink className="mr-2 size-4" /> Open session
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button asChild>
+                      <Link to="/platform/virtual">
+                        <ExternalLink className="mr-2 size-4" /> Request a place to join
+                      </Link>
+                    </Button>
+                  ))}
                 {selected.kind === "o2o" && (
                   <>
                     <Button asChild variant="outline">

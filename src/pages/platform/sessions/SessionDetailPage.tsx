@@ -49,6 +49,7 @@ import {
   useUploadRecordingToDrive,
 } from "@/lib/queries/sessions.queries"
 import { useLearners } from "@/lib/queries/learners.queries"
+import { useUser } from "@/hooks/use-user"
 import { sessionPhase, sessionPhaseLabel } from "@/lib/sessions/timing"
 import { useVerifiedUserIds } from "@/lib/queries/verification.queries"
 import { VerifiedTick } from "@/components/platform/Verification"
@@ -64,6 +65,8 @@ const STATUSES: { key: AttendanceStatus; label: string; cls: string }[] = [
 export default function SessionDetailPage() {
   const { id = "" } = useParams()
   const navigate = useNavigate()
+  const { isAdmin, isTrainer } = useUser()
+  const canManage = isAdmin || isTrainer
   const session = useSession(id)
   const roster = useRoster(id)
   const verifiedIds = useVerifiedUserIds()
@@ -193,37 +196,48 @@ export default function SessionDetailPage() {
           )}
           {s.description && <p className="pt-1 text-sm">{s.description}</p>}
           <div className="mt-2 flex flex-wrap gap-2">
-            {ended
-              ? (s.meet_url || s.zoom_join_url) && (
-                  <Button size="sm" variant="outline" disabled>
-                    <Video className="mr-1.5 size-4" /> Meeting ended
+            {ended ? (
+              (s.meet_url || s.zoom_join_url) && (
+                <Button size="sm" variant="outline" disabled>
+                  <Video className="mr-1.5 size-4" /> Meeting ended
+                </Button>
+              )
+            ) : canManage ? (
+              // Staff get the meeting links directly to run the session.
+              <>
+                {s.meet_url && (
+                  <Button asChild size="sm">
+                    <a href={s.meet_url} target="_blank" rel="noopener noreferrer">
+                      <Video className="mr-1.5 size-4" /> Join Google Meet
+                    </a>
                   </Button>
-                )
-              : (
-                <>
-                  {s.meet_url && (
-                    <Button asChild size="sm">
-                      <a href={s.meet_url} target="_blank" rel="noopener noreferrer">
-                        <Video className="mr-1.5 size-4" /> Join Google Meet
-                      </a>
-                    </Button>
-                  )}
-                  {s.zoom_join_url && (
-                    <Button asChild size="sm" variant={s.meet_url ? "outline" : "default"}>
-                      <a href={s.zoom_join_url} target="_blank" rel="noopener noreferrer">
-                        <Video className="mr-1.5 size-4" /> Join Zoom meeting
-                      </a>
-                    </Button>
-                  )}
-                  {s.zoom_start_url && (
-                    <Button asChild size="sm" variant="outline">
-                      <a href={s.zoom_start_url} target="_blank" rel="noopener noreferrer">
-                        <Radio className="mr-1.5 size-4" /> Launch as host
-                      </a>
-                    </Button>
-                  )}
-                </>
-              )}
+                )}
+                {s.zoom_join_url && (
+                  <Button asChild size="sm" variant={s.meet_url ? "outline" : "default"}>
+                    <a href={s.zoom_join_url} target="_blank" rel="noopener noreferrer">
+                      <Video className="mr-1.5 size-4" /> Join Zoom meeting
+                    </a>
+                  </Button>
+                )}
+                {s.zoom_start_url && (
+                  <Button asChild size="sm" variant="outline">
+                    <a href={s.zoom_start_url} target="_blank" rel="noopener noreferrer">
+                      <Radio className="mr-1.5 size-4" /> Launch as host
+                    </a>
+                  </Button>
+                )}
+              </>
+            ) : (
+              // Learners must request a place first; the Join button only appears
+              // once an admin approves them, over on the Virtual training page.
+              (s.meet_url || s.zoom_join_url) && (
+                <Button asChild size="sm">
+                  <Link to="/platform/virtual">
+                    <Video className="mr-1.5 size-4" /> Request a place to join
+                  </Link>
+                </Button>
+              )
+            )}
             {s.recording_url && (
               <Button asChild size="sm" variant="outline">
                 <a href={s.recording_url} target="_blank" rel="noopener noreferrer">

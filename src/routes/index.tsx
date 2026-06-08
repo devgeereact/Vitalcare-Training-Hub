@@ -340,7 +340,7 @@ export const router = createBrowserRouter (
         {
           path: "attendance",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin"]}>
               <AttendanceLogPage />
             </RoleGuard>
           ),

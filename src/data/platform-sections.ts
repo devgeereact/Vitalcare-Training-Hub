@@ -102,7 +102,7 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
     items: [
       { label: "Sessions", to: "/platform/sessions", prefix: "/platform/sessions" },
       { label: "Trainer Timetable", to: "/platform/timetable", prefix: "/platform/timetable", roles: MGMT_T },
-      { label: "Attendance Log", to: "/platform/attendance", prefix: "/platform/attendance", roles: MGMT_T },
+      { label: "Attendance Log", to: "/platform/attendance", prefix: "/platform/attendance", roles: ADMINS },
     ],
   },
   {
