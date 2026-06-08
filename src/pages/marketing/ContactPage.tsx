@@ -1,4 +1,3 @@
-import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -13,6 +12,7 @@ import {
   Linkedin,
   Instagram,
   MessageCircle,
+  ArrowRight,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,8 +20,6 @@ import { Button } from "@/components/ui/button"
 import { PageHero } from "@/components/marketing/PageHero"
 import { supabase } from "@/lib/supabase/client"
 import { COMPANY, SOCIAL_LINKS } from "@/lib/constants"
-import Turnstile, { type TurnstileHandle } from "@/components/security/Turnstile"
-import { turnstileEnabled } from "@/lib/turnstile"
 
 const contactSchema = z.object({
   name: z.string().min(2, "Enter your name"),
@@ -35,6 +33,7 @@ type ContactValues = z.infer<typeof contactSchema>
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+const FIELD = `h-11 rounded-xl ${FOCUS}`
 
 export default function ContactPage(): React.ReactElement {
   const {
@@ -43,9 +42,6 @@ export default function ContactPage(): React.ReactElement {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ContactValues>({ resolver: zodResolver(contactSchema) })
-
-  const [captchaToken, setCaptchaToken] = useState("")
-  const captchaRef = useRef<TurnstileHandle>(null)
 
   const onSubmit = async (values: ContactValues): Promise<void> => {
     try {
@@ -57,12 +53,8 @@ export default function ContactPage(): React.ReactElement {
           subject: values.subject,
           message: values.message,
           website: values.website ?? "",
-          turnstileToken: captchaToken,
         },
       })
-      // Turnstile tokens are single-use: reset for the next attempt.
-      captchaRef.current?.reset()
-      setCaptchaToken("")
       if (error) {
         console.error("[contact-form]", error)
         toast.error("We could not send your message", {
@@ -90,65 +82,65 @@ export default function ContactPage(): React.ReactElement {
         description="Tell us about your team and what you need. We will get back to you quickly."
       />
 
-      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-5 lg:gap-12 lg:px-8 lg:py-28">
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 lg:grid-cols-5 lg:gap-10 lg:px-8 lg:py-28">
         {/* Left: company info */}
         <div className="space-y-6 lg:col-span-2">
-          <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530] px-7 py-8">
+          <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06),0_18px_40px_-24px_rgba(27,46,107,0.30)]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530] px-7 py-9">
               <div
                 className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-brand-gold/20 blur-3xl"
                 aria-hidden="true"
               />
-              <p className="relative inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold">
+              <p className="relative inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.22em] text-brand-gold">
                 <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
                 Get in touch
               </p>
-              <h2 className="relative mt-3 font-sans font-semibold tracking-tight text-2xl text-white">
+              <h2 className="relative mt-3 font-sans text-2xl font-semibold tracking-tight text-white">
                 We answer training questions fast
               </h2>
-              <p className="relative mt-2 text-sm leading-relaxed text-white/80">
-                Reach us directly, or send the form and a member of the team
-                will reply.
+              <p className="relative mt-2 max-w-sm text-sm leading-relaxed text-white/80">
+                Reach us directly, or send the form and a member of the team will
+                reply.
               </p>
             </div>
 
-            <ul className="space-y-5 px-7 py-7 text-sm">
-              <li className="flex items-start gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
+            <ul className="space-y-2 p-4 text-sm sm:p-5">
+              <li className="flex items-start gap-3.5 rounded-2xl p-3 transition-colors hover:bg-muted/50">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
                   <MapPin className="size-5" />
                 </span>
-                <span className="text-foreground">
+                <span className="pt-1.5 text-foreground">
                   {COMPANY.address.line1}
                   <br />
                   {COMPANY.address.city} {COMPANY.address.postcode}
                 </span>
               </li>
-              <li className="flex items-center gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
-                  <Phone className="size-5" />
-                </span>
+              <li>
                 <a
                   href={`tel:${COMPANY.phone.replace(/\s/g, "")}`}
-                  className={`rounded text-foreground hover:text-brand-navy ${FOCUS}`}
+                  className={`flex items-center gap-3.5 rounded-2xl p-3 text-foreground transition-colors hover:bg-muted/50 hover:text-brand-navy ${FOCUS}`}
                 >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
+                    <Phone className="size-5" />
+                  </span>
                   {COMPANY.phone}
                 </a>
               </li>
-              <li className="flex items-center gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
-                  <Mail className="size-5" />
-                </span>
+              <li>
                 <a
                   href={`mailto:${COMPANY.email}`}
-                  className={`rounded text-foreground hover:text-brand-navy ${FOCUS}`}
+                  className={`flex items-center gap-3.5 rounded-2xl p-3 text-foreground transition-colors hover:bg-muted/50 hover:text-brand-navy ${FOCUS}`}
                 >
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
+                    <Mail className="size-5" />
+                  </span>
                   {COMPANY.email}
                 </a>
               </li>
             </ul>
 
             {/* WhatsApp + socials */}
-            <div className="mt-7 border-t border-border pt-6">
+            <div className="border-t border-border px-5 py-6 sm:px-6">
               <a
                 href={SOCIAL_LINKS.whatsapp}
                 target="_blank"
@@ -180,28 +172,28 @@ export default function ContactPage(): React.ReactElement {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-white p-7 shadow-sm">
+          <div className="rounded-3xl border border-border bg-white p-7 shadow-sm">
             <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-brand-gold/15 text-brand-navy">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
                 <Clock className="size-5" />
               </span>
-              <h2 className="font-sans font-semibold tracking-tight text-xl text-brand-navy">
+              <h2 className="font-sans text-xl font-semibold tracking-tight text-brand-navy">
                 Office hours
               </h2>
             </div>
-            <dl className="mt-5 space-y-2.5 text-sm text-muted-foreground">
-              <div className="flex justify-between">
-                <dt>Monday to Friday</dt>
-                <dd className="font-medium text-foreground">9am to 5pm</dd>
+            <dl className="mt-5 space-y-3 text-sm">
+              <div className="flex items-center justify-between border-b border-border/70 pb-3">
+                <dt className="text-muted-foreground">Monday to Friday</dt>
+                <dd className="font-semibold text-foreground">9am to 5pm</dd>
               </div>
-              <div className="flex justify-between">
-                <dt>Saturday and Sunday</dt>
-                <dd className="font-medium text-foreground">Closed</dd>
+              <div className="flex items-center justify-between">
+                <dt className="text-muted-foreground">Saturday and Sunday</dt>
+                <dd className="font-semibold text-foreground">Closed</dd>
               </div>
             </dl>
           </div>
 
-          <div className="flex items-start gap-3 rounded-2xl border border-brand-gold/30 bg-brand-gold/[0.06] p-6">
+          <div className="flex items-start gap-3 rounded-3xl border border-brand-gold/30 bg-brand-gold/[0.06] p-6">
             <ShieldCheck
               className="mt-0.5 size-5 shrink-0 text-brand-gold"
               aria-hidden="true"
@@ -215,18 +207,18 @@ export default function ContactPage(): React.ReactElement {
 
         {/* Right: form */}
         <div className="lg:col-span-3">
-          <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="font-sans font-semibold tracking-tight text-2xl text-brand-navy">
+          <div className="rounded-3xl border border-border bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_24px_56px_-28px_rgba(27,46,107,0.35)] sm:p-9">
+            <h2 className="font-sans text-2xl font-semibold tracking-tight text-brand-navy">
               Send us a message
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1.5 text-sm text-muted-foreground">
               Fields marked with an asterisk are required.
             </p>
 
             <form
               onSubmit={handleSubmit(onSubmit)}
               noValidate
-              className="mt-6 grid gap-5"
+              className="mt-7 grid gap-5"
             >
               {/* Honeypot: hidden from users and screen readers; bots fill it. */}
               <input
@@ -241,7 +233,7 @@ export default function ContactPage(): React.ReactElement {
                 <Label htmlFor="name">Name *</Label>
                 <Input
                   id="name"
-                  className={FOCUS}
+                  className={FIELD}
                   aria-invalid={!!errors.name}
                   {...register("name")}
                 />
@@ -258,7 +250,7 @@ export default function ContactPage(): React.ReactElement {
                   <Input
                     id="email"
                     type="email"
-                    className={FOCUS}
+                    className={FIELD}
                     aria-invalid={!!errors.email}
                     {...register("email")}
                   />
@@ -273,7 +265,7 @@ export default function ContactPage(): React.ReactElement {
                   <Input
                     id="phone"
                     type="tel"
-                    className={FOCUS}
+                    className={FIELD}
                     {...register("phone")}
                   />
                 </div>
@@ -283,7 +275,7 @@ export default function ContactPage(): React.ReactElement {
                 <Label htmlFor="subject">Subject *</Label>
                 <Input
                   id="subject"
-                  className={FOCUS}
+                  className={FIELD}
                   aria-invalid={!!errors.subject}
                   {...register("subject")}
                 />
@@ -299,7 +291,7 @@ export default function ContactPage(): React.ReactElement {
                 <textarea
                   id="message"
                   rows={6}
-                  className={`flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground ${FOCUS}`}
+                  className={`flex w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm ring-offset-background placeholder:text-muted-foreground ${FOCUS}`}
                   aria-invalid={!!errors.message}
                   {...register("message")}
                 />
@@ -310,12 +302,10 @@ export default function ContactPage(): React.ReactElement {
                 ) : null}
               </div>
 
-              <Turnstile ref={captchaRef} onVerify={setCaptchaToken} />
-
               <Button
                 type="submit"
-                disabled={isSubmitting || (turnstileEnabled() && !captchaToken)}
-                className={`w-full sm:w-auto ${FOCUS}`}
+                disabled={isSubmitting}
+                className={`group h-12 w-full rounded-xl bg-brand-navy text-sm font-semibold text-white transition-colors hover:bg-brand-navy-dark ${FOCUS}`}
               >
                 {isSubmitting ? (
                   <>
@@ -323,7 +313,10 @@ export default function ContactPage(): React.ReactElement {
                     Sending
                   </>
                 ) : (
-                  "Send message"
+                  <>
+                    Send message
+                    <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
+                  </>
                 )}
               </Button>
             </form>
