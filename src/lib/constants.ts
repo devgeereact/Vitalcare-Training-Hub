@@ -18,6 +18,15 @@ export const COMPANY = {
     city: "London",
     postcode: "SE13 7TJ",
   },
+  whatsapp: "07427132765",
+} as const
+
+/** Public social and contact links shown on the marketing site. */
+export const SOCIAL_LINKS = {
+  linkedin: "https://www.linkedin.com/in/vitalcare-training-hub-3a837b366/",
+  instagram: "https://www.instagram.com/vitalcaretraininghub/",
+  // 07427132765 -> international +44 7427132765 for the wa.me deep link.
+  whatsapp: "https://wa.me/447427132765",
 } as const
 
 export const LEADERSHIP = {

@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom"
-import { MapPin, Mail, Phone, ShieldCheck } from "lucide-react"
+import { MapPin, Mail, Phone, ShieldCheck, Linkedin, Instagram, MessageCircle } from "lucide-react"
 import { LEGAL_LINKS } from "@/data/nav"
-import { COMPANY, CREDENTIAL_PHRASE } from "@/lib/constants"
+import { COMPANY, CREDENTIAL_PHRASE, SOCIAL_LINKS } from "@/lib/constants"
+
+const SOCIALS = [
+  { label: "LinkedIn", href: SOCIAL_LINKS.linkedin, Icon: Linkedin },
+  { label: "Instagram", href: SOCIAL_LINKS.instagram, Icon: Instagram },
+  { label: "WhatsApp", href: SOCIAL_LINKS.whatsapp, Icon: MessageCircle },
+]
 
 const COLUMNS: { heading: string; links: { label: string; href: string }[] }[] = [
   {
@@ -99,6 +105,22 @@ export function Footer() {
                 </a>
               </p>
             </address>
+
+            {/* Social links */}
+            <div className="mt-6 flex items-center gap-3">
+              {SOCIALS.map(({ label, href, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="flex size-9 items-center justify-center rounded-full border border-white/15 text-white/80 transition-colors hover:border-brand-gold hover:text-brand-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy"
+                >
+                  <Icon className="size-4" />
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Link columns */}
