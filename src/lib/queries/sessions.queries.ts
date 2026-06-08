@@ -548,14 +548,20 @@ export interface CheckInResult {
   alreadyRegistered: boolean
 }
 
-// Learner self check-in (QR): set own booking -> attended (RLS allows own).
+// Learner self check-in: set own booking -> attended (RLS allows own).
 // Reports whether the learner was already registered so the UI can tell them.
-export async function selfCheckIn(sessionId: string): Promise<CheckInResult> {
+// QR check-in uses a tight 5-minute pre-window; join-driven check-in (an
+// approved learner opening a virtual meeting) is lenient (30 minutes before),
+// because joining the meeting is itself proof of attendance.
+export async function selfCheckIn(
+  sessionId: string,
+  opts: { lenient?: boolean } = {},
+): Promise<CheckInResult> {
   const { data: auth } = await supabase.auth.getUser()
   if (!auth.user) throw new Error("Not signed in")
   const uid = auth.user.id
 
-  // Check-in opens 5 minutes before the session and closes 2 hours after it ends.
+  const preMins = opts.lenient ? 30 : 5
   const { data: s } = await supabase
     .from("training_sessions")
     .select("starts_at, ends_at")
@@ -565,8 +571,7 @@ export async function selfCheckIn(sessionId: string): Promise<CheckInResult> {
     const now = Date.now()
     const start = new Date(s.starts_at).getTime()
     const end = new Date(s.ends_at).getTime()
-    // Check-in opens 5 minutes before the session and closes 2 hours after it ends.
-    if (Number.isFinite(start) && now < start - 5 * 60 * 1000) {
+    if (Number.isFinite(start) && now < start - preMins * 60 * 1000) {
       const when = new Date(s.starts_at).toLocaleString("en-GB", {
         weekday: "long",
         day: "numeric",
@@ -575,7 +580,7 @@ export async function selfCheckIn(sessionId: string): Promise<CheckInResult> {
         minute: "2-digit",
       })
       throw new Error(
-        `Check-in opens 5 minutes before the session. This session starts on ${when}. Please try again then.`,
+        `Check-in opens ${preMins} minutes before the session. This session starts on ${when}. Please try again then.`,
       )
     }
     if (Number.isFinite(end) && now > end + 2 * 60 * 60 * 1000) {

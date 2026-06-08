@@ -134,7 +134,7 @@ export default function CalendarPage() {
         toast.error("The meeting link is not available yet.")
         return
       }
-      await selfCheckIn(sessionId).catch(() => undefined)
+      await selfCheckIn(sessionId, { lenient: true }).catch(() => undefined)
       window.open(url, "_blank", "noopener,noreferrer")
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not join the session.")

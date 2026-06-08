@@ -44,14 +44,22 @@ export default function VerifyCertDialog({
   const [result, setResult] = useState<{
     code: string
     value: VerifyResult | null | "error"
+    expired: boolean
   } | null>(null)
 
   useEffect(() => {
     if (!code) return
     let active = true
     verifyByCode(code)
-      .then((cert) => active && setResult({ code, value: cert }))
-      .catch(() => active && setResult({ code, value: "error" }))
+      .then((cert) => {
+        if (!active) return
+        // Compute expiry here (not in render) to keep render pure.
+        const expired = cert?.expires_at
+          ? new Date(cert.expires_at).getTime() < Date.now()
+          : false
+        setResult({ code, value: cert, expired })
+      })
+      .catch(() => active && setResult({ code, value: "error", expired: false }))
     return () => {
       active = false
     }
@@ -59,7 +67,7 @@ export default function VerifyCertDialog({
 
   const state:
     | { kind: "loading" }
-    | { kind: "found"; cert: VerifyResult }
+    | { kind: "found"; cert: VerifyResult; expired: boolean }
     | { kind: "not_found" }
     | { kind: "error" } =
     !code || result?.code !== code
@@ -68,7 +76,7 @@ export default function VerifyCertDialog({
         ? { kind: "error" }
         : result.value === null
           ? { kind: "not_found" }
-          : { kind: "found", cert: result.value }
+          : { kind: "found", cert: result.value, expired: result.expired }
 
   return (
     <Dialog open={Boolean(code)} onOpenChange={(o) => !o && onClose()}>
@@ -104,7 +112,9 @@ export default function VerifyCertDialog({
                 <p className="text-sm text-muted-foreground">
                   {state.cert.is_valid
                     ? "Genuine and currently in date."
-                    : "This certificate has expired or is not yet approved."}
+                    : state.expired
+                      ? "This certificate has expired."
+                      : "This certificate is awaiting approval."}
                 </p>
               </div>
             </div>

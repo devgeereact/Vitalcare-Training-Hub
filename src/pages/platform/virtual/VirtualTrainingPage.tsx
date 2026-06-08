@@ -95,7 +95,7 @@ export default function VirtualTrainingPage() {
       }
       // Mark attendance on join. Outside the check-in window this throws, which
       // is fine: the learner still joins.
-      await selfCheckIn(s.id).catch(() => undefined)
+      await selfCheckIn(s.id, { lenient: true }).catch(() => undefined)
       window.open(url, "_blank", "noopener,noreferrer")
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not join the session.")
