@@ -85,7 +85,7 @@ export default function ContactPage(): React.ReactElement {
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 lg:grid-cols-5 lg:gap-10 lg:px-8 lg:py-28">
         {/* Left: company info */}
         <div className="space-y-6 lg:col-span-2">
-          <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05),0_16px_40px_-20px_rgba(27,46,107,0.22)]">
+          <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
             <div className="relative overflow-hidden bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530] px-7 py-9">
               <div
                 className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-brand-gold/20 blur-3xl"
@@ -172,7 +172,7 @@ export default function ContactPage(): React.ReactElement {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-white p-7 shadow-[0_1px_3px_rgba(15,23,42,0.05),0_16px_40px_-20px_rgba(27,46,107,0.22)]">
+          <div className="rounded-2xl border border-border bg-white p-7 shadow-sm">
             <div className="flex items-center gap-3">
               <span className="flex size-10 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
                 <Clock className="size-5" />
@@ -193,7 +193,7 @@ export default function ContactPage(): React.ReactElement {
             </dl>
           </div>
 
-          <div className="flex items-start gap-3 rounded-3xl border border-brand-gold/30 bg-brand-gold/[0.06] p-6 shadow-[0_1px_3px_rgba(15,23,42,0.05),0_16px_40px_-20px_rgba(27,46,107,0.22)]">
+          <div className="flex items-start gap-3 rounded-2xl border border-brand-gold/30 bg-brand-gold/[0.06] p-6 shadow-sm">
             <ShieldCheck
               className="mt-0.5 size-5 shrink-0 text-brand-gold"
               aria-hidden="true"
@@ -207,7 +207,7 @@ export default function ContactPage(): React.ReactElement {
 
         {/* Right: form */}
         <div className="lg:col-span-3">
-          <div className="rounded-3xl border border-border bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.05),0_16px_40px_-20px_rgba(27,46,107,0.22)] sm:p-9">
+          <div className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-9">
             <h2 className="font-sans text-2xl font-semibold tracking-tight text-brand-navy">
               Send us a message
             </h2>
