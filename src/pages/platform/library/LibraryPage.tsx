@@ -26,6 +26,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
+import AiAssistButton from "@/components/ai/AiAssistButton"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
@@ -320,6 +322,20 @@ function ResourceForm({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <AiFieldsButton
+              subject="a course resource or handout for health and care training"
+              context={`Working title: ${values.title || "(none)"}`}
+              fields={[
+                { key: "title", label: "Title", format: "text" },
+                { key: "description", label: "Description", format: "text" },
+              ]}
+              onApply={(v) => {
+                if (v.title) set("title", v.title.slice(0, 160))
+                if (v.description) set("description", v.description)
+              }}
+            />
+          </div>
           <div>
             <Label className="mb-1.5 block text-xs">Title</Label>
             <Input
@@ -329,7 +345,14 @@ function ResourceForm({
             />
           </div>
           <div>
-            <Label className="mb-1.5 block text-xs">Description</Label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <Label className="block text-xs">Description</Label>
+              <AiAssistButton
+                task="a short description of a training resource"
+                context={`Resource title: ${values.title}`}
+                onInsert={(text) => set("description", text)}
+              />
+            </div>
             <Textarea
               rows={2}
               value={values.description}

@@ -6,6 +6,8 @@ import { z } from "zod"
 import { toast } from "sonner"
 import { ArrowLeft, AlertCircle, Loader2, Save, Send } from "lucide-react"
 import AuthoringHeader from "@/components/authoring/AuthoringHeader"
+import AiFieldsButton from "@/components/ai/AiFieldsButton"
+import AiAssistButton from "@/components/ai/AiAssistButton"
 import {
   Card,
   CardContent,
@@ -157,6 +159,22 @@ export default function BlogEditPage(): React.ReactElement {
           </CardHeader>
           <CardContent>
             <form className="grid gap-5">
+        <div className="flex justify-end">
+          <AiFieldsButton
+            subject="a UK health and social care blog article"
+            context={`Working title: ${watch("title") || "(none)"}`}
+            fields={[
+              { key: "title", label: "Title", format: "text" },
+              { key: "excerpt", label: "Excerpt", format: "text" },
+              { key: "body", label: "Body", format: "text" },
+            ]}
+            onApply={(v) => {
+              if (v.title) setValue("title", v.title.slice(0, 160))
+              if (v.excerpt) setValue("excerpt", v.excerpt)
+              if (v.body) setValue("body", v.body)
+            }}
+          />
+        </div>
         <div className="grid gap-2">
           <Label htmlFor="title">Title</Label>
           <Input id="title" className={FOCUS} {...register("title")} />
@@ -200,7 +218,14 @@ export default function BlogEditPage(): React.ReactElement {
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="body">Body</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="body">Body</Label>
+            <AiAssistButton
+              task="a UK health and social care blog article body"
+              context={`Title: ${watch("title")}\nExcerpt: ${watch("excerpt")}`}
+              onInsert={(text) => setValue("body", text)}
+            />
+          </div>
           <Textarea
             id="body"
             rows={14}
