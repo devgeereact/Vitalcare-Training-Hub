@@ -1,6 +1,9 @@
+import { useEffect, useRef } from "react"
+import { useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { Package, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -22,6 +25,16 @@ export default function StoreOrdersPage() {
   const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useOrders(isAdmin, user?.id)
   const confirm = useConfirmOrder(profile?.id)
+  const [searchParams] = useSearchParams()
+  const highlightId = searchParams.get("id")
+  const rowRef = useRef<HTMLTableRowElement | null>(null)
+
+  // Deep link from a notification (?id=) scrolls to and highlights that order.
+  useEffect(() => {
+    if (highlightId && rowRef.current) {
+      rowRef.current.scrollIntoView({ block: "center", behavior: "smooth" })
+    }
+  }, [highlightId, data])
 
   return (
     <div className="space-y-6">
@@ -69,7 +82,14 @@ export default function StoreOrdersPage() {
                 </thead>
                 <tbody>
                   {data!.map((o) => (
-                    <tr key={o.id} className="border-b border-border last:border-0">
+                    <tr
+                      key={o.id}
+                      ref={o.id === highlightId ? rowRef : undefined}
+                      className={cn(
+                        "border-b border-border last:border-0",
+                        o.id === highlightId && "bg-brand-gold/10",
+                      )}
+                    >
                       <td className="px-5 py-3 font-mono text-xs">{o.reference}</td>
                       {isAdmin && <td className="px-5 py-3">{o.buyerName}</td>}
                       <td className="px-5 py-3 text-muted-foreground">{o.items || "-"}</td>
