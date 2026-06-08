@@ -11,6 +11,7 @@ import CoursesManagePage from "@/pages/platform/courses/CoursesManagePage"
 import CourseBuilderPage from "@/pages/platform/courses/CourseBuilderPage"
 import CourseOverviewPage from "@/pages/platform/courses/CourseOverviewPage"
 import MyCoursesPage from "@/pages/platform/courses/MyCoursesPage"
+import EnrolledCoursesPage from "@/pages/platform/courses/EnrolledCoursesPage"
 import LessonPlayerPage from "@/pages/platform/courses/LessonPlayerPage"
 import QuizListPage from "@/pages/platform/assessments/QuizListPage"
 import QuizBuilderPage from "@/pages/platform/assessments/QuizBuilderPage"
@@ -253,6 +254,7 @@ export const router = createBrowserRouter (
           ),
         },
         { path: "courses", element: <MyCoursesPage /> },
+        { path: "my-learning", element: <EnrolledCoursesPage /> },
         { path: "courses/:id", element: <CourseOverviewPage /> },
         { path: "courses/:id/learn/:lessonId", element: <LessonPlayerPage /> },
         {

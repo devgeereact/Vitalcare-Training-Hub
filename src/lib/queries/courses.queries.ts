@@ -160,12 +160,13 @@ export async function getCurriculum(
   if (!modules || modules.length === 0) return []
 
   const moduleIds = modules.map((m) => m.id)
-  const { data: lessons } = await supabase
+  const { data: lessons, error: lErr } = await supabase
     .from("lessons")
     .select("*")
     .in("module_id", moduleIds)
     .is("deleted_at", null)
     .order("position", { ascending: true })
+  if (lErr) console.error("[getCurriculum:lessons]", lErr)
 
   return (modules as Module[]).map((m) => ({
     ...m,

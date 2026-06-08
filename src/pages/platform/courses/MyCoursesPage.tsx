@@ -422,6 +422,7 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
                 durationMins={course.duration_mins}
                 cstf={course.is_cstf_aligned}
                 thumbnailUrl={course.thumbnail_url}
+                enrolled={enrolled}
                 ctaLabel={enrolled ? "Continue" : "View course"}
               />
               {enrolled && (

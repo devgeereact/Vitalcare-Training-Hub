@@ -26,6 +26,8 @@ export interface CourseCardProps {
   thumbnailUrl?: string | null
   /** Button label. Defaults to "View course". */
   ctaLabel?: string
+  /** Shows an "Enrolled" badge over the thumbnail when true. */
+  enrolled?: boolean
   className?: string
 }
 
@@ -43,6 +45,7 @@ export function CourseCard({
   cstf = false,
   thumbnailUrl,
   ctaLabel = "View course",
+  enrolled = false,
   className,
 }: CourseCardProps): React.ReactElement {
   // driveImageUrl passes plain http(s) URLs through untouched and converts
@@ -74,15 +77,22 @@ export function CourseCard({
         className,
       )}
     >
-      {onView ? (
-        <button type="button" onClick={onView} className={mediaClass} aria-label={title}>
-          {media}
-        </button>
-      ) : (
-        <Link to={href ?? "#"} className={mediaClass} aria-label={title}>
-          {media}
-        </Link>
-      )}
+      <div className="relative">
+        {enrolled ? (
+          <span className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
+            <ShieldCheck className="size-3" aria-hidden /> Enrolled
+          </span>
+        ) : null}
+        {onView ? (
+          <button type="button" onClick={onView} className={mediaClass} aria-label={title}>
+            {media}
+          </button>
+        ) : (
+          <Link to={href ?? "#"} className={mediaClass} aria-label={title}>
+            {media}
+          </Link>
+        )}
+      </div>
 
       <div className="flex flex-1 flex-col p-4">
         {categoryName ? (

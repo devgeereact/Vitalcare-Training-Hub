@@ -218,9 +218,11 @@ export default function CourseOverviewPage() {
                     </Button>
                   </>
                 ) : (
-                  <Button disabled className="w-full">
-                    No lessons yet
-                  </Button>
+                  <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3 text-center text-sm text-muted-foreground">
+                    You are enrolled. Lessons for this course are being prepared,
+                    so check back soon. Any assessment and materials below are
+                    available now.
+                  </div>
                 )
               ) : (
                 <Button

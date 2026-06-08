@@ -69,6 +69,7 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
     icon: BookOpen,
     items: [
       { label: "Courses", to: "/platform/courses", prefix: "/platform/courses" },
+      { label: "My Learning", to: "/platform/my-learning", prefix: "/platform/my-learning" },
       { label: "Resources", to: "/platform/my-resources", prefix: "/platform/my-resources" },
       { label: "Learning Paths", to: "/platform/courses/paths", prefix: "/platform/courses/paths" },
       { label: "Assessment Results", to: "/platform/assessments/results", prefix: "/platform/assessments/results", roles: MGMT_T },

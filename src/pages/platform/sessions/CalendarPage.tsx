@@ -16,6 +16,9 @@ import {
   Pencil,
   ExternalLink,
   CalendarClock,
+  Video,
+  Hourglass,
+  CheckCircle2,
 } from "lucide-react"
 
 import {
@@ -58,6 +61,12 @@ import {
 } from "@/lib/queries/calendar.queries"
 import { getUpcomingHolidays } from "@/lib/integrations/holidays"
 import { useOneToOnes } from "@/lib/queries/one-to-one.queries"
+import {
+  useMyJoinRequests,
+  useRequestJoin,
+  getSessionJoinLink,
+} from "@/lib/queries/virtual.queries"
+import { selfCheckIn } from "@/lib/queries/sessions.queries"
 import { cn } from "@/lib/utils"
 
 const COLORS = {
@@ -81,6 +90,8 @@ interface Selected {
   meetUrl?: string
   /** True when the event has already ended (computed at selection time). */
   past?: boolean
+  /** True for a virtual training session (drives the inline join request). */
+  isVirtual?: boolean
 }
 
 function toLocalInput(d: Date) {
@@ -109,6 +120,28 @@ export default function CalendarPage() {
   // The current user's own 1:1s (as learner or assigned trainer). Approved +
   // scheduled ones surface on the calendar with their meeting link.
   const oneToOnes = useOneToOnes(user?.id, false)
+  // Learner join requests, so the calendar popup can offer request / join inline.
+  const myJoin = useMyJoinRequests(canManage ? undefined : user?.id)
+  const requestJoin = useRequestJoin(user?.id)
+  const [joiningId, setJoiningId] = useState<string | null>(null)
+
+  async function joinSession(sessionId: string): Promise<void> {
+    setJoiningId(sessionId)
+    try {
+      const link = await getSessionJoinLink(sessionId)
+      const url = link?.meet_url || link?.zoom_join_url
+      if (!url) {
+        toast.error("The meeting link is not available yet.")
+        return
+      }
+      await selfCheckIn(sessionId).catch(() => undefined)
+      window.open(url, "_blank", "noopener,noreferrer")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not join the session.")
+    } finally {
+      setJoiningId(null)
+    }
+  }
 
   const [selected, setSelected] = useState<Selected | null>(null)
   const [editing, setEditing] = useState(false)
@@ -130,7 +163,6 @@ export default function CalendarPage() {
   const [fPublic, setFPublic] = useState(false)
 
   const events: EventInput[] = useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity -- time-based filter is intentional
     const nowMs = Date.now()
     const out: EventInput[] = []
     for (const s of sessions.data ?? []) {
@@ -143,7 +175,7 @@ export default function CalendarPage() {
         end: s.endsAt,
         backgroundColor: s.isVirtual ? COLORS.virtual : COLORS.physical,
         borderColor: s.isVirtual ? COLORS.virtual : COLORS.physical,
-        extendedProps: { kind: "session", rawId: s.id },
+        extendedProps: { kind: "session", rawId: s.id, isVirtual: s.isVirtual },
       })
     }
     for (const e of customEvents.data ?? []) {
@@ -212,7 +244,6 @@ export default function CalendarPage() {
   }, [sessions.data, customEvents.data, holidays.data, orgHolidays.data, oneToOnes.data, user?.id, canManage])
 
   const upcoming = useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity -- time-based filter is intentional
     const now = Date.now()
     return events
       .filter((e) => e.start && new Date(e.start as string).getTime() >= now - 36e5)
@@ -377,6 +408,7 @@ export default function CalendarPage() {
                       color: info.event.backgroundColor || COLORS.custom,
                       meetUrl: info.event.extendedProps.meetUrl as string | undefined,
                       past: endAt ? endAt.getTime() < Date.now() : false,
+                      isVirtual: Boolean(info.event.extendedProps.isVirtual),
                     })
                   }}
                   dateClick={(info) => openNew(info.dateStr)}
@@ -411,6 +443,7 @@ export default function CalendarPage() {
                       color: (e.backgroundColor as string) || COLORS.custom,
                       meetUrl: e.extendedProps?.meetUrl as string | undefined,
                       past: new Date((e.end ?? e.start) as string).getTime() < Date.now(),
+                      isVirtual: Boolean(e.extendedProps?.isVirtual),
                     })
                   }
                   className="flex w-full items-start gap-2 rounded-lg p-2 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold"
@@ -468,12 +501,62 @@ export default function CalendarPage() {
                         <ExternalLink className="mr-2 size-4" /> Open session
                       </Link>
                     </Button>
-                  ) : (
-                    <Button asChild>
-                      <Link to="/platform/virtual">
-                        <ExternalLink className="mr-2 size-4" /> Request a place to join
-                      </Link>
+                  ) : selected.past ? (
+                    <Button disabled variant="secondary">
+                      Session ended
                     </Button>
+                  ) : selected.isVirtual ? (
+                    // Inline request-to-join for a virtual session.
+                    (() => {
+                      const status = myJoin.data?.[selected.id]
+                      if (status === "approved")
+                        return (
+                          <Button
+                            onClick={() => joinSession(selected.id)}
+                            disabled={joiningId === selected.id}
+                          >
+                            {joiningId === selected.id ? (
+                              <Loader2 className="mr-2 size-4 animate-spin" />
+                            ) : (
+                              <Video className="mr-2 size-4" />
+                            )}
+                            Join meeting
+                          </Button>
+                        )
+                      if (status === "pending")
+                        return (
+                          <Button variant="outline" disabled>
+                            <Hourglass className="mr-2 size-4" /> Awaiting approval
+                          </Button>
+                        )
+                      if (status === "declined")
+                        return (
+                          <span className="text-sm text-muted-foreground">
+                            Request not approved
+                          </span>
+                        )
+                      return (
+                        <Button
+                          onClick={() =>
+                            requestJoin.mutate(selected.id, {
+                              onSuccess: () =>
+                                toast.success("Request sent. An admin will review it."),
+                              onError: (err) =>
+                                toast.error(
+                                  err instanceof Error ? err.message : "Could not send request",
+                                ),
+                            })
+                          }
+                          disabled={requestJoin.isPending}
+                        >
+                          <CheckCircle2 className="mr-2 size-4" /> Request to join
+                        </Button>
+                      )
+                    })()
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      In-person session. Your trainer will confirm your place.
+                    </span>
                   ))}
                 {selected.kind === "o2o" && (
                   <>

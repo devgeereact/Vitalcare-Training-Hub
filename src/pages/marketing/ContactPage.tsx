@@ -85,7 +85,7 @@ export default function ContactPage(): React.ReactElement {
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-20 sm:px-6 lg:grid-cols-5 lg:gap-10 lg:px-8 lg:py-28">
         {/* Left: company info */}
         <div className="space-y-6 lg:col-span-2">
-          <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06),0_18px_40px_-24px_rgba(27,46,107,0.30)]">
+          <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05),0_16px_40px_-20px_rgba(27,46,107,0.22)]">
             <div className="relative overflow-hidden bg-gradient-to-br from-[#1b2e6b] via-[#142054] to-[#0d1530] px-7 py-9">
               <div
                 className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-brand-gold/20 blur-3xl"
@@ -104,8 +104,8 @@ export default function ContactPage(): React.ReactElement {
               </p>
             </div>
 
-            <ul className="space-y-2 p-4 text-sm sm:p-5">
-              <li className="flex items-start gap-3.5 rounded-2xl p-3 transition-colors hover:bg-muted/50">
+            <ul className="space-y-1 p-5 text-sm sm:p-6">
+              <li className="flex items-start gap-3.5 py-2">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
                   <MapPin className="size-5" />
                 </span>
@@ -115,25 +115,25 @@ export default function ContactPage(): React.ReactElement {
                   {COMPANY.address.city} {COMPANY.address.postcode}
                 </span>
               </li>
-              <li>
+              <li className="flex items-center gap-3.5 py-2">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
+                  <Phone className="size-5" />
+                </span>
                 <a
                   href={`tel:${COMPANY.phone.replace(/\s/g, "")}`}
-                  className={`flex items-center gap-3.5 rounded-2xl p-3 text-foreground transition-colors hover:bg-muted/50 hover:text-brand-navy ${FOCUS}`}
+                  className={`rounded text-foreground transition-colors hover:text-brand-navy ${FOCUS}`}
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
-                    <Phone className="size-5" />
-                  </span>
                   {COMPANY.phone}
                 </a>
               </li>
-              <li>
+              <li className="flex items-center gap-3.5 py-2">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
+                  <Mail className="size-5" />
+                </span>
                 <a
                   href={`mailto:${COMPANY.email}`}
-                  className={`flex items-center gap-3.5 rounded-2xl p-3 text-foreground transition-colors hover:bg-muted/50 hover:text-brand-navy ${FOCUS}`}
+                  className={`rounded text-foreground transition-colors hover:text-brand-navy ${FOCUS}`}
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
-                    <Mail className="size-5" />
-                  </span>
                   {COMPANY.email}
                 </a>
               </li>
@@ -172,7 +172,7 @@ export default function ContactPage(): React.ReactElement {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-white p-7 shadow-sm">
+          <div className="rounded-3xl border border-border bg-white p-7 shadow-[0_1px_3px_rgba(15,23,42,0.05),0_16px_40px_-20px_rgba(27,46,107,0.22)]">
             <div className="flex items-center gap-3">
               <span className="flex size-10 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
                 <Clock className="size-5" />
@@ -193,7 +193,7 @@ export default function ContactPage(): React.ReactElement {
             </dl>
           </div>
 
-          <div className="flex items-start gap-3 rounded-3xl border border-brand-gold/30 bg-brand-gold/[0.06] p-6">
+          <div className="flex items-start gap-3 rounded-3xl border border-brand-gold/30 bg-brand-gold/[0.06] p-6 shadow-[0_1px_3px_rgba(15,23,42,0.05),0_16px_40px_-20px_rgba(27,46,107,0.22)]">
             <ShieldCheck
               className="mt-0.5 size-5 shrink-0 text-brand-gold"
               aria-hidden="true"
@@ -207,7 +207,7 @@ export default function ContactPage(): React.ReactElement {
 
         {/* Right: form */}
         <div className="lg:col-span-3">
-          <div className="rounded-3xl border border-border bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.06),0_24px_56px_-28px_rgba(27,46,107,0.35)] sm:p-9">
+          <div className="rounded-3xl border border-border bg-white p-6 shadow-[0_1px_3px_rgba(15,23,42,0.05),0_16px_40px_-20px_rgba(27,46,107,0.22)] sm:p-9">
             <h2 className="font-sans text-2xl font-semibold tracking-tight text-brand-navy">
               Send us a message
             </h2>
