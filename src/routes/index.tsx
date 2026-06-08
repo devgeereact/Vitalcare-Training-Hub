@@ -197,7 +197,7 @@ export const router = createBrowserRouter (
         {
           path: "learners",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <LearnersListPage />
             </RoleGuard>
           ),
@@ -205,7 +205,7 @@ export const router = createBrowserRouter (
         {
           path: "learners/new",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <LearnerNewPage />
             </RoleGuard>
           ),
@@ -213,7 +213,7 @@ export const router = createBrowserRouter (
         {
           path: "learners/:id",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <LearnerDetailPage />
             </RoleGuard>
           ),
@@ -221,7 +221,7 @@ export const router = createBrowserRouter (
         {
           path: "learners/:id/edit",
           element: (
-            <RoleGuard roles={["super_admin", "admin", "manager", "trainer"]}>
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
               <LearnerEditPage />
             </RoleGuard>
           ),
@@ -554,7 +554,14 @@ export const router = createBrowserRouter (
         { path: "qa", element: <QaWallPage /> },
         { path: "qa/:id", element: <ThreadPage /> },
         { path: "feedback", element: <FeedbackPage /> },
-        { path: "feedback/results", element: <FeedbackResultsPage /> },
+        {
+          path: "feedback/results",
+          element: (
+            <RoleGuard roles={["super_admin", "admin", "manager"]}>
+              <FeedbackResultsPage />
+            </RoleGuard>
+          ),
+        },
         {
           path: "email",
           element: (

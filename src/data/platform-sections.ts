@@ -123,7 +123,7 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
     roles: MGMT_T,
     items: [
       { label: "All Accounts", to: "/platform/users", prefix: "/platform/users", roles: ADMINS },
-      { label: "Learners", to: "/platform/learners", prefix: "/platform/learners", roles: MGMT_T },
+      { label: "Learners", to: "/platform/learners", prefix: "/platform/learners", roles: MGMT },
       { label: "Trainers", to: "/platform/trainers", prefix: "/platform/trainers", roles: MGMT },
       { label: "Cohorts & Teams", to: "/platform/cohorts", prefix: "/platform/cohorts", roles: MGMT },
     ],
@@ -152,7 +152,8 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
       { label: "Announcements", to: "/platform/announcements", prefix: "/platform/announcements" },
       { label: "Forum", to: "/platform/forums", prefix: "/platform/forums" },
       { label: "Q&A", to: "/platform/qa", prefix: "/platform/qa" },
-      { label: "Feedback", to: "/platform/feedback/results", prefix: "/platform/feedback" },
+      { label: "Give Feedback", to: "/platform/feedback", prefix: "/platform/feedback" },
+      { label: "Feedback Results", to: "/platform/feedback/results", prefix: "/platform/feedback/results", roles: MGMT },
     ],
   },
   {
