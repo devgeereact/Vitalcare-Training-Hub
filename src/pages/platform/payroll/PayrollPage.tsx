@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { format } from "date-fns"
 import { toast } from "sonner"
 
@@ -66,6 +67,16 @@ export default function PayrollPage() {
 
   const [open, setOpen] = useState(false)
   const [viewing, setViewing] = useState<Payroll | null>(null)
+  const [searchParams] = useSearchParams()
+
+  // Deep link from a notification (?id=) opens that payslip.
+  useEffect(() => {
+    const id = searchParams.get("id")
+    if (!id) return
+    const match = (q.data ?? []).find((p) => p.id === id)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- open the item from a URL deep link
+    if (match) setViewing(match)
+  }, [searchParams, q.data])
   const [staffId, setStaffId] = useState("")
   const [period, setPeriod] = useState("")
   const [periodStart, setPeriodStart] = useState("")

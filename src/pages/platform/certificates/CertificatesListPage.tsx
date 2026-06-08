@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, useSearchParams } from "react-router-dom"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { Award, AlertCircle, Download, Plus, BadgeCheck, Clock, Eye, CheckCircle2 } from "lucide-react"
@@ -212,6 +212,16 @@ export default function CertificatesListPage() {
   const [signatory, setSignatory] = useState("")
   const [signatoryRole, setSignatoryRole] = useState("")
   const [preview, setPreview] = useState<CertRow | null>(null)
+  const [searchParams] = useSearchParams()
+
+  // Deep link from a notification (?id=) opens that certificate's preview.
+  useEffect(() => {
+    const id = searchParams.get("id")
+    if (!id || !data) return
+    const match = data.find((c) => c.id === id)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- open the item from a URL deep link
+    if (match) setPreview(match)
+  }, [searchParams, data])
 
   const baseTpl = template.data ?? DEFAULT_TEMPLATE
   const previewTemplate: CertTemplate = {

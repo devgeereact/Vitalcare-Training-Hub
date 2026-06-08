@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import {
@@ -61,6 +62,16 @@ export default function InvoicesPage() {
 
   const [open, setOpen] = useState(false)
   const [viewing, setViewing] = useState<Invoice | null>(null)
+  const [searchParams] = useSearchParams()
+
+  // Deep link from a notification (?id=) opens that invoice.
+  useEffect(() => {
+    const id = searchParams.get("id")
+    if (!id || !data) return
+    const match = data.find((inv) => inv.id === id)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- open the item from a URL deep link
+    if (match) setViewing(match)
+  }, [searchParams, data])
   const [recipient, setRecipient] = useState("")
   const [dueDate, setDueDate] = useState("")
   const [notes, setNotes] = useState("")
