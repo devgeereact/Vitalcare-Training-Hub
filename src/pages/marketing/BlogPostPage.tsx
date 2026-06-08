@@ -7,9 +7,11 @@ import {
   Eye,
   Heart,
   Loader2,
+  Share2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
+import { driveImageUrl } from "@/lib/drive-image"
 import { useAuth } from "@/hooks/use-auth"
 import {
   usePublishedPost,
@@ -85,8 +87,29 @@ export default function BlogPostPage(): React.ReactElement {
     })
   }
 
+  async function onShare() {
+    const url = window.location.href
+    const shareData = { title: post!.title, text: post!.excerpt ?? post!.title, url }
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share(shareData)
+        return
+      }
+    } catch {
+      // user cancelled or share unsupported; fall through to copy
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success("Link copied to clipboard")
+    } catch {
+      toast.error("Could not copy the link")
+    }
+  }
+
+  const heroImage = post.featureImageUrl ? driveImageUrl(post.featureImageUrl, 1600) : null
+
   return (
-    <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+    <article className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
       <Link
         to="/resources/blog"
         className="inline-flex items-center gap-2 text-sm font-medium text-brand-navy/70 transition-colors hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
@@ -94,34 +117,69 @@ export default function BlogPostPage(): React.ReactElement {
         <ArrowLeft className="size-4" /> All articles
       </Link>
 
-      <h1 className="mt-6 font-sans text-3xl font-semibold leading-tight tracking-tight text-brand-navy sm:text-4xl">
-        {post.title}
-      </h1>
-
-      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5">
-          <CalendarDays className="size-4 text-brand-gold" aria-hidden />
-          {formatDate(post.publishedAt)}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <UserRound className="size-4 text-brand-gold" aria-hidden />
-          {post.authorName}
-        </span>
-        {post.views > 0 ? (
-          <span className="inline-flex items-center gap-1.5">
-            <Eye className="size-4 text-brand-gold" aria-hidden />
-            {post.views} views
-          </span>
-        ) : null}
+      {/* Hero: image with the title and meta over the bottom. */}
+      <div className="relative mt-6 overflow-hidden rounded-3xl bg-brand-navy">
+        {heroImage ? (
+          <img
+            src={heroImage}
+            alt=""
+            className="aspect-[16/9] w-full object-cover sm:aspect-[21/9]"
+          />
+        ) : (
+          <div className="aspect-[21/9] w-full bg-gradient-to-br from-[#1b2e6b] via-[#16265a] to-[#0f1b41]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10">
+          <h1 className="max-w-3xl font-sans text-2xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+            {post.title}
+          </h1>
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/85">
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays className="size-4 text-brand-gold" aria-hidden />
+              {formatDate(post.publishedAt)}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <UserRound className="size-4 text-brand-gold" aria-hidden />
+              {post.authorName}
+            </span>
+            {post.views > 0 ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Eye className="size-4 text-brand-gold" aria-hidden />
+                {post.views} views
+              </span>
+            ) : null}
+          </div>
+        </div>
       </div>
 
-      {post.featureImageUrl ? (
-        <img
-          src={post.featureImageUrl}
-          alt=""
-          className="mt-8 aspect-[16/9] w-full rounded-2xl border border-border object-cover"
-        />
-      ) : null}
+      {/* Like + Share, before the content. */}
+      <div className="mt-6 flex items-center gap-3 border-b border-border pb-6">
+        <button
+          type="button"
+          onClick={onLike}
+          disabled={!canLike || toggle.isPending}
+          aria-pressed={liked}
+          className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-gold hover:bg-brand-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+        >
+          {toggle.isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Heart
+              className={liked ? "size-4 fill-brand-gold text-brand-gold" : "size-4"}
+              aria-hidden
+            />
+          )}
+          {liked ? "Liked" : "Like"}
+          {likeCount > 0 ? <span className="text-muted-foreground">· {likeCount}</span> : null}
+        </button>
+        <button
+          type="button"
+          onClick={onShare}
+          className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-gold hover:bg-brand-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
+        >
+          <Share2 className="size-4" aria-hidden /> Share
+        </button>
+      </div>
 
       <div className="mt-8 space-y-5">
         {paragraphs.map((p, i) => (
@@ -130,29 +188,6 @@ export default function BlogPostPage(): React.ReactElement {
           </p>
         ))}
       </div>
-
-      {canLike ? (
-        <div className="mt-12 flex items-center gap-4 border-t border-border pt-8">
-          <button
-            type="button"
-            onClick={onLike}
-            disabled={toggle.isPending}
-            aria-pressed={liked}
-            className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-gold hover:bg-brand-gold/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
-          >
-            {toggle.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Heart
-                className={liked ? "size-4 fill-brand-gold text-brand-gold" : "size-4"}
-                aria-hidden
-              />
-            )}
-            {liked ? "Liked" : "Like"}
-            {likeCount > 0 ? <span className="text-muted-foreground">· {likeCount}</span> : null}
-          </button>
-        </div>
-      ) : null}
     </article>
   )
 }

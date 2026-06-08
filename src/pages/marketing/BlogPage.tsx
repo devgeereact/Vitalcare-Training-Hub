@@ -7,6 +7,7 @@ import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { Pagination } from "@/components/marketing/Pagination"
 import { Skeleton } from "@/components/ui/skeleton"
+import { driveImageUrl } from "@/lib/drive-image"
 import { usePublishedPosts, type PublicBlogPost } from "@/lib/queries/blog.queries"
 
 const PAGE_SIZE = 12
@@ -28,7 +29,7 @@ function PostCard({ post }: { post: PublicBlogPost }) {
       <div className="aspect-[16/9] w-full overflow-hidden bg-brand-navy/5">
         {post.featureImageUrl ? (
           <img
-            src={post.featureImageUrl}
+            src={driveImageUrl(post.featureImageUrl, 800)}
             alt=""
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
