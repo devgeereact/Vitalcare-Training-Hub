@@ -16,6 +16,13 @@
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
+  # A missing build artefact must fail as a 404, not fall through to the SPA.
+  # Without this a stale client requesting a deleted chunk gets index.html with
+  # a 200, the browser refuses it as the wrong MIME type, and the retry logic in
+  # src/lib/chunk-reload.ts never sees the load error it is waiting for.
+  RewriteCond %{REQUEST_URI} ^/(assets|logos|images|cards|illustrations|products)/
+  RewriteRule ^ - [R=404,L]
+
   RewriteRule ^ index.html [L]
 </IfModule>
 
@@ -37,6 +44,15 @@
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
+# Apache has no built-in type for .webmanifest and falls back to
+# application/octet-stream, which stops the browser treating the file as a PWA
+# manifest at all. svg and woff2 are declared for the same reason.
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+  AddType image/svg+xml .svg
+  AddType font/woff2 .woff2
+</IfModule>
+
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml \
     application/javascript application/json image/svg+xml
@@ -49,5 +65,3 @@
 <Files ".htaccess">
   Require all denied
 </Files>
-
-ErrorDocument 404 /index.html
