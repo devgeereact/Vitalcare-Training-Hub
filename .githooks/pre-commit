@@ -1,0 +1,8 @@
+#!/bin/sh
+# Local credential gate. CI is the real enforcement (a hook is bypassable with
+# --no-verify and does not exist in a fresh clone until enabled); this just
+# catches the mistake before it reaches the remote, where removing it stops
+# being enough.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+exec node scripts/check-secrets.mjs

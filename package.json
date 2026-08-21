@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "verify": "npm run typecheck && npm run lint && npm run check:secrets",
     "preview": "vite preview",
     "deploy:check": "cpanel-deploy dist vitalcare.uk --prune --keep cgi-bin --keep tmp --with-htaccess dist/.htaccess",
     "deploy": "npm run build && cpanel-deploy dist vitalcare.uk --prune --keep cgi-bin --keep tmp --with-htaccess dist/.htaccess --go"

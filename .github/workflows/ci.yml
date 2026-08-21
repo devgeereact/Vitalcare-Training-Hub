@@ -1,0 +1,42 @@
+name: CI
+
+# Enforces RULE 17 (no merge without typecheck + lint + build) and adds a
+# credential gate. The secret scan runs first and on every push, because a
+# committed key is the one failure a later job cannot undo: by the time it is
+# on the remote it exists in every clone and must be rotated, not deleted.
+
+on:
+  push:
+    branches: [dev, production]
+  pull_request:
+    branches: [dev, production]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Secret scan
+        run: npm run check:secrets
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # No VITE_* secrets are provided here on purpose. The build must succeed
+      # without them: src/lib/supabase/client.ts falls back to the publishable
+      # key, which is browser-safe. If a build ever starts REQUIRING a secret,
+      # that secret is about to be baked into the bundle and shipped publicly.
+      - name: Build
+        run: npm run build
