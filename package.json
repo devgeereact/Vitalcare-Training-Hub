@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:check": "cpanel-deploy dist vitalcare.uk --prune --keep cgi-bin --keep tmp --with-htaccess dist/.htaccess",
+    "deploy": "npm run build && cpanel-deploy dist vitalcare.uk --prune --keep cgi-bin --keep tmp --with-htaccess dist/.htaccess --go"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

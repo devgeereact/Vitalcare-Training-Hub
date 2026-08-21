@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   const url = new URL(req.url)
   const code = url.searchParams.get("code")
   const state = url.searchParams.get("state") ?? "" // supabase user id
-  const appUrl = Deno.env.get("APP_URL") ?? "https://app-1-orcin-eight.vercel.app"
+  const appUrl = Deno.env.get("APP_URL") ?? "https://vitalcare.uk"
 
   if (!code) return redirect(`${appUrl}/platform/settings?google=error`)
 
