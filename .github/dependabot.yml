@@ -2,9 +2,10 @@ version: 2
 
 # Matches the convention already running in rotaflow and kokolett-beauty.
 #
-# This repo is PRIVATE, so CodeQL is not available without GitHub Advanced
-# Security. Dependabot alerts and version updates are, and they matter here:
-# the browser bundle ships Supabase auth and the platform holds learner records,
+# The repo is public, so Dependabot and CodeQL are both free. This note used to
+# claim CodeQL needed GitHub Advanced Security; see .github/workflows/codeql.yml,
+# which now runs it. Dependency updates matter here regardless: the browser
+# bundle ships Supabase auth and the platform holds learner records,
 # certificates and payroll, so a compromised transitive dependency runs in the
 # same context as the session token.
 updates:

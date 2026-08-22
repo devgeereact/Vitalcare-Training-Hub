@@ -91,7 +91,7 @@ This template was forked and rebranded. Do NOT overwrite its core components unn
 | Storage | Supabase Storage | 1GB free |
 | Realtime | Supabase Realtime | Notifications, chat |
 | Deploy | cPanel static hosting | Local build, rsync over SSH. Server has no Node |
-| CI | GitHub Actions | 2,000 min/month |
+| CI | GitHub Actions | Unlimited: the repo is public. CodeQL runs too |
 | Email | Resend | 3,000/month |
 | AI (primary) | Gemini 3.6 Flash | Requires credit on the geeapp-n8n project |
 | AI (fallback) | OpenRouter Claude Haiku | Via Supabase Edge Function |

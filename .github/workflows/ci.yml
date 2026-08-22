@@ -4,9 +4,10 @@ name: CI
 # credential gate. Hardened to match the convention already running in rotaflow
 # and kokolett-beauty.
 #
-# No CodeQL job here: this repo is PRIVATE, and CodeQL on a private repo needs
-# GitHub Advanced Security. Adding the workflow would just fail every run.
-# Dependabot covers what is available, see .github/dependabot.yml.
+# CodeQL runs as its own workflow, see .github/workflows/codeql.yml. This note
+# used to say the repo was private and so could not run CodeQL without GitHub
+# Advanced Security; the repo is public, so the scan is free and now enabled.
+# Dependabot covers dependencies, see .github/dependabot.yml.
 
 on:
   push:

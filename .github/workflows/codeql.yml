@@ -1,0 +1,74 @@
+name: CodeQL
+
+# Free on public repositories, which this one is. It was not always: the repo
+# was private during early development, and both this workflow and the note in
+# dependabot.yml used to say CodeQL needed GitHub Advanced Security. That is no
+# longer true, and the scan is worth having here specifically.
+#
+# The platform holds learner records, assessment results, certificates and
+# invoices, and the browser bundle carries a Supabase session token. The classes
+# of bug CodeQL catches are the ones review misses: injection into query
+# builders, unsafe DOM sinks, tainted redirects, secrets reaching a log.
+#
+# It also reads supabase/functions/**, 27 Deno edge functions that tsc never
+# sees: tsconfig.app.json includes only src, so `npm run typecheck` skips them
+# entirely. ESLint does read them, but ESLint is a correctness and style tool,
+# not a taint analyser. Those functions hold the service-role key and call Zoom,
+# Google and Resend on the user's behalf, so they are the highest-value code in
+# the repo and, until now, the least analysed.
+#
+# This does NOT replace Supabase RLS as the enforcement boundary. It is a
+# second net.
+
+on:
+  push:
+    branches: [dev, production]
+  pull_request:
+    branches: [dev, production]
+  schedule:
+    # Weekly, so newly published queries reach an unchanged codebase too. Most
+    # findings arrive from updated rules, not from new commits. Offset from the
+    # sibling repos' CodeQL crons so the runners are not all claimed at once.
+    - cron: '17 5 * * 1'
+
+# Least privilege at the top level; the job widens it only where needed.
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to upload results to the Security tab.
+      security-events: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript-typescript']
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Don't leave GITHUB_TOKEN on disk for the rest of the job.
+          persist-credentials: false
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v4.37.7
+        with:
+          languages: ${{ matrix.language }}
+          # security-extended adds lower-severity security queries; the default
+          # pack alone is thin for an app that handles personal data.
+          queries: security-extended
+
+      # No build step. This is a static Vite SPA, and CodeQL's autobuild adds
+      # nothing for JS/TS beyond what the source scan already covers.
+      - name: Analyse
+        uses: github/codeql-action/analyze@v4.37.7
+        with:
+          category: '/language:${{ matrix.language }}'
