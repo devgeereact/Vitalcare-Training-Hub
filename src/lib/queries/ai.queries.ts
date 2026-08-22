@@ -12,8 +12,16 @@ export async function sendChat(messages: ChatMessage[]): Promise<string> {
   })
   if (error) {
     console.error("[sendChat]", error)
+    // invoke() sets `error` for ANY non-2xx, so the old code threw a fixed
+    // "deploy the function" message and discarded the body. That sent us
+    // hunting a deployment problem when the function was deployed and simply
+    // out of Gemini credit. The real reason is in the response body.
+    const body = await (error as { context?: Response }).context
+      ?.json()
+      .catch(() => null)
+    if (body?.error) throw new Error(body.error as string)
     throw new Error(
-      "The AI assistant is unavailable. Deploy the ai-chat Edge Function and set its API keys, then try again.",
+      "The AI assistant could not be reached. Check the ai-chat function logs for the provider error.",
     )
   }
   if (data?.error) throw new Error(data.error)

@@ -4,7 +4,7 @@
 //
 // Deploy:  supabase functions deploy ai-chat
 // Secrets (Supabase → Edge Functions → Secrets):
-//   GOOGLE_AI_API_KEY, GOOGLE_AI_MODEL (default gemini-1.5-flash),
+//   GOOGLE_AI_API_KEY, GOOGLE_AI_MODEL (default gemini-3.6-flash),
 //   OPENROUTER_API_KEY, OR_MODEL (default anthropic/claude-3.5-haiku)
 // Verify JWT stays ON — only signed-in users can call this.
 
@@ -115,7 +115,7 @@ async function tryGemini(
 ): Promise<string | null> {
   const key = await getSecret(admin, "GOOGLE_AI_API_KEY")
   if (!key) return null
-  const model = (await getSecret(admin, "GOOGLE_AI_MODEL")) ?? "gemini-2.0-flash"
+  const model = (await getSecret(admin, "GOOGLE_AI_MODEL")) ?? "gemini-3.6-flash"
   const contents = messages.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
@@ -220,8 +220,18 @@ Deno.serve(async (req) => {
     provider = "openrouter"
   }
   if (!reply) {
+    // Say which provider failed and why. The old message always blamed missing
+    // secrets, which is one of several causes: a depleted Gemini balance and a
+    // retired model name both land here too, and both were misdiagnosed as a
+    // deployment problem because the caller could not see the difference.
+    const geminiKey = await getSecret(admin, "GOOGLE_AI_API_KEY")
+    const orKey = await getSecret(admin, "OPENROUTER_API_KEY")
+    const detail = [
+      geminiKey ? "Gemini key set but the call failed" : "GOOGLE_AI_API_KEY not set",
+      orKey ? "OpenRouter key set but the call failed" : "OPENROUTER_API_KEY not set",
+    ].join("; ")
     return json(
-      { error: "AI is unavailable. Set GOOGLE_AI_API_KEY / OPENROUTER_API_KEY secrets." },
+      { error: `AI is unavailable. ${detail}. See the ai-chat function logs for the provider response.` },
       503,
     )
   }

@@ -93,7 +93,7 @@ This template was forked and rebranded. Do NOT overwrite its core components unn
 | Deploy | Vercel Hobby | 100GB bandwidth |
 | CI | GitHub Actions | 2,000 min/month |
 | Email | Resend | 3,000/month |
-| AI (primary) | Gemini 1.5 Flash | 15 RPM, 1M tokens/day |
+| AI (primary) | Gemini 3.6 Flash | Requires credit on the geeapp-n8n project |
 | AI (fallback) | OpenRouter Claude Haiku | Via Supabase Edge Function |
 | Video | Zoom Server-to-Server OAuth | Virtual sessions |
 | Calendar sync | Google Calendar API | Session scheduling |
