@@ -38,13 +38,17 @@ export default function GoogleIntegrationCard(): React.ReactElement {
   const google = useQuery({
     queryKey: ["google-oauth-status"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("google_oauth_tokens")
-        .select("connected_email, created_at")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      return data
+      // Via an RPC, not the table. Migration 067 revoked all client access to
+      // google_oauth_tokens so the refresh_token column can never be read over
+      // REST; querying the table directly returns null forever and the card
+      // reads "not connected" even when Google is connected. The RPC returns
+      // only connected_email and created_at, and is admin-gated.
+      const { data, error } = await supabase.rpc("google_oauth_status")
+      if (error) {
+        console.error("[GoogleIntegrationCard]", error)
+        return null
+      }
+      return data?.[0] ?? null
     },
     enabled: isSuperAdmin,
   })

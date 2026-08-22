@@ -838,6 +838,13 @@ export type Database = {
           is_valid: boolean
         }[]
       }
+      google_oauth_status: {
+        Args: Record<string, never>
+        Returns: {
+          connected_email: string | null
+          connected_at: string
+        }[]
+      }
     }
     Enums: {
       user_role: UserRole

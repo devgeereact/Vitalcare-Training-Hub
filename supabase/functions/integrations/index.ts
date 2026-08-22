@@ -33,11 +33,27 @@ const CATALOGUE: { id: string; label: string; keys: string[] }[] = [
     label: "IMAP (pull your inbox)",
     keys: ["IMAP_HOST", "IMAP_PORT"],
   },
-  { id: "google_oauth", label: "Google sign-in", keys: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"] },
+  // Named for what actually reads these: google-oauth-callback and
+  // gmeet-create-event, both Calendar/Meet. Supabase Auth sign-in does NOT use
+  // them, it is configured in the Supabase dashboard's Google provider. The old
+  // "Google sign-in" label sent people to the wrong place for hours.
+  //
+  // Both functions resolve these with Deno.env.get, not getSecret, so setting
+  // them here has no effect. Saying so beats a green badge that means nothing.
+  {
+    id: "google_oauth",
+    label: "Google Calendar/Meet OAuth client (set in Edge Function Secrets, not here)",
+    keys: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+  },
+  // GOOGLE_SA_JSON dropped: it fed gcal-sync-event, which nothing calls, and it
+  // is read via Deno.env anyway. Asking for it pinned this row at "Partial"
+  // forever and invited pasting a service-account private key into the database
+  // for no benefit. GCAL_CALENDAR_ID is optional too (gmeet-create-event
+  // defaults to "primary"), but it is at least real.
   {
     id: "google_meet",
-    label: "Google Meet & Calendar",
-    keys: ["GCAL_CALENDAR_ID", "GOOGLE_SA_JSON"],
+    label: "Google Meet & Calendar (optional target calendar)",
+    keys: ["GCAL_CALENDAR_ID"],
   },
   { id: "zoom", label: "Zoom (backup video)", keys: ["ZOOM_ACCOUNT_ID", "ZOOM_CLIENT_ID", "ZOOM_CLIENT_SECRET"] },
   { id: "openweather", label: "OpenWeather", keys: ["OPENWEATHER_API_KEY"] },
