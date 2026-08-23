@@ -12,13 +12,19 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useCertificates } from "@/lib/queries/certificates.queries"
+import { useMyCertificates } from "@/lib/queries/certificates.queries"
 import { useMyCourses } from "@/lib/queries/courses.queries"
 import { useMyResources } from "@/lib/queries/library.queries"
 import { downloadCertificatePdf } from "@/lib/certificates/pdf"
+import { useUser } from "@/hooks/use-user"
+import { DataState, EmptyState, ErrorState } from "@/components/common/DataState"
 
 export default function MyFilesPage() {
-  const certs = useCertificates()
+  const { profile } = useUser()
+  // Pinned to the signed-in person. Row-level security lets staff read the whole
+  // certificate register, so a page headed "your certificates" has to scope the
+  // query itself or an administrator is shown other learners' records here.
+  const certs = useMyCertificates(profile?.id)
   const myCourses = useMyCourses()
   const resources = useMyResources("learner")
   const [downloading, setDownloading] = useState<string | null>(null)
@@ -75,25 +81,26 @@ export default function MyFilesPage() {
           <CardDescription>Download any certificate you have earned.</CardDescription>
         </CardHeader>
         <CardContent>
-          {certs.isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-14 w-full" />
-              <Skeleton className="h-14 w-full" />
-            </div>
-          ) : certs.isError ? (
-            <div className="py-4 text-center">
-              <p className="text-sm text-muted-foreground">Could not load certificates.</p>
-              <Button variant="outline" size="sm" className="mt-2" onClick={() => certs.refetch()}>
-                Retry
-              </Button>
-            </div>
-          ) : (certs.data ?? []).length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-              No certificates yet. Complete a course and pass its assessment to earn one.
-            </p>
-          ) : (
+          <DataState
+            query={certs}
+            resource="your certificates"
+            loading={
+              <div className="space-y-2">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+              </div>
+            }
+            empty={
+              <EmptyState
+                icon={Award}
+                title="No certificates yet"
+                description="Complete a course and pass its assessment to earn one."
+              />
+            }
+          >
+            {(rows) => (
             <ul className="space-y-2">
-              {(certs.data ?? []).map((c) => (
+              {rows.map((c) => (
                 <li
                   key={c.id}
                   className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5"
@@ -138,6 +145,7 @@ export default function MyFilesPage() {
                         <Download className="mr-1.5 size-4" />
                       )}
                       Download
+                      <span className="sr-only"> {c.courseTitle} certificate</span>
                     </Button>
                   ) : (
                     <span className="ml-auto text-xs text-muted-foreground">
@@ -147,7 +155,8 @@ export default function MyFilesPage() {
                 </li>
               ))}
             </ul>
-          )}
+            )}
+          </DataState>
         </CardContent>
       </Card>
 
@@ -164,10 +173,21 @@ export default function MyFilesPage() {
         <CardContent>
           {loading ? (
             <Skeleton className="h-14 w-full" />
+          ) : myCourses.isError || resources.isError ? (
+            <ErrorState
+              error={resources.error ?? myCourses.error}
+              resource="your course workbooks"
+              onRetry={() => {
+                void myCourses.refetch()
+                void resources.refetch()
+              }}
+            />
           ) : completedMaterials.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-              Workbooks from your completed courses will appear here.
-            </p>
+            <EmptyState
+              icon={FileText}
+              title="No workbooks yet"
+              description="Workbooks from your completed courses will appear here."
+            />
           ) : (
             <ul className="space-y-2">
               {completedMaterials.map((r) => (
@@ -185,7 +205,7 @@ export default function MyFilesPage() {
                         <p className="truncate text-xs text-muted-foreground">{r.courseTitle}</p>
                       )}
                     </div>
-                    <Download className="ml-auto size-4 shrink-0 text-muted-foreground" />
+                    <Download className="ml-auto size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                   </a>
                 </li>
               ))}

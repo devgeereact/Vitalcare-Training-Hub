@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { Award, AlertCircle, Download, Plus, BadgeCheck, Clock, Eye, CheckCircle2 } from "lucide-react"
+import { Award, Download, Plus, BadgeCheck, Clock, Eye, CheckCircle2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table"
 import {
   useCertificates,
+  useMyCertificates,
   useApproveCertificate,
   useIssueCertificate,
   useDefaultTemplate,
@@ -49,6 +50,8 @@ import { downloadCertificatePdf } from "@/lib/certificates/pdf"
 import { CertificatePreview } from "@/components/certificates/CertificatePreview"
 import VerifyCertDialog from "@/components/certificates/VerifyCertDialog"
 import { useUser } from "@/hooks/use-user"
+import { ErrorState, PermissionState } from "@/components/common/DataState"
+import { isPermissionError } from "@/lib/queries/query-error"
 
 function ExpiryBadge({ cert }: { cert: CertRow }) {
   if (cert.status === "expired") {
@@ -203,9 +206,14 @@ function IssueDialog() {
 }
 
 export default function CertificatesListPage() {
-  const { isAdmin, isTrainer } = useUser()
+  const { isAdmin, isTrainer, profile } = useUser()
   const isStaff = isAdmin || isTrainer
-  const { data, isLoading, isError, refetch } = useCertificates()
+  // Staff read the register; everyone else reads only their own certificates.
+  // Both hooks are called so the hook order stays stable, but only the one that
+  // matches the caller's role is enabled.
+  const register = useCertificates({ enabled: isStaff })
+  const mine = useMyCertificates(isStaff ? undefined : profile?.id)
+  const { data, isLoading, isError, error, refetch } = isStaff ? register : mine
   const approve = useApproveCertificate()
   const [verifyCode, setVerifyCode] = useState<string | null>(null)
   const template = useDefaultTemplate()
@@ -321,13 +329,15 @@ export default function CertificatesListPage() {
               ))}
             </div>
           ) : isError ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <AlertCircle className="size-8 text-destructive" />
-              <p className="text-sm text-muted-foreground">Could not load certificates.</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </div>
+            isPermissionError(error) ? (
+              <PermissionState resource="these certificates" />
+            ) : (
+              <ErrorState
+                error={error}
+                resource={isStaff ? "the certificate register" : "your certificates"}
+                onRetry={refetch}
+              />
+            )
           ) : (data?.length ?? 0) === 0 ? (
             <div className="flex flex-col items-center gap-3 py-12 text-center">
               <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">

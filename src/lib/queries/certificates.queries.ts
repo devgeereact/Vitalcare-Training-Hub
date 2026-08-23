@@ -5,6 +5,7 @@ import { callRpc } from "@/lib/supabase/rpc"
 export const certsKeys = {
   all: ["certificates"] as const,
   list: () => [...certsKeys.all, "list"] as const,
+  mine: (learnerId: string) => [...certsKeys.all, "mine", learnerId] as const,
   template: () => [...certsKeys.all, "template"] as const,
 }
 
@@ -76,13 +77,29 @@ export function certStatus(expiresAt: string | null): {
   return { status: "active", daysToExpiry: days }
 }
 
-export async function getCertificates(): Promise<CertRow[]> {
-  const { data, error } = await supabase
+/**
+ * Every certificate the caller is allowed to see: their own if they are a
+ * learner, the whole (organisation-scoped) register if they are staff.
+ *
+ * This is the ADMINISTRATIVE register. It must never back a learner-facing
+ * screen, because a signed-in administrator would then be shown other people's
+ * certificates under a heading that says "yours". Learner-facing screens use
+ * `useMyCertificates`, which pins the query to the signed-in learner.
+ */
+export async function getCertificates(
+  { learnerId }: { learnerId?: string } = {},
+): Promise<CertRow[]> {
+  let q = supabase
     .from("learner_certificates")
     .select(
       "id, learner_id, course_id, certificate_number, cpd_hours, issued_at, expires_at, verification_uuid, verification_code, approved",
     )
     .is("deleted_at", null)
+  // Defence in depth: row-level security already limits a learner to their own
+  // rows, but a staff caller is not limited, so a learner-facing screen must
+  // pin the owner here as well.
+  if (learnerId) q = q.eq("learner_id", learnerId)
+  const { data, error } = await q
     .order("issued_at", { ascending: false })
     .limit(500)
   if (error) {
@@ -154,8 +171,27 @@ export async function getCertificates(): Promise<CertRow[]> {
   })
 }
 
-export function useCertificates() {
-  return useQuery({ queryKey: certsKeys.list(), queryFn: getCertificates })
+export function useCertificates({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: certsKeys.list(),
+    enabled,
+    queryFn: () => getCertificates(),
+  })
+}
+
+/**
+ * The signed-in learner's own certificates, and nothing else.
+ *
+ * Backs every "your certificates" surface. The query stays disabled until the
+ * learner id is known, so it can never fall back to the unscoped register while
+ * the profile is still loading.
+ */
+export function useMyCertificates(learnerId: string | undefined) {
+  return useQuery({
+    queryKey: certsKeys.mine(learnerId ?? "none"),
+    enabled: !!learnerId,
+    queryFn: () => getCertificates({ learnerId: learnerId! }),
+  })
 }
 
 export interface CertStats {

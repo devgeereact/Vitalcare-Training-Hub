@@ -180,11 +180,23 @@ export function useCreateOrder(buyerId: string | undefined) {
         quantity: 1,
         unit_price_pence: input.product.price_pence,
       })
-      // Count the coupon use so max_uses is enforced (RLS blocks a direct
-      // update by the buyer, so this goes through a SECURITY DEFINER RPC).
+      // Record the redemption against this order. The RPC locks the coupon
+      // row, re-checks the cap and expiry on the server, and is keyed on the
+      // order, so a retry or a second confirmation cannot count it twice.
       if (coupon) {
-        const { error: rErr } = await callRpc("redeem_coupon", { p_code: coupon })
+        const { data: redeemed, error: rErr } = await callRpc<boolean>(
+          "redeem_coupon_for_order",
+          { p_order: order.id },
+        )
         if (rErr) console.error("[useCreateOrder:redeem]", rErr)
+        if (redeemed === false) {
+          // The coupon lapsed between the quote and the write. Keep the order,
+          // drop the discount, and charge the honest price.
+          await supabase
+            .from("orders")
+            .update({ coupon_code: null, total_pence: input.product.price_pence })
+            .eq("id", order.id)
+        }
       }
       return order.id as string
     },
@@ -397,67 +409,28 @@ export function useStoreStats(): ReturnType<typeof useQuery<StoreStats>> {
   })
 }
 
-/** Staff: mark an order paid and auto-enrol the buyer on any linked courses. */
-export function useConfirmOrder(confirmerId: string | undefined) {
+/**
+ * Staff: mark an order paid and auto-enrol the buyer on any linked courses.
+ *
+ * The confirming user is taken from the session on the server, not passed in,
+ * so the audit trail cannot be spoofed by the caller.
+ */
+export function useConfirmOrder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (orderId: string) => {
-      const { data: order, error } = await supabase
-        .from("orders")
-        .update({
-          status: "paid",
-          paid_at: new Date().toISOString(),
-          confirmed_by: confirmerId,
-        })
-        .eq("id", orderId)
-        .select("buyer_id, coupon_code")
-        .single()
+      // One server-side transaction: mark paid, enrol the buyer on every course
+      // in the order, and count the coupon once. Doing this from the browser
+      // let a double click count a coupon twice, enrol twice, and re-confirm an
+      // order that was already paid.
+      const { data, error } = await callRpc<boolean>("confirm_order", {
+        p_order: orderId,
+      })
       if (error) {
         console.error("[useConfirmOrder]", error)
         throw error
       }
-      // Enrol buyer on linked courses.
-      const { data: items } = await supabase
-        .from("order_items")
-        .select("product_id")
-        .eq("order_id", orderId)
-      const productIds = (items ?? []).map((i) => i.product_id).filter(Boolean) as string[]
-      if (order.buyer_id && productIds.length) {
-        const buyerId = order.buyer_id
-        const { data: products } = await supabase
-          .from("products")
-          .select("course_id")
-          .in("id", productIds)
-        const courseIds = [...new Set((products ?? []).map((p) => p.course_id).filter(Boolean))] as string[]
-        if (courseIds.length) {
-          const { data: existing } = await supabase
-            .from("enrollments")
-            .select("course_id")
-            .eq("learner_id", order.buyer_id)
-            .in("course_id", courseIds)
-            .is("deleted_at", null)
-          const already = new Set((existing ?? []).map((e) => e.course_id))
-          const toEnrol = courseIds.filter((c) => !already.has(c))
-          if (toEnrol.length) {
-            await supabase.from("enrollments").insert(
-              toEnrol.map((course_id) => ({
-                learner_id: buyerId,
-                course_id,
-                status: "not_started" as const,
-              })),
-            )
-          }
-        }
-      }
-      // Count coupon usage.
-      if (order.coupon_code) {
-        const { data: c } = await supabase
-          .from("coupons")
-          .select("id, used_count")
-          .eq("code", order.coupon_code)
-          .maybeSingle()
-        if (c) await supabase.from("coupons").update({ used_count: c.used_count + 1 }).eq("id", c.id)
-      }
+      return data === true
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["store", "orders"] }),
   })
