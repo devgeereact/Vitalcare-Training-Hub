@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import { callRpc } from "@/lib/supabase/rpc"
 import type { TrainingSession } from "@/types/database.types"
 
 export function useVirtualSessions() {
@@ -191,14 +192,9 @@ export function useDecideJoin(deciderId: string | undefined) {
 export async function getSessionJoinLink(
   sessionId: string,
 ): Promise<{ meet_url: string | null; zoom_join_url: string | null } | null> {
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args?: Record<string, unknown>,
-  ) => Promise<{
-    data: { meet_url: string | null; zoom_join_url: string | null }[] | null
-    error: { message: string } | null
-  }>
-  const { data, error } = await rpc("get_session_join_link", { p_session_id: sessionId })
+  const { data, error } = await callRpc<
+    { meet_url: string | null; zoom_join_url: string | null }[]
+  >("get_session_join_link", { p_session_id: sessionId })
   if (error) {
     console.error("[getSessionJoinLink]", error)
     return null

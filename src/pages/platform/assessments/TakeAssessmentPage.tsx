@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react"
 import { useParams, Link } from "react-router-dom"
+import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { ArrowLeft, AlertCircle, CheckCircle2, XCircle, Check, X, ListChecks } from "lucide-react"
 
@@ -28,6 +29,7 @@ import {
 
 export default function TakeAssessmentPage() {
   const { id = "" } = useParams()
+  const qc = useQueryClient()
   const assessment = useAssessment(id)
   const questions = useQuestions(id)
   const attemptCount = useAttemptCount(id)
@@ -69,6 +71,12 @@ export default function TakeAssessmentPage() {
         Math.round((Date.now() - startedAt.current) / 1000),
       )
       setResult(res)
+      if (res.passed) {
+        // A pass can complete the course and issue a certificate, so refresh
+        // what the learner sees next.
+        qc.invalidateQueries({ queryKey: ["certificates"] })
+        qc.invalidateQueries({ queryKey: ["courses"] })
+      }
     } catch {
       toast.error("Could not submit. Please try again.")
     } finally {

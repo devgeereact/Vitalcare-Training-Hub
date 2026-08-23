@@ -1,0 +1,67 @@
+# Vitalcare Training Hub — Apache/LiteSpeed config for the built SPA.
+#
+# Replaces vercel.json, which only worked on Vercel. React Router owns every
+# path, so anything that is not a real file on disk falls through to index.html.
+#
+# Note for deploys: cpanel-deploy excludes .htaccess from rsync by default, so
+# this file only reaches the server when you pass --with-htaccess dist/.htaccess.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Real files and directories serve directly (assets, images, uploads, any
+  # PHP living alongside the app).
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # A missing build artefact must fail as a 404, not fall through to the SPA.
+  # Without this a stale client requesting a deleted chunk gets index.html with
+  # a 200, the browser refuses it as the wrong MIME type, and the retry logic in
+  # src/lib/chunk-reload.ts never sees the load error it is waiting for.
+  RewriteCond %{REQUEST_URI} ^/(assets|logos|images|cards|illustrations|products)/
+  RewriteRule ^ - [R=404,L]
+
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Fingerprinted build output only. Vite hashes everything under /assets/,
+  # so a year of immutable caching is safe there and nowhere else.
+  <FilesMatch "\.(js|css|woff2?|png|jpe?g|svg|webp|avif|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # These four are NOT fingerprinted and must revalidate every load, or a
+  # returning visitor keeps running last week's build. sw.js especially:
+  # a stale service worker breaks push delivery until its cache expires.
+  <FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest|robots\.txt)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Apache has no built-in type for .webmanifest and falls back to
+# application/octet-stream, which stops the browser treating the file as a PWA
+# manifest at all. svg and woff2 are declared for the same reason.
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+  AddType image/svg+xml .svg
+  AddType font/woff2 .woff2
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml \
+    application/javascript application/json image/svg+xml
+</IfModule>
+
+# Never serve the things that should not be public, whatever ends up on disk.
+<FilesMatch "\.(env|env\.local|map|sql|bak|log|json\.bak)$">
+  Require all denied
+</FilesMatch>
+<Files ".htaccess">
+  Require all denied
+</Files>

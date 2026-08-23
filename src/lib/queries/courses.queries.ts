@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import { issueCourseCertificate } from "@/lib/queries/certificates.queries"
+import { callRpc } from "@/lib/supabase/rpc"
 import { stripDashes } from "@/lib/text/strip-dashes"
 import type {
   Course,
@@ -52,10 +54,8 @@ export function useEnrolmentCounts() {
     queryKey: [...coursesKeys.all, "enrolment-counts"],
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Map<string, number>> => {
-      const rpc = supabase.rpc as unknown as (
-        fn: string,
-      ) => Promise<{ data: { course_id: string; total: number }[] | null; error: unknown }>
-      const { data, error } = await rpc("course_enrolment_counts")
+      const { data, error } =
+        await callRpc<{ course_id: string; total: number }[]>("course_enrolment_counts")
       if (error) {
         console.error("[useEnrolmentCounts]", error)
         return new Map()
@@ -716,7 +716,7 @@ export function useMarkLessonComplete(courseId: string, lessonIds: string[]) {
         }
       }
 
-      const { data: enrolment } = await supabase
+      await supabase
         .from("enrollments")
         .update({
           progress_pct: pct,
@@ -725,24 +725,26 @@ export function useMarkLessonComplete(courseId: string, lessonIds: string[]) {
         })
         .eq("course_id", courseId)
         .eq("learner_id", uid)
-        .select("id")
 
       // Issue the certificate server-side. The browser cannot insert into
       // learner_certificates (RLS is staff-only), so we call a SECURITY DEFINER
       // function that re-validates enrolment, lesson completion and the
       // assessment pass, and is idempotent. Returns the cert id or null.
-      const isEnrolled = (enrolment?.length ?? 0) > 0
+      //
+      // Nothing here gates that call on a client-side enrolment check any more.
+      // A learner who finishes a course and gets no certificate has nothing to
+      // show for the work, so the only check that should be able to withhold one
+      // is the server's own. A single retry covers the case where the last
+      // lesson_progress write is not yet visible to the function.
       let issued = false
-      if (done && isEnrolled) {
-        const rpc = supabase.rpc as unknown as (
-          fn: string,
-          args: Record<string, unknown>,
-        ) => Promise<{ data: string | null; error: unknown }>
-        const { data: certId, error: certErr } = await rpc("issue_course_certificate", {
-          p_course: courseId,
-        })
-        if (certErr) console.error("[useMarkLessonComplete:cert]", certErr)
-        issued = !!certId
+      if (done) {
+        issued = !!(await issueCourseCertificate(courseId))
+        if (!issued) {
+          await new Promise((r) => setTimeout(r, 500))
+          issued = !!(await issueCourseCertificate(courseId, {
+            expectIssued: true,
+          }))
+        }
       }
       return { done: issued, assessmentPending }
     },

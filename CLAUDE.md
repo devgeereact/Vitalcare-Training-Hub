@@ -28,8 +28,8 @@ Skipping this causes brand drift, architectural errors, and copy that fails the 
 | **Email** | info@vitalcare.uk |
 | **Admin email** | gakinz101@gmail.com |
 | **Secondary admin** | info@vitalcare.uk |
-| **Repo** | github.com/[owner]/vitalcare-training-hub |
-| **Deploy** | Vercel Hobby (auto-deploy from main) |
+| **Repo** | github.com/devgeereact/Vitalcare-Training-Hub |
+| **Deploy** | cPanel (Apache/LiteSpeed) at vitalcare.uk, `npm run deploy` |
 | **Supabase project** | mongirnapzzizmzcrkqp |
 | **Founded** | May 2024 |
 | **NHS framework** | CSTF-aligned |
@@ -90,10 +90,10 @@ This template was forked and rebranded. Do NOT overwrite its core components unn
 | Database | Supabase PostgreSQL | 500MB free |
 | Storage | Supabase Storage | 1GB free |
 | Realtime | Supabase Realtime | Notifications, chat |
-| Deploy | Vercel Hobby | 100GB bandwidth |
-| CI | GitHub Actions | 2,000 min/month |
+| Deploy | cPanel static hosting | Local build, rsync over SSH. Server has no Node |
+| CI | GitHub Actions | Unlimited: the repo is public. CodeQL runs too |
 | Email | Resend | 3,000/month |
-| AI (primary) | Gemini 1.5 Flash | 15 RPM, 1M tokens/day |
+| AI (primary) | Gemini 3.6 Flash | Requires credit on the geeapp-n8n project |
 | AI (fallback) | OpenRouter Claude Haiku | Via Supabase Edge Function |
 | Video | Zoom Server-to-Server OAuth | Virtual sessions |
 | Calendar sync | Google Calendar API | Session scheduling |
@@ -295,7 +295,7 @@ vitalcare-training-hub/
 ├── tsconfig.json
 ├── tsconfig.app.json
 ├── package.json
-├── vercel.json                         # SPA rewrites
+├── public/.htaccess                    # SPA rewrites + cache headers (Apache)
 ├── index.html                          # Vitalcare title + Google Fonts
 ├── CLAUDE.md                           # You are here
 └── tms-product-spec-2026.html          # Feature spec reference
@@ -375,7 +375,7 @@ For local development only. Seeded via `supabase/migrations/003_seed.sql`.
 - `VITE_*` — exposed to browser. Use ONLY for Supabase URL + anon key + public flags.
 - All API secrets (Zoom, Google AI, OpenRouter, Resend, Google OAuth) — server-side only via Supabase Edge Functions.
 - `.env.local` is in `.gitignore`. It is NEVER committed.
-- Add all variables to Vercel: Settings > Environment Variables.
+- The production bundle is built locally, so `.env.local` supplies the build. There is no hosting dashboard to paste variables into.
 
 ### Supabase client config:
 ```
@@ -523,11 +523,13 @@ organisation, programme, practise (verb), practice (noun), centre, colour, licen
 
 ### Branches
 ```
-main       → production (Vercel auto-deploy)
-dev        → staging (Vercel preview)
+production → live site at vitalcare.uk (deployed by hand, see below)
+dev        → default working branch
 feature/*  → PRs into dev
-hotfix/*   → emergency PRs into main
+hotfix/*   → emergency PRs into production
 ```
+
+`production` is the repo default branch on GitHub. There is no `main`.
 
 ### Commit format
 ```
@@ -537,12 +539,27 @@ fix(auth): resolve Google OAuth redirect loop on mobile
 chore(deps): update vite to 7.2.5
 ```
 
-### Vercel config (vercel.json — required for SPA routing)
-```json
-{
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
-}
+### Deploying
+
+There is no auto-deploy. A push to `production` does not reach the live site.
+The server has no Node, so the build runs locally and ships as static files:
+
+```bash
+npm run deploy:check    # dry run — prints every file rsync would change
+npm run deploy          # build, then rsync to vitalcare.uk
 ```
+
+Both wrap `cpanel-deploy` (see `~/CLAUDE.md` §2). Run `deploy:check` first: the
+target `vitalcare.uk` is an addon-domain root, and a mirror deploy deletes
+anything on the server that is absent locally.
+
+### SPA routing
+
+`public/.htaccess` owns it, not `vercel.json`. React Router takes every path
+that is not a real file, except missing build artefacts under `/assets/` and
+friends, which must 404 so `src/lib/chunk-reload.ts` sees a load error rather
+than an HTML body with a 200. `cpanel-deploy` skips `.htaccess` unless the
+deploy passes `--with-htaccess`, which the npm scripts do.
 
 ---
 
@@ -610,7 +627,8 @@ RULE 15  NEVER use `any` as a TypeScript type.
 
 RULE 16  NEVER leave empty catch blocks. Log the error at minimum.
 
-RULE 17  NEVER merge to main without passing CI (typecheck + lint + build).
+RULE 17  NEVER merge to production without passing CI (secret scan + typecheck
+         + lint + build).
 
 RULE 18  ALWAYS test at 375px mobile breakpoint before committing UI changes.
 

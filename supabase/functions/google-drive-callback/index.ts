@@ -21,7 +21,7 @@ function redirect(url: string) {
 Deno.serve(async (req) => {
   const url = new URL(req.url)
   const code = url.searchParams.get("code")
-  const appUrl = Deno.env.get("APP_URL") ?? "https://app-1-orcin-eight.vercel.app"
+  const appUrl = Deno.env.get("APP_URL") ?? "https://vitalcare.uk"
   const dest = `${appUrl}/platform/settings/integrations`
 
   const admin = createClient(

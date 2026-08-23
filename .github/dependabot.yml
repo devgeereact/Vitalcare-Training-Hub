@@ -1,0 +1,101 @@
+version: 2
+
+# Matches the convention already running in rotaflow and kokolett-beauty.
+#
+# The repo is public, so Dependabot and CodeQL are both free. This note used to
+# claim CodeQL needed GitHub Advanced Security; see .github/workflows/codeql.yml,
+# which now runs it. Dependency updates matter here regardless: the browser
+# bundle ships Supabase auth and the platform holds learner records,
+# certificates and payroll, so a compromised transitive dependency runs in the
+# same context as the session token.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # Wait a week before proposing a newly published version. Compromised
+    # releases are typically pulled within days of publication, so the delay
+    # costs nothing and takes this repo out of the blast radius of a fresh
+    # supply-chain attack.
+    cooldown:
+      default-days: 7
+    # Batch the noisy, low-risk updates so review effort goes to the things that
+    # actually change behaviour.
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      production-patch:
+        dependency-type: production
+        update-types: [patch]
+    # ---------------------------------------------------------------------
+    # Toolchain majors are migrations, not upgrades: a human plans them.
+    #
+    # Scope is deliberately narrow. Majors for runtime dependencies
+    # (@supabase/supabase-js, react-router-dom, date-fns, zod) still open PRs.
+    # That is where a security fix is most likely to land major-only, and this
+    # app holds personal data. Blanket-ignoring every major would suppress
+    # exactly the updates worth seeing.
+    # ---------------------------------------------------------------------
+    ignore:
+      # Framework. A React or Vite major is a planned migration.
+      - dependency-name: react
+        update-types: ['version-update:semver-major']
+      - dependency-name: react-dom
+        update-types: ['version-update:semver-major']
+      - dependency-name: vite
+        update-types: ['version-update:semver-major']
+      # Language and build toolchain.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      # Tailwind 4 replaces the config format, and tailwind.config.ts carries
+      # the whole Vitalcare brand palette. That PR would not upgrade the
+      # project, it would break the build and leave someone reconstructing the
+      # design system from a diff.
+      - dependency-name: tailwindcss
+        update-types: ['version-update:semver-major']
+      - dependency-name: postcss
+        update-types: ['version-update:semver-major']
+      - dependency-name: autoprefixer
+        update-types: ['version-update:semver-major']
+      # ESLint majors mean a config-format migration; its plugins move with it.
+      - dependency-name: eslint
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'eslint-plugin-*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@typescript-eslint/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'typescript-eslint'
+        update-types: ['version-update:semver-major']
+      # Vite plugins are pinned to the Vite major they support.
+      - dependency-name: '@vitejs/*'
+        update-types: ['version-update:semver-major']
+      # tailwind-merge's major track is coupled to Tailwind's: v2 = Tailwind 3,
+      # v3 = Tailwind 4. It is a runtime dependency so the rule above would let
+      # its majors through, and the failure mode is silent: same twMerge, same
+      # signature, but conflicts resolved against a v4 class table, so cn()
+      # starts picking the wrong winner across the app with no error anywhere.
+      # Re-allow only in the same PR that moves to Tailwind 4.
+      - dependency-name: tailwind-merge
+        update-types: ['version-update:semver-major']
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(dev-deps)'
+
+  # Actions are pinned by major tag, which still moves underneath us. Dependabot
+  # is what surfaces a deprecated or compromised action. Grouped so three
+  # routine bumps arrive as one PR.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ['*']
+    commit-message:
+      prefix: 'chore(ci)'

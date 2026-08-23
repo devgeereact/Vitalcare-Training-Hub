@@ -32,3 +32,4 @@ memory/
 
 # TS build cache
 *.tsbuildinfo
+.gstack/

@@ -11,7 +11,7 @@ import {
 import { PageHero } from "@/components/marketing/PageHero"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/supabase/client"
+import { callRpc } from "@/lib/supabase/rpc"
 
 interface CertResult {
   learner_name: string
@@ -58,11 +58,9 @@ export default function VerifyCertPage(): React.ReactElement {
     }
     setState({ kind: "loading" })
     // verify_certificate(text) is added in migration 081; call it untyped.
-    const rpc = supabase.rpc as unknown as (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ data: CertResult[] | null; error: { message: string } | null }>
-    const { data, error } = await rpc("verify_certificate", { p_code: id })
+    const { data, error } = await callRpc<CertResult[]>("verify_certificate", {
+      p_code: id,
+    })
     if (error) {
       console.error("[verify_certificate]", error)
       setState({ kind: "error" })

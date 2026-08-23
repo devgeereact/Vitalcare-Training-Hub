@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import { callRpc } from "@/lib/supabase/rpc"
 import type { Coupon, Order, Product } from "@/types/database.types"
 
 export function gbp(pence: number): string {
@@ -182,11 +183,7 @@ export function useCreateOrder(buyerId: string | undefined) {
       // Count the coupon use so max_uses is enforced (RLS blocks a direct
       // update by the buyer, so this goes through a SECURITY DEFINER RPC).
       if (coupon) {
-        const rpc = supabase.rpc as unknown as (
-          fn: string,
-          args: Record<string, unknown>,
-        ) => Promise<{ error: { message: string } | null }>
-        const { error: rErr } = await rpc("redeem_coupon", { p_code: coupon })
+        const { error: rErr } = await callRpc("redeem_coupon", { p_code: coupon })
         if (rErr) console.error("[useCreateOrder:redeem]", rErr)
       }
       return order.id as string

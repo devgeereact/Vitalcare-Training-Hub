@@ -1,0 +1,78 @@
+name: CI
+
+# Enforces RULE 17 (no merge without typecheck + lint + build) and adds a
+# credential gate. Hardened to match the convention already running in rotaflow
+# and kokolett-beauty.
+#
+# CodeQL runs as its own workflow, see .github/workflows/codeql.yml. This note
+# used to say the repo was private and so could not run CodeQL without GitHub
+# Advanced Security; the repo is public, so the scan is free and now enabled.
+# Dependabot covers dependencies, see .github/dependabot.yml.
+
+on:
+  push:
+    branches: [dev, production]
+  pull_request:
+    branches: [dev, production]
+
+# Least privilege. Without this block GITHUB_TOKEN gets the repository default,
+# which is far broader than checkout needs.
+permissions:
+  contents: read
+
+# A superseded run on the same ref is wasted minutes and a confusing red X on a
+# commit that has already been replaced.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    # Not the author's zone. This platform schedules sessions, issues
+    # certificates with expiry dates and runs attendance windows, all of which
+    # are date arithmetic that behaves differently under UTC than under BST.
+    # Pinning UTC means CI never shares the developer's zone and cannot hide
+    # that class of bug.
+    env:
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Don't leave GITHUB_TOKEN on disk for the rest of the job.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # First, and on every push. A committed key is the one failure a later job
+      # cannot undo: once it is on the remote it exists in every clone and must
+      # be rotated, not deleted.
+      - name: Secret scan
+        run: npm run check:secrets
+
+      # `npm run build` runs tsc first, but run it separately so a type error is
+      # reported as a type error rather than buried in a failed bundle.
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Not --max-warnings 0 yet. The two standing warnings are in files this
+      # project may not edit: a React Compiler notice on TanStack Table's
+      # useReactTable, and an unused `ref` in src/components/ui/sidebar.tsx,
+      # which is Shadcn and off-limits per CLAUDE.md. Tighten this when both are
+      # resolved upstream rather than by editing generated components.
+      - name: Lint
+        run: npm run lint
+
+      # No VITE_* secrets are provided here on purpose. The build must succeed
+      # without them: src/lib/supabase/client.ts falls back to the publishable
+      # key, which is browser-safe. If a build ever starts REQUIRING a secret,
+      # that secret is about to be baked into the bundle and shipped publicly.
+      - name: Build
+        run: npm run build
