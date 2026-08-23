@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react"
@@ -16,14 +17,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  // True while the profile for a newly signed-in user is in flight. Role guards
+  // read `loading`, and without this they would see `loading: false, role: null`
+  // in the gap between the session arriving and the profile landing, and bounce
+  // a legitimate admin off the page they just signed in to reach.
+  const [profileLoading, setProfileLoading] = useState(false)
+  // Whose profile is currently held. A token refresh re-fires onAuthStateChange
+  // for the same user; reloading there must not flash the loading screen.
+  const profileUserId = useRef<string | null>(null)
 
   const loadProfile = useCallback(async (userId: string | undefined) => {
     if (!userId) {
+      profileUserId.current = null
       setProfile(null)
+      setProfileLoading(false)
       return
     }
-    const result = await getProfile(userId)
-    setProfile(result)
+    const isNewUser = profileUserId.current !== userId
+    if (isNewUser) setProfileLoading(true)
+    try {
+      const result = await getProfile(userId)
+      profileUserId.current = userId
+      setProfile(result)
+    } finally {
+      if (isNewUser) setProfileLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -71,11 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       profile,
       role: profile?.role ?? null,
-      loading,
+      loading: loading || profileLoading,
       signOut: handleSignOut,
       refreshProfile,
     }),
-    [session, profile, loading, handleSignOut, refreshProfile],
+    [session, profile, loading, profileLoading, handleSignOut, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
