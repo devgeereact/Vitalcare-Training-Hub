@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase/client"
+import { callRpc } from "@/lib/supabase/rpc"
 import { stripDashes } from "@/lib/text/strip-dashes"
 import type {
   Announcement,
@@ -132,11 +133,7 @@ export function useAdminContacts(userId: string | undefined) {
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<AdminContact[]> => {
-      const rpc = supabase.rpc as unknown as (
-        fn: string,
-        args?: Record<string, unknown>,
-      ) => Promise<{ data: AdminContact[] | null; error: { message: string } | null }>
-      const { data, error } = await rpc("list_admin_contacts")
+      const { data, error } = await callRpc<AdminContact[]>("list_admin_contacts")
       if (error) {
         console.error("[useAdminContacts]", error)
         return []
@@ -158,11 +155,9 @@ export function useSearchContacts(query: string) {
     enabled: q.length >= 2,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<AdminContact[]> => {
-      const rpc = supabase.rpc as unknown as (
-        fn: string,
-        args: Record<string, unknown>,
-      ) => Promise<{ data: AdminContact[] | null; error: { message: string } | null }>
-      const { data, error } = await rpc("search_contacts", { p_query: q })
+      const { data, error } = await callRpc<AdminContact[]>("search_contacts", {
+        p_query: q,
+      })
       if (error) {
         console.error("[useSearchContacts]", error)
         return []

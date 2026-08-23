@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import { callRpc } from "@/lib/supabase/rpc"
 
 export const certsKeys = {
   all: ["certificates"] as const,
@@ -28,6 +29,40 @@ export interface CertRow {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Ask the server to issue this learner's certificate for a course.
+ *
+ * `issue_course_certificate` is SECURITY DEFINER and re-checks enrolment, that
+ * every lesson is complete, and that the published assessment (if any) is
+ * passed. It is idempotent, so calling it again returns the existing id rather
+ * than creating a duplicate: any code path that could have completed a course
+ * may call it safely.
+ *
+ * Returns the certificate id, or null when the learner does not yet qualify.
+ * A null return on a course that looks finished means the write was lost, so it
+ * is logged rather than swallowed: a missing certificate is invisible to the
+ * learner until an admin goes looking for it.
+ */
+export async function issueCourseCertificate(
+  courseId: string,
+  { expectIssued = false }: { expectIssued?: boolean } = {},
+): Promise<string | null> {
+  const { data, error } = await callRpc<string>("issue_course_certificate", {
+    p_course: courseId,
+  })
+  if (error) {
+    console.error("[issueCourseCertificate]", courseId, error)
+    return null
+  }
+  if (!data && expectIssued) {
+    console.error(
+      "[issueCourseCertificate] course looks complete but no certificate was issued",
+      courseId,
+    )
+  }
+  return data
+}
 
 /** Classify a certificate from its expiry date. Within 30 days is "expiring". */
 export function certStatus(expiresAt: string | null): {
@@ -174,11 +209,9 @@ export interface VerifyResult {
 
 export async function verifyByCode(code: string): Promise<VerifyResult | null> {
   // verify_certificate(text) is added in migration 081; call it untyped.
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: VerifyResult[] | null; error: { message: string } | null }>
-  const { data, error } = await rpc("verify_certificate", { p_code: code.trim() })
+  const { data, error } = await callRpc<VerifyResult[]>("verify_certificate", {
+    p_code: code.trim(),
+  })
   if (error) {
     console.error("[verifyByCode]", error)
     throw new Error(error.message)
@@ -219,11 +252,7 @@ export function useApproveCertificate() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (certId: string) => {
-      const rpc = supabase.rpc as unknown as (
-        fn: string,
-        args: Record<string, unknown>,
-      ) => Promise<{ error: { message: string } | null }>
-      const { error } = await rpc("approve_certificate", { p_id: certId })
+      const { error } = await callRpc("approve_certificate", { p_id: certId })
       if (error) throw new Error(error.message)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: certsKeys.all }),

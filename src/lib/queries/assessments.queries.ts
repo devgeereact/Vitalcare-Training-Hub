@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import { issueCourseCertificate } from "@/lib/queries/certificates.queries"
+import { callRpc } from "@/lib/supabase/rpc"
 import type {
   Assessment,
   Question,
@@ -171,18 +173,9 @@ export async function getQuestions(assessmentId: string): Promise<QuestionWithOp
   // Options come through get_question_options (migration 068): it masks
   // is_correct for non-staff so learners cannot read the answer key, while the
   // staff Quiz Builder still sees the real answers.
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>,
-  ) => Promise<{
-    data:
-      | { id: string; question_id: string; label: string; position: number; is_correct: boolean }[]
-      | null
-    error: unknown
-  }>
-  const { data: optRows, error: optErr } = await rpc("get_question_options", {
-    p_assessment: assessmentId,
-  })
+  const { data: optRows, error: optErr } = await callRpc<
+    { id: string; question_id: string; label: string; position: number; is_correct: boolean }[]
+  >("get_question_options", { p_assessment: assessmentId })
   if (optErr) console.error("[getQuestions:options]", optErr)
   const options = (optRows ?? []).map((o) => ({
     ...o,
@@ -383,11 +376,7 @@ export function useAssessmentReview(assessmentId: string, enabled: boolean) {
     queryKey: ["assessment", "review", assessmentId],
     enabled: enabled && !!assessmentId,
     queryFn: async (): Promise<ReviewQuestion[]> => {
-      const rpc = supabase.rpc as unknown as (
-        fn: string,
-        args: Record<string, unknown>,
-      ) => Promise<{ data: ReviewRow[] | null; error: { message: string } | null }>
-      const { data, error } = await rpc("get_assessment_review", {
+      const { data, error } = await callRpc<ReviewRow[]>("get_assessment_review", {
         p_assessment: assessmentId,
       })
       if (error) {
@@ -452,11 +441,7 @@ export async function submitAttempt(
     }
   }
 
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: unknown; error: { message: string } | null }>
-  const { data, error } = await rpc("submit_assessment_attempt", {
+  const { data, error } = await callRpc<AttemptResult>("submit_assessment_attempt", {
     p_assessment: assessmentId,
     p_answers: payload,
     p_time_taken: timeTakenSecs,
@@ -465,7 +450,50 @@ export async function submitAttempt(
     console.error("[submitAttempt]", error)
     throw new Error(error.message)
   }
-  return data as AttemptResult
+
+  const result = data as AttemptResult
+  // Passing the assessment is the last thing standing between the learner and
+  // their certificate on a course that gates on one, so finish the course here.
+  // Marking a lesson complete used to be the only path that issued anything,
+  // which left a learner who finished the lessons first and passed the
+  // assessment second with a course stuck in progress and no certificate.
+  if (result.passed) {
+    await completeCourseAfterAttempt(assessmentId)
+  }
+  return result
+}
+
+/**
+ * Close out the course behind a passed assessment: issue the certificate (the
+ * server re-checks every condition and is idempotent) and, once it has been
+ * issued, mark the enrolment complete.
+ */
+async function completeCourseAfterAttempt(assessmentId: string): Promise<void> {
+  const { data: assessment, error } = await supabase
+    .from("assessments")
+    .select("course_id")
+    .eq("id", assessmentId)
+    .single()
+  if (error || !assessment?.course_id) {
+    if (error) console.error("[completeCourseAfterAttempt]", error)
+    return
+  }
+
+  const certId = await issueCourseCertificate(assessment.course_id)
+  if (!certId) return
+
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) return
+  const { error: enrolErr } = await supabase
+    .from("enrollments")
+    .update({
+      status: "completed",
+      progress_pct: 100,
+      completed_at: new Date().toISOString(),
+    })
+    .eq("course_id", assessment.course_id)
+    .eq("learner_id", auth.user.id)
+  if (enrolErr) console.error("[completeCourseAfterAttempt:enrolment]", enrolErr)
 }
 
 // ─── Results / grade book ────────────────────────────────────────────────────
