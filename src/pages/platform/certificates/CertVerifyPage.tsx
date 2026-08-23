@@ -28,6 +28,8 @@ import {
   verifyByCode,
   type VerifyResult,
 } from "@/lib/queries/certificates.queries"
+import { ErrorState, PermissionState } from "@/components/common/DataState"
+import { isPermissionError } from "@/lib/queries/query-error"
 
 const CODE_RE = /^(VC-[A-Z0-9]{6}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i
 
@@ -72,12 +74,26 @@ export default function CertVerifyPage() {
         </p>
       </div>
 
+      {stats.isError ? (
+        // Zeroes in these cards would read as "no certificates have been
+        // issued", which is a compliance statement, not a loading hiccup.
+        isPermissionError(stats.error) ? (
+          <PermissionState resource="certificate statistics" />
+        ) : (
+          <ErrorState
+            error={stats.error}
+            resource="certificate statistics"
+            onRetry={stats.refetch}
+          />
+        )
+      ) : (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total issued" value={stats.data?.total ?? 0} icon={Award} loading={stats.isLoading} />
         <StatCard label="Active" value={stats.data?.active ?? 0} icon={ShieldCheck} loading={stats.isLoading} />
         <StatCard label="Expiring (30 days)" value={stats.data?.expiringSoon ?? 0} icon={Clock} loading={stats.isLoading} />
         <StatCard label="Expired" value={stats.data?.expired ?? 0} icon={ShieldAlert} loading={stats.isLoading} />
       </div>
+      )}
 
       <Card>
         <CardHeader>

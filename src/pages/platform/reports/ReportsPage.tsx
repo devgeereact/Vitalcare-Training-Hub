@@ -55,6 +55,32 @@ export default function ReportsPage(): JSX.Element {
     }
   }
 
+  /**
+   * Whether a report's live source failed to load.
+   *
+   * This matters more here than anywhere else in the app: every builder was
+   * called with `data ?? []`, so a failed query exported a valid-looking
+   * workbook containing nothing. A compliance report that says an organisation
+   * has issued no certificates, when in fact the query broke, is worse than no
+   * report at all, because somebody files it.
+   */
+  function liveError(id: ReportId): boolean {
+    switch (id) {
+      case "certificate-log":
+        return certificates.isError
+      case "learner-progress":
+        return learners.isError
+      case "finance-tracker":
+        return invoices.isError
+      case "business-overview":
+        return summary.isError || invoices.isError
+      case "training-matrix":
+        return matrix.isError
+      default:
+        return false
+    }
+  }
+
   /** Build the live workbook for a report, or null if its data is unavailable. */
   function liveSpec(id: ReportId): WorkbookSpec | null {
     switch (id) {
@@ -100,6 +126,13 @@ export default function ReportsPage(): JSX.Element {
     const key = `${report.id}:${mode}`
     setBusy((prev) => ({ ...prev, [key]: true }))
     try {
+      if (mode === "live" && liveError(report.id)) {
+        toast.error("This report's data could not be loaded", {
+          description:
+            "Exporting now would produce an empty report. Reload the page and try again.",
+        })
+        return
+      }
       const spec =
         mode === "template" ? report.template() : liveSpec(report.id)
       if (!spec) {
@@ -145,6 +178,7 @@ export default function ReportsPage(): JSX.Element {
           const templateBusy = busy[`${report.id}:template`] ?? false
           const liveBusy = busy[`${report.id}:live`] ?? false
           const fetching = report.live && liveLoading(report.id)
+          const failed = report.live && liveError(report.id)
           return (
             <Card key={report.id} className="flex flex-col">
               <CardHeader>
@@ -180,18 +214,26 @@ export default function ReportsPage(): JSX.Element {
                   Download template
                 </Button>
                 {report.live && (
-                  <Button
-                    onClick={() => handleDownload(report, "live")}
-                    disabled={liveBusy || fetching}
-                    className="bg-brand-navy hover:bg-brand-navy-dark"
-                  >
-                    {liveBusy || fetching ? (
-                      <Loader2 className="mr-2 size-4 animate-spin" />
-                    ) : (
-                      <Database className="mr-2 size-4" />
+                  <>
+                    <Button
+                      onClick={() => handleDownload(report, "live")}
+                      disabled={liveBusy || fetching || failed}
+                      className="bg-brand-navy hover:bg-brand-navy-dark"
+                    >
+                      {liveBusy || fetching ? (
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                      ) : (
+                        <Database className="mr-2 size-4" />
+                      )}
+                      Export live data
+                    </Button>
+                    {failed && (
+                      <p role="alert" className="text-xs text-destructive">
+                        This report's data could not be loaded, so it cannot be
+                        exported. Reload the page and try again.
+                      </p>
                     )}
-                    Export live data
-                  </Button>
+                  </>
                 )}
               </CardContent>
             </Card>

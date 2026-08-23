@@ -487,7 +487,17 @@ async function completeCourseAfterAttempt(assessmentId: string): Promise<void> {
     return
   }
 
-  const certId = await issueCourseCertificate(assessment.course_id)
+  // The attempt itself is already recorded and passed. If issuance fails now,
+  // saying "could not submit" would be a lie about the thing that mattered, so
+  // this step is logged and left for the course page to retry: issuance is
+  // idempotent and runs again the next time the learner opens the course.
+  let certId: string | null = null
+  try {
+    certId = await issueCourseCertificate(assessment.course_id)
+  } catch (err) {
+    console.error("[completeCourseAfterAttempt:issue]", err)
+    return
+  }
   if (!certId) return
 
   const { data: auth } = await supabase.auth.getUser()

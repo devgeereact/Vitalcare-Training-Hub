@@ -41,9 +41,11 @@ const DAY_MS = 24 * 60 * 60 * 1000
  * may call it safely.
  *
  * Returns the certificate id, or null when the learner does not yet qualify.
- * A null return on a course that looks finished means the write was lost, so it
- * is logged rather than swallowed: a missing certificate is invisible to the
- * learner until an admin goes looking for it.
+ *
+ * A failed call throws: "you have not finished the course" and "we could not
+ * reach the server" are different answers, and returning null for both hid the
+ * second one behind the first. A missing certificate is invisible to the
+ * learner until an administrator goes looking for it.
  */
 export async function issueCourseCertificate(
   courseId: string,
@@ -54,7 +56,7 @@ export async function issueCourseCertificate(
   })
   if (error) {
     console.error("[issueCourseCertificate]", courseId, error)
-    return null
+    throw error
   }
   if (!data && expectIssued) {
     console.error(

@@ -20,6 +20,7 @@ import {
   incrementBlogView,
 } from "@/lib/queries/blog.queries"
 import { PageMeta, SITE_URL } from "@/components/seo/PageMeta"
+import { ErrorState } from "@/components/common/DataState"
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -31,7 +32,7 @@ function formatDate(iso: string): string {
 
 export default function BlogPostPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>()
-  const { data: post, isLoading } = usePublishedPost(slug)
+  const { data: post, isLoading, isError, error, refetch } = usePublishedPost(slug)
   const toggle = useToggleBlogLike()
 
   // Register a view once the post resolves.
@@ -49,9 +50,26 @@ export default function BlogPostPage(): React.ReactElement {
     )
   }
 
+  // A failed request is not a missing article. Saying "that article does not
+  // exist" when the fetch broke tells the reader the wrong thing and buries the
+  // defect.
+  if (isError) {
+    return (
+      <section className="mx-auto max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
+        <PageMeta title="Article unavailable" noIndex />
+        <ErrorState error={error} resource="this article" onRetry={refetch} />
+      </section>
+    )
+  }
+
   if (!post) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
+        <PageMeta
+          title="Article not found"
+          description="That article does not exist or is no longer published."
+          noIndex
+        />
         <h1 className="font-sans text-3xl font-semibold tracking-tight text-brand-navy">
           Article not found
         </h1>

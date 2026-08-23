@@ -47,6 +47,8 @@ import {
   useTrainers,
 } from "@/lib/queries/sessions.queries"
 import { useCourses } from "@/lib/queries/courses.queries"
+import { ErrorState, PermissionState } from "@/components/common/DataState"
+import { isPermissionError } from "@/lib/queries/query-error"
 
 function toLocal(iso: string) {
   return format(new Date(iso), "yyyy-MM-dd'T'HH:mm")
@@ -167,6 +169,24 @@ export default function SessionFormPage() {
       <div className="mx-auto max-w-2xl space-y-4">
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
+
+  // An edit form that cannot load the session would otherwise render blank and
+  // save those blanks over the real record.
+  if (isEdit && session.isError) {
+    return (
+      <div className="mx-auto max-w-2xl py-10">
+        {isPermissionError(session.error) ? (
+          <PermissionState resource="this session" />
+        ) : (
+          <ErrorState
+            error={session.error}
+            resource="this session"
+            onRetry={session.refetch}
+          />
+        )}
       </div>
     )
   }

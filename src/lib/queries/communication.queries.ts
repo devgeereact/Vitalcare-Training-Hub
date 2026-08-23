@@ -135,8 +135,11 @@ export function useAdminContacts(userId: string | undefined) {
     queryFn: async (): Promise<AdminContact[]> => {
       const { data, error } = await callRpc<AdminContact[]>("list_admin_contacts")
       if (error) {
+        // Throw rather than return an empty list: "no one to message" and
+        // "we could not load your contacts" are different problems, and only
+        // one of them is the user's to work around.
         console.error("[useAdminContacts]", error)
-        return []
+        throw error
       }
       return data ?? []
     },
@@ -160,7 +163,7 @@ export function useSearchContacts(query: string) {
       })
       if (error) {
         console.error("[useSearchContacts]", error)
-        return []
+        throw error
       }
       return data ?? []
     },
