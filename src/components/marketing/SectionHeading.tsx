@@ -34,8 +34,8 @@ export function SectionHeading({
           <p
             className={
               centered && !action
-                ? "inline-flex items-center justify-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold"
-                : "inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold"
+                ? "inline-flex items-center justify-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold-ink"
+                : "inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold-ink"
             }
           >
             <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />

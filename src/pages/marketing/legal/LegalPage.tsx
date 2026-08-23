@@ -34,11 +34,11 @@ export function LegalPage({
   const reduce = useReducedMotion()
 
   const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 18 },
+    hidden: { opacity: reduce ? 1 : 0, y: reduce ? 0 : 18 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.45, ease: [0.21, 0.47, 0.32, 0.98] },
+      transition: { duration: reduce ? 0 : 0.45, ease: [0.21, 0.47, 0.32, 0.98] },
     },
   }
 
@@ -58,7 +58,7 @@ export function LegalPage({
           {/* Sticky contents rail */}
           <aside className="hidden lg:block">
             <div className="sticky top-28">
-              <p className="inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold">
+              <p className="inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold-ink">
                 <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
                 On this page
               </p>
@@ -69,7 +69,7 @@ export function LegalPage({
                     href={`#${slugify(section.heading)}`}
                     className="flex items-baseline gap-3 rounded-md px-2 py-1.5 text-sm leading-snug text-muted-foreground transition-colors hover:bg-muted/60 hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
                   >
-                    <span className="font-sans text-xs font-semibold tabular-nums text-brand-gold">
+                    <span className="font-sans text-xs font-semibold tabular-nums text-brand-gold-ink">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     {section.heading}
@@ -101,7 +101,7 @@ export function LegalPage({
                   className="scroll-mt-28 border-l-2 border-brand-gold/40 pl-6"
                 >
                   <h2 className="flex items-baseline gap-3 font-sans font-semibold tracking-tight text-2xl leading-tight text-brand-navy sm:text-3xl">
-                    <span className="font-sans text-sm font-semibold tabular-nums text-brand-gold">
+                    <span className="font-sans text-sm font-semibold tabular-nums text-brand-gold-ink">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     {section.heading}

@@ -34,3 +34,9 @@ memory/
 # TS build cache
 *.tsbuildinfo
 .gstack/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

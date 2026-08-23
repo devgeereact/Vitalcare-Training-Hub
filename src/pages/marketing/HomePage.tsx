@@ -137,11 +137,11 @@ function HomeHero() {
     },
   }
   const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 20 },
+    hidden: { opacity: reduce ? 1 : 0, y: reduce ? 0 : 20 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.55, ease: [0.21, 0.47, 0.32, 0.98] },
+      transition: { duration: reduce ? 0 : 0.55, ease: [0.21, 0.47, 0.32, 0.98] },
     },
   }
 
@@ -438,7 +438,7 @@ export default function HomePage() {
               <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
                 {body}
               </p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-gold">
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-gold-ink">
                 See how we help
                 <ArrowRight
                   className="size-4 transition-transform group-hover:translate-x-0.5"

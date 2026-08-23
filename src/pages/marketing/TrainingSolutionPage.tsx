@@ -42,7 +42,7 @@ export default function TrainingSolutionPage(): React.ReactElement {
     .filter((c): c is NonNullable<typeof c> => Boolean(c))
 
   const fadeUp = {
-    hidden: { opacity: 0, y: reduce ? 0 : 24 },
+    hidden: { opacity: reduce ? 1 : 0, y: reduce ? 0 : 24 },
     show: { opacity: 1, y: 0 },
   }
 
@@ -250,7 +250,7 @@ export default function TrainingSolutionPage(): React.ReactElement {
                   <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-muted-foreground">
                     {category.blurb}
                   </p>
-                  <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-brand-gold">
+                  <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-brand-gold-ink">
                     View courses
                     <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                   </span>

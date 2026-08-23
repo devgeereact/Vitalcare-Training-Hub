@@ -151,7 +151,7 @@ export default function ContactPage(): React.ReactElement {
                 href={SOCIAL_LINKS.whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1ebe5d] ${FOCUS}`}
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f7a6e] px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c6459] ${FOCUS}`}
               >
                 <MessageCircle className="size-5" /> Chat on WhatsApp
               </a>

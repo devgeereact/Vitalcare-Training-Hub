@@ -71,7 +71,7 @@ export function CategoryGrid({ initialCount = 9 }: { initialCount?: number }) {
               <p className="mt-1 flex-1 text-sm leading-relaxed text-muted-foreground">
                 {category.blurb}
               </p>
-              <p className="mt-4 flex items-center gap-1.5 text-sm font-medium text-brand-gold">
+              <p className="mt-4 flex items-center gap-1.5 text-sm font-medium text-brand-gold-ink">
                 {category.count} courses
                 <ArrowRight
                   className="size-4 transition-transform group-hover:translate-x-0.5"

@@ -5,10 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/logos/logo-round-navy.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Vitalcare Training Hub | CSTF-aligned Healthcare Training</title>
-    <meta
-      name="description"
-      content="CSTF-aligned, CPD-accredited healthcare training for NHS Trusts, care homes and healthcare professionals across the UK."
-    />
+    <!--
+      No description, Open Graph or canonical tag here.
+
+      React 19 hoists head tags rendered by a component, but for <meta> it adds
+      rather than replaces: a static description here plus a per-page one from
+      PageMeta means every page ships two contradictory descriptions, and the
+      generic one wins as often as not. The title below is a bootstrap only, and
+      React does replace that.
+
+      Page metadata lives in src/components/seo/PageMeta.tsx.
+    -->
     <meta name="theme-color" content="#1b2e6b" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/logos/logo-round-navy.svg" />

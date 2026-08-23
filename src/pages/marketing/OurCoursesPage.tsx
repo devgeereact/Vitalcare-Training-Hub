@@ -83,7 +83,7 @@ export default function OurCoursesPage(): React.ReactElement {
   )
 
   const fadeUp = {
-    hidden: { opacity: 0, y: reduce ? 0 : 24 },
+    hidden: { opacity: reduce ? 1 : 0, y: reduce ? 0 : 24 },
     show: { opacity: 1, y: 0 },
   }
 
@@ -121,9 +121,12 @@ export default function OurCoursesPage(): React.ReactElement {
                 <item.icon className="size-5" aria-hidden />
               </span>
               <div>
-                <h3 className="text-base font-semibold text-brand-navy">
+                {/* h2, not h3: this band sits directly under the page h1 and
+                    there is no section heading between them, so h3 left a gap
+                    in the outline a screen-reader user navigates by. */}
+                <h2 className="text-base font-semibold text-brand-navy">
                   {item.title}
-                </h3>
+                </h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                   {item.body}
                 </p>

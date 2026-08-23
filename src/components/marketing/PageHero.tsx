@@ -42,11 +42,11 @@ export function PageHero({
     },
   }
   const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 18 },
+    hidden: { opacity: reduce ? 1 : 0, y: reduce ? 0 : 18 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] },
+      transition: { duration: reduce ? 0 : 0.5, ease: [0.21, 0.47, 0.32, 0.98] },
     },
   }
 

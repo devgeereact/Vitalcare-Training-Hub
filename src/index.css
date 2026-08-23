@@ -617,7 +617,11 @@
   --secondary: 210 40% 96%;
   --secondary-foreground: 222 47% 11%;
   --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  /* Was 47% lightness (#65748b, "slate-500"), which measures 4.49:1 against the
+     app's own #f8fafc background: below the 4.5:1 WCAG AA floor for body text,
+     and it failed on real pages. 45% clears it on both white and the tinted
+     background while reading as the same grey. */
+  --muted-foreground: 215 16% 45%;
   --accent: 43 65% 56%;                 /* gold #d4a843 */
   --accent-foreground: 225 61% 18%;
   --destructive: 0 72% 51%;

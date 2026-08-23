@@ -4,8 +4,10 @@ import { cn } from "@/lib/utils"
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
 
+// px-2 at the narrowest widths: nine 36px controls in one row is 324px, which
+// does not fit a 320px screen and pushed the whole page sideways.
 const BASE =
-  "inline-flex h-9 min-w-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+  "inline-flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:px-3"
 
 export interface PaginationProps {
   /** Current page, 1-based. */
@@ -66,7 +68,7 @@ export function Pagination({
   return (
     <nav
       aria-label={label}
-      className={cn("flex items-center justify-center gap-1", className)}
+      className={cn("flex flex-wrap items-center justify-center gap-1", className)}
     >
       <button
         type="button"
@@ -83,7 +85,7 @@ export function Pagination({
         <span className="hidden sm:inline">Previous</span>
       </button>
 
-      <ul className="flex items-center gap-1">
+      <ul className="flex flex-wrap items-center justify-center gap-1">
         {tokens.map((token, i) =>
           token === ELLIPSIS ? (
             <li key={`ellipsis-${i}`} aria-hidden>

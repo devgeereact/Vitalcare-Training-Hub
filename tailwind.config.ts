@@ -74,6 +74,13 @@ const config: Config = {
           navy: "#1b2e6b",
           "navy-dark": "#142054",
           gold: "#d4a843",
+          // Brand gold as *text on a light background*. #d4a843 is an accent
+          // colour: at 2.2:1 on white it fails WCAG AA for anything smaller
+          // than a heading, which covered every eyebrow label and "learn more"
+          // link on the marketing site. This darker tone reads as the same gold
+          // and clears AA at 4.96:1. Use the accent for fills, borders, icons
+          // and for text on navy; use this for text on white or near-white.
+          "gold-ink": "#8f6a10",
           "gold-light": "#e8c26a",
         },
         // Semantic (CSTF/CPD badges, status)
