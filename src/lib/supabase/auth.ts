@@ -127,5 +127,32 @@ function friendlyAuthError(message: string): string {
   if (m.includes("captcha")) {
     return "The security check could not be verified. Refresh the page and try again."
   }
+  // The mail service, not the person, has failed. "Please try again" here sends
+  // someone into an endless retry loop against something that will keep
+  // failing, so say what actually happened and give them a way through.
+  if (
+    m.includes("sending confirmation email") ||
+    m.includes("sending recovery email") ||
+    m.includes("error sending") ||
+    m.includes("smtp")
+  ) {
+    return (
+      "We could not send your email, so the account was not created. This is a " +
+      "fault at our end, not yours. Please contact info@vitalcare.uk and we " +
+      "will set your account up."
+    )
+  }
+  if (m.includes("password") && m.includes("least")) {
+    return "That password is too short. Use at least eight characters."
+  }
+  if (m.includes("signups not allowed") || m.includes("signup is disabled")) {
+    return "New accounts are not open at the moment. Contact info@vitalcare.uk."
+  }
   return "Something went wrong. Please try again."
 }
+
+/**
+ * Exposed for tests. What these messages say is the whole of what a person sees
+ * when authentication fails, so they are worth pinning down.
+ */
+export const friendlyAuthErrorForTest = friendlyAuthError
