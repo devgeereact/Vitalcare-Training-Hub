@@ -163,8 +163,12 @@ export default function AppLayout() {
 
         <ProfileCompletionBanner />
 
-        {/* PAGE CONTENT */}
-        <main className="flex-1 p-6 pb-24 md:pb-6">
+        {/* PAGE CONTENT
+            Clearance for the fixed mobile tab bar comes from --bottom-nav-height,
+            which is the bar's real height including the device safe area, and 0
+            on md and up where no bar is rendered. Pages do not add their own
+            bottom padding: one variable keeps every screen consistent. */}
+        <main className="flex-1 p-6 pb-safe-nav">
           <SectionTabs />
           <Outlet />
         </main>

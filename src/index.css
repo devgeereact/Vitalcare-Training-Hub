@@ -696,3 +696,43 @@
   --sidebar-border: 225 40% 20%;
   --sidebar-ring: 43 65% 56%;
 }
+
+/* ---------------------------------------------------------------------------
+   Mobile safe area
+   ---------------------------------------------------------------------------
+   The platform shell puts a fixed tab bar at the bottom of every mobile
+   viewport. Anything that scrolls has to end above it, and above the device's
+   own home indicator, or the last card on the page sits underneath the bar and
+   cannot be read or tapped.
+
+   One source of truth: --bottom-nav-height is the real height of that bar
+   including the safe area, and is 0 wherever the bar is not rendered (>= md).
+   Layouts and any page with its own fixed action bar reserve space from this
+   variable instead of guessing a padding value per screen.
+   --------------------------------------------------------------------------- */
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --bottom-nav-height: 0px;
+}
+
+@media (max-width: 767.98px) {
+  :root {
+    /* 4rem tab row + whatever the device reserves for its home indicator. */
+    --bottom-nav-height: calc(4rem + var(--safe-bottom));
+  }
+}
+
+/* Reserve room for the tab bar at the end of a scrolling region. */
+.pb-safe-nav {
+  padding-bottom: calc(var(--bottom-nav-height) + 1.5rem);
+}
+
+/* Sit a fixed element (action bar, floating control) directly above the tabs. */
+.bottom-safe-nav {
+  bottom: var(--bottom-nav-height);
+}
+
+/* Keep an anchored or focused element clear of the tab bar when scrolled to. */
+html {
+  scroll-padding-bottom: calc(var(--bottom-nav-height) + 1rem);
+}

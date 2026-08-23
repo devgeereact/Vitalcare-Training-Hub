@@ -25,12 +25,18 @@ const badgeVariants = cva(
 )
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends React.HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof badgeVariants> {}
 
+/**
+ * Renders a <span>, not a <div>. A badge is inline content and is routinely
+ * placed inside a paragraph or a button, both of which may only contain
+ * phrasing content: a <div> there is invalid HTML and React reports it as a
+ * nesting warning.
+ */
 function Badge({ className, variant, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <span className={cn(badgeVariants({ variant }), className)} {...props} />
   )
 }
 
