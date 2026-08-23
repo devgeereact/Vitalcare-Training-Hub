@@ -57,6 +57,11 @@ jobs:
       - name: Secret scan
         run: npm run check:secrets
 
+      # Unit tests before the build: they are the fastest signal, and a failure
+      # here means the logic is wrong regardless of whether it bundles.
+      - name: Unit tests
+        run: npm run test
+
       # `npm run build` runs tsc first, but run it separately so a type error is
       # reported as a type error rather than buried in a failed bundle.
       - name: Typecheck
@@ -76,3 +81,85 @@ jobs:
       # that secret is about to be baked into the bundle and shipped publicly.
       - name: Build
         run: npm run build
+
+  # End-to-end against the production build: deep links, per-page metadata,
+  # WCAG AA, the mobile safe area at five widths, and the bundle budget. Kept as
+  # its own job so a failure here is legible as "the built site is wrong" rather
+  # than folded into the lint step.
+  e2e:
+    name: end-to-end
+    runs-on: ubuntu-latest
+    needs: verify
+    env:
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # The sitemap generator reaches for the database and warns rather than
+      # failing when it cannot, so the build works here without credentials.
+      - name: End-to-end tests
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # The authorisation suite signs in as real accounts against the live Supabase
+  # project, so it only runs where those credentials exist. It is deliberately
+  # not required for a merge from a fork, which cannot hold them: it runs on
+  # pushes to the long-lived branches, where the secrets are available.
+  authorisation:
+    name: authorisation
+    runs-on: ubuntu-latest
+    needs: verify
+    if: github.event_name == 'push'
+    env:
+      TZ: UTC
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      TEST_SUPER_ADMIN_EMAIL: ${{ secrets.TEST_SUPER_ADMIN_EMAIL }}
+      TEST_SUPER_ADMIN_PASSWORD: ${{ secrets.TEST_SUPER_ADMIN_PASSWORD }}
+      TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
+      TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+      TEST_TRAINER_EMAIL: ${{ secrets.TEST_TRAINER_EMAIL }}
+      TEST_TRAINER_PASSWORD: ${{ secrets.TEST_TRAINER_PASSWORD }}
+      TEST_LEARNER_EMAIL: ${{ secrets.TEST_LEARNER_EMAIL }}
+      TEST_LEARNER_PASSWORD: ${{ secrets.TEST_LEARNER_PASSWORD }}
+      TEST_OTHER_USER_EMAIL: ${{ secrets.TEST_OTHER_USER_EMAIL }}
+      TEST_OTHER_USER_PASSWORD: ${{ secrets.TEST_OTHER_USER_PASSWORD }}
+      MIGRATION_092_APPLIED: ${{ vars.MIGRATION_092_APPLIED }}
+      MIGRATION_093_APPLIED: ${{ vars.MIGRATION_093_APPLIED }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # Skips itself, loudly, when the secrets are not configured. A skipped
+      # authorisation test is not a passing one, so read the log rather than the
+      # tick.
+      - name: Authorisation and journey tests
+        run: npm run test:security
