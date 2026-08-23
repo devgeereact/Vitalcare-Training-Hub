@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { PageHero } from "@/components/marketing/PageHero"
 import { supabase } from "@/lib/supabase/client"
 import { COMPANY, SOCIAL_LINKS } from "@/lib/constants"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 const contactSchema = z.object({
   name: z.string().min(2, "Enter your name"),
@@ -76,6 +77,11 @@ export default function ContactPage(): React.ReactElement {
 
   return (
     <>
+      <PageMeta
+        title="Contact us"
+        description="Talk to the Vitalcare team about training for your organisation. 11 Halesworth Road, London SE13 7TJ. 020 8059 8757."
+        canonicalPath="/contact-us"
+      />
       <PageHero
         eyebrow="Contact us"
         title="Talk to the Vitalcare team"

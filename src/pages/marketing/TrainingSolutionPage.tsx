@@ -6,6 +6,7 @@ import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { getSector } from "@/data/sectors"
 import { getCategory } from "@/data/courses"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 export default function TrainingSolutionPage(): React.ReactElement {
   const { sector: sectorSlug } = useParams<{ sector: string }>()
@@ -15,6 +16,11 @@ export default function TrainingSolutionPage(): React.ReactElement {
   if (!sector) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
+        <PageMeta
+          title="Solution not found"
+          description="That training solution does not exist."
+          noIndex
+        />
         <h1 className="font-sans font-semibold tracking-tight text-3xl text-brand-navy">
           Solution not found
         </h1>
@@ -42,6 +48,11 @@ export default function TrainingSolutionPage(): React.ReactElement {
 
   return (
     <>
+      <PageMeta
+        title={sector.headline}
+        description={sector.intro}
+        canonicalPath={`/training-solutions/${sector.slug}`}
+      />
       <PageHero
         eyebrow="Training solutions"
         title={sector.headline}

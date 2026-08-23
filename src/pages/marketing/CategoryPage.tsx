@@ -10,6 +10,7 @@ import { CourseCard } from "@/components/courses/CourseCard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getCategory } from "@/data/courses"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
+import { PageMeta, SITE_URL } from "@/components/seo/PageMeta"
 
 const PAGE_SIZE = 12
 
@@ -41,6 +42,11 @@ export default function CategoryPage(): React.ReactElement {
   if (!category) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
+        <PageMeta
+          title="Category not found"
+          description="That course category does not exist."
+          noIndex
+        />
         <h1 className="font-sans font-semibold tracking-tight text-3xl text-brand-navy">
           Category not found
         </h1>
@@ -64,6 +70,18 @@ export default function CategoryPage(): React.ReactElement {
 
   return (
     <>
+      <PageMeta
+        title={`${category.name} courses`}
+        description={category.blurb}
+        canonicalPath={`/our-courses/${category.slug}`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: `${category.name} courses`,
+          description: category.blurb,
+          url: `${SITE_URL}/our-courses/${category.slug}`,
+        }}
+      />
       <PageHero
         eyebrow="Course category"
         title={category.name}

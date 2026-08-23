@@ -9,6 +9,7 @@ import { Pagination } from "@/components/marketing/Pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { driveImageUrl } from "@/lib/drive-image"
 import { usePublishedPosts, type PublicBlogPost } from "@/lib/queries/blog.queries"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 const PAGE_SIZE = 12
 
@@ -82,6 +83,11 @@ export default function BlogPage(): React.ReactElement {
 
   return (
     <>
+      <PageMeta
+        title="Insight on healthcare training"
+        description="Practical guidance on CSTF compliance, mandatory training, safeguarding and clinical skills, written for the people who run training."
+        canonicalPath="/resources/blog"
+      />
       <PageHero
         eyebrow="Insights"
         title="Insight on healthcare training"

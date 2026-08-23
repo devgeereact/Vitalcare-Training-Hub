@@ -19,6 +19,7 @@ import {
   setPostLiked,
   incrementBlogView,
 } from "@/lib/queries/blog.queries"
+import { PageMeta, SITE_URL } from "@/components/seo/PageMeta"
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -111,8 +112,36 @@ export default function BlogPostPage(): React.ReactElement {
 
   const heroImage = post.featureImageUrl ? driveImageUrl(post.featureImageUrl, 1600) : null
 
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.publishedAt,
+    author: { "@type": "Person", name: post.authorName },
+    publisher: {
+      "@type": "Organization",
+      name: "Vitalcare Training Hub",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logos/logo-round-navy.svg`,
+      },
+    },
+    mainEntityOfPage: `${SITE_URL}/resources/blog/${post.slug}`,
+    ...(heroImage ? { image: heroImage } : {}),
+  }
+
   return (
     <article className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
+      <PageMeta
+        title={post.title}
+        description={post.excerpt}
+        canonicalPath={`/resources/blog/${post.slug}`}
+        image={heroImage ?? undefined}
+        type="article"
+        publishedTime={post.publishedAt}
+        jsonLd={articleSchema}
+      />
       <Link
         to="/resources/blog"
         className="inline-flex items-center gap-2 text-sm font-medium text-brand-navy/70 transition-colors hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"

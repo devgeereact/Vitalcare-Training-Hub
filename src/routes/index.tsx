@@ -1,5 +1,5 @@
 import { Suspense, lazy, type ReactElement } from "react"
-import { createBrowserRouter } from "react-router-dom"
+import { createBrowserRouter, Navigate } from "react-router-dom"
 
 import { RouteFallback } from "@/routes/route-fallback"
 
@@ -169,6 +169,9 @@ export const router = createBrowserRouter (
         { path: "our-courses/:categorySlug", element: <CategoryPage /> },
         { path: "training-solutions/:sector", element: <TrainingSolutionPage /> },
         { path: "resources/verify-certificate", element: <VerifyCertPage /> },
+        // Every certificate, and the standard credentialing line, prints
+        // "verifiable at vitalcare.uk/verify". That address has to resolve.
+        { path: "verify", element: <Navigate to="/resources/verify-certificate" replace /> },
         { path: "resources/accreditations", element: <AccreditationsPage /> },
         { path: "resources/blog", element: <BlogPage /> },
         { path: "resources/blog/:slug", element: <BlogPostPage /> },

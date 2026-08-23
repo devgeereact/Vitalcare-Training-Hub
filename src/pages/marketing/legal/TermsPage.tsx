@@ -3,6 +3,7 @@ import { LegalPage } from "@/pages/marketing/legal/LegalPage"
 export default function TermsPage() {
   return (
     <LegalPage
+      canonicalPath="/terms-and-conditions"
       title="Terms and Conditions"
       updated="1 June 2026"
       intro="The terms on which you may use Vitalcare Training Hub."

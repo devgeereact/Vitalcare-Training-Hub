@@ -3,6 +3,7 @@ import { LegalPage } from "@/pages/marketing/legal/LegalPage"
 export default function PrivacyPolicyPage() {
   return (
     <LegalPage
+      canonicalPath="/privacy-policy"
       title="Privacy Policy"
       updated="1 June 2026"
       intro="How Vitalcare Training Hub Ltd collects, uses and protects your personal data."

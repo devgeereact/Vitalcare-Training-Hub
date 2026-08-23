@@ -1,6 +1,7 @@
 import { motion, useReducedMotion, type Variants } from "framer-motion"
 import { FileText } from "lucide-react"
 import { PageHero } from "@/components/marketing/PageHero"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 export interface LegalSection {
   heading: string
@@ -21,11 +22,14 @@ export function LegalPage({
   updated,
   intro,
   sections,
+  canonicalPath,
 }: {
   title: string
   updated: string
   intro?: string
   sections: LegalSection[]
+  /** The route this page is served at, used as its canonical URL. */
+  canonicalPath: string
 }) {
   const reduce = useReducedMotion()
 
@@ -40,6 +44,13 @@ export function LegalPage({
 
   return (
     <>
+      {/* Every legal page shares this layout, so metadata lives here once and
+          each page supplies its own title, description and canonical path. */}
+      <PageMeta
+        title={title}
+        description={intro ?? `${title} for Vitalcare Training Hub Ltd.`}
+        canonicalPath={canonicalPath}
+      />
       <PageHero eyebrow="Legal" title={title} description={intro} />
 
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">

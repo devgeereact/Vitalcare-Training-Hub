@@ -26,6 +26,8 @@ import { useCategories } from "@/lib/queries/courses.queries"
 import { useAuth } from "@/hooks/use-auth"
 import { COURSES, getCategory } from "@/data/courses"
 import { sanitizeHtml } from "@/lib/sanitize"
+import { PageMeta, SITE_URL } from "@/components/seo/PageMeta"
+import { plainText } from "@/lib/text/plain"
 
 function Crumbs({ title }: { title: string }): React.ReactElement {
   return (
@@ -104,6 +106,11 @@ export default function CourseDetailPage(): React.ReactElement {
   if (!c && !fallback) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
+        <PageMeta
+          title="Course not found"
+          description="That course does not exist or is not yet published."
+          noIndex
+        />
         <h1 className="font-sans font-semibold tracking-tight text-3xl text-brand-navy">Course not found</h1>
         <p className="mt-3 text-muted-foreground">
           That course does not exist or is not yet published. Browse the full
@@ -141,8 +148,42 @@ export default function CourseDetailPage(): React.ReactElement {
     show: { opacity: 1, y: 0 },
   }
 
+  // Metadata is built from this course, not from a site-wide default, so every
+  // course page presents its own title, description and canonical URL. Without
+  // it a crawler sees the same page a few hundred times over.
+  const metaDescription =
+    plainText(summary ?? description ?? "").slice(0, 300) ||
+    `${title}: ${cstf ? "CSTF-aligned, " : ""}CPD-accredited training from Vitalcare Training Hub.`
+
+  const courseSchema = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: title,
+    description: metaDescription,
+    url: `${SITE_URL}/our-courses/course/${slug}`,
+    provider: {
+      "@type": "Organization",
+      name: "Vitalcare Training Hub",
+      url: SITE_URL,
+    },
+    ...(categoryName ? { about: categoryName } : {}),
+    ...(thumbnail ? { image: thumbnail } : {}),
+    hasCourseInstance: {
+      "@type": "CourseInstance",
+      courseMode: "online",
+      courseWorkload: `PT${Math.max(1, Math.round(durationMins / 60))}H`,
+    },
+  }
+
   return (
     <>
+      <PageMeta
+        title={title}
+        description={metaDescription}
+        canonicalPath={`/our-courses/course/${slug}`}
+        image={thumbnail ?? undefined}
+        jsonLd={courseSchema}
+      />
       {/* Navy hero, matched to the shared PageHero banner */}
       <section className="relative overflow-hidden bg-brand-navy">
         <div

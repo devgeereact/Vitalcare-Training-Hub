@@ -28,6 +28,7 @@ import { LEADERSHIP } from "@/lib/constants"
 import { img, imgAlt } from "@/data/marketing-images"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
 import { usePublicEvents } from "@/lib/queries/public-events.queries"
+import { PageMeta, SITE_URL } from "@/components/seo/PageMeta"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
@@ -382,8 +383,34 @@ function UpcomingEvents() {
 }
 
 export default function HomePage() {
+  // The organisation and website schema live on the home page only, so search
+  // engines resolve the brand once rather than on every page.
+  const organisationSchema = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    name: "Vitalcare Training Hub Ltd",
+    url: SITE_URL,
+    logo: `${SITE_URL}/logos/logo-round-navy.svg`,
+    email: "info@vitalcare.uk",
+    telephone: "+442080598757",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "11 Halesworth Road",
+      addressLocality: "London",
+      postalCode: "SE13 7TJ",
+      addressCountry: "GB",
+    },
+  }
+
   return (
     <>
+      <PageMeta
+        isHome
+        title="Vitalcare Training Hub | CSTF-aligned healthcare training"
+        description="CSTF-aligned, CPD-accredited healthcare training for NHS Trusts, care homes and healthcare professionals across the UK."
+        canonicalPath="/"
+        jsonLd={organisationSchema}
+      />
       <HomeHero />
 
       <StatsBar />

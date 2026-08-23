@@ -15,6 +15,7 @@ import { PageHero } from "@/components/marketing/PageHero"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { LEADERSHIP, COMPANY } from "@/lib/constants"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
@@ -79,6 +80,11 @@ export default function AboutUsPage() {
 
   return (
     <>
+      <PageMeta
+        title="About us"
+        description="Vitalcare Training Hub is a CPD-accredited healthcare training provider working with NHS Trusts, care homes and independent practitioners across the UK."
+        canonicalPath="/about-us"
+      />
       <PageHero
         eyebrow="About us"
         title="About Vitalcare Training Hub"

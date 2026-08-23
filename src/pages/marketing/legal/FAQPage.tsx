@@ -3,6 +3,7 @@ import { LegalPage } from "@/pages/marketing/legal/LegalPage"
 export default function FAQPage() {
   return (
     <LegalPage
+      canonicalPath="/faq"
       title="Frequently asked questions"
       updated="1 June 2026"
       intro="Answers to the questions we are asked most often by training leads and learners."

@@ -17,6 +17,7 @@ import { Pagination } from "@/components/marketing/Pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { COURSE_CATEGORIES, TOTAL_COURSE_COUNT } from "@/data/courses"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 const ALL = "all" as const
 
@@ -88,6 +89,11 @@ export default function OurCoursesPage(): React.ReactElement {
 
   return (
     <>
+      <PageMeta
+        title="Healthcare training courses"
+        description="CSTF-aligned, CPD-accredited training across mandatory care, safeguarding, clinical skills, first aid, fire safety and more."
+        canonicalPath="/our-courses"
+      />
       <PageHero
         eyebrow="Our courses"
         title="Training across every area of care"
