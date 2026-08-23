@@ -50,7 +50,47 @@
     -->
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      A first paint that does not wait for JavaScript.
+
+      The document body was an empty div, so on a throttled connection the
+      screen stayed blank until the bundle parsed and React mounted: no
+      first-contentful-paint entry at all, and roughly two seconds of nothing on
+      a mid-range phone. This markup is styled inline so it needs no stylesheet,
+      and React replaces it the moment it mounts.
+    -->
+    <div id="root">
+      <div
+        style="
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 1rem;
+          background: #f8fafc;
+          color: #1b2e6b;
+          font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        "
+      >
+        <img
+          src="/logos/logo-round-navy.svg"
+          alt=""
+          width="56"
+          height="56"
+          style="opacity: 0.9"
+        />
+        <p style="margin: 0; font-size: 0.875rem; letter-spacing: 0.01em">
+          Loading Vitalcare Training Hub...
+        </p>
+        <noscript>
+          <p style="margin: 0; max-width: 28rem; text-align: center; font-size: 0.875rem">
+            This site needs JavaScript. Turn it on, or call us on 020 8059 8757
+            and we will help you book training.
+          </p>
+        </noscript>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
