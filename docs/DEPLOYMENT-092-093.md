@@ -13,6 +13,11 @@ Your account does not have the necessary privileges to access this endpoint.
 
 Apply them from an account that administers the project.
 
+> **Applying them by hand instead?** `docs/SQL-EDITOR-RUNBOOK.md` has the same
+> two migrations laid out for the Supabase SQL Editor, with pre-flight checks,
+> verification queries and rollback notes around them. Use that if you do not
+> want to set up the CLI.
+
 ## What to run
 
 ```bash
