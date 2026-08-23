@@ -5,6 +5,7 @@ import { ArrowUpDown, Pencil, Eye, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { CourseRow } from "@/lib/queries/courses.queries"
 import DuplicateCourseButton from "@/pages/platform/courses/DuplicateCourseButton"
+import RemoveCourseButton from "@/pages/platform/courses/RemoveCourseButton"
 import PublishCourseButton from "@/pages/platform/courses/PublishCourseButton"
 
 export const courseColumns: ColumnDef<CourseRow>[] = [
@@ -72,12 +73,12 @@ export const courseColumns: ColumnDef<CourseRow>[] = [
     header: "",
     cell: ({ row }) => (
       <div className="flex justify-end gap-1">
-        <Button asChild variant="ghost" size="icon" className="size-8" aria-label="View course">
+        <Button asChild variant="ghost" size="icon" className="size-8" aria-label={`View ${row.original.title}`}>
           <Link to={`/platform/courses/${row.original.id}`}>
             <Eye className="size-4" />
           </Link>
         </Button>
-        <Button asChild variant="ghost" size="icon" className="size-8" aria-label="Edit course">
+        <Button asChild variant="ghost" size="icon" className="size-8" aria-label={`Edit ${row.original.title}`}>
           <Link to={`/platform/courses/builder/${row.original.id}`}>
             <Pencil className="size-4" />
           </Link>
@@ -87,6 +88,7 @@ export const courseColumns: ColumnDef<CourseRow>[] = [
           published={row.original.status === "Published"}
         />
         <DuplicateCourseButton id={row.original.id} />
+        <RemoveCourseButton id={row.original.id} title={row.original.title} />
       </div>
     ),
   },
