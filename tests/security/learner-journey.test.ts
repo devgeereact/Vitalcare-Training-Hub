@@ -397,12 +397,32 @@ describe.skipIf(!enabled)("learner journey", () => {
   })
 
   afterAll(async () => {
+    if (!fixture) return
     // The fixture course stays, unpublished, so the next run reuses it. It is
     // never listed publicly and holds no real learner's records.
     await admin.client
       .from("courses")
       .update({ is_published: false })
-      .eq("id", fixture?.courseId ?? "")
+      .eq("id", fixture.courseId)
+
+    // Each run adds two attempts (one failed, one passed). Left alone they
+    // accumulate for ever and skew any report that counts attempts, so the run
+    // tidies up after itself, keeping only the pass that backs the certificate.
+    const { data: attempts } = await admin.client
+      .from("assessment_attempts")
+      .select("id, passed, completed_at")
+      .eq("assessment_id", fixture.assessmentId)
+      .is("deleted_at", null)
+      .order("completed_at", { ascending: false })
+
+    const keep = (attempts ?? []).find((a) => a.passed)?.id
+    const stale = (attempts ?? []).filter((a) => a.id !== keep).map((a) => a.id)
+    if (stale.length > 0) {
+      await admin.client
+        .from("assessment_attempts")
+        .update({ deleted_at: new Date().toISOString() })
+        .in("id", stale as string[])
+    }
   })
 })
 
