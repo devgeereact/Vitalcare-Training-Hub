@@ -1,4 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom"
+import { Suspense } from "react"
+import { RouteFallback } from "@/routes/route-fallback"
 import { AppSidebar } from "@/components/app-sidebar"
 import BottomTabBar from "@/components/platform/BottomTabBar"
 import SectionTabs from "@/components/platform/SectionTabs"
@@ -170,7 +172,9 @@ export default function AppLayout() {
             bottom padding: one variable keeps every screen consistent. */}
         <main className="flex-1 p-6 pb-safe-nav">
           <SectionTabs />
-          <Outlet />
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
 
         <Footer />

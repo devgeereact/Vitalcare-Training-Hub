@@ -1,5 +1,4 @@
 import { format } from "date-fns"
-import * as XLSX from "xlsx"
 import { Download, AlertCircle, ClipboardList } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -15,11 +14,17 @@ import {
 } from "@/components/ui/table"
 import { useResults } from "@/lib/queries/assessments.queries"
 
+/** Load the 1.2MB spreadsheet library only when an export or import runs. */
+async function loadXlsx() {
+  return await import("xlsx")
+}
+
 export default function ResultsPage() {
   const { data, isLoading, isError, refetch } = useResults()
 
-  function exportXlsx() {
+  async function exportXlsx() {
     if (!data?.length) return
+    const XLSX = await loadXlsx()
     const rows = data.map((r) => ({
       Learner: r.learnerName,
       Assessment: r.assessmentTitle,

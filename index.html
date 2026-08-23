@@ -16,17 +16,31 @@
     <!-- Fonts: DM Serif Display (headings) + DM Sans (body/UI) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Loaded without blocking the first paint: the stylesheet is fetched as a
+      low-priority resource and promoted to a stylesheet once it arrives, with
+      a plain <link> inside <noscript> so it still applies without JavaScript.
+      display=swap means text is readable in the fallback face meanwhile.
+    -->
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&family=Dancing+Script:wght@500;600;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&family=Dancing+Script:wght@500;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
 
-    <!-- Template icon fonts (used by base component pages) -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-      rel="stylesheet"
-    />
-    <link href="https://cdn.boxicons.com/fonts/basic/boxicons.min.css" rel="stylesheet" />
+    <!--
+      Bootstrap Icons and Boxicons came with the base template and were loaded
+      from two third-party CDNs on every page. Nothing in this application uses
+      either icon set (Lucide and Tabler are the icon libraries), so they were
+      two render-blocking cross-origin requests buying nothing. Removed.
+    -->
   </head>
   <body>
     <div id="root"></div>
