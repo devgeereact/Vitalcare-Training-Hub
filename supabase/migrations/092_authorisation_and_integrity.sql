@@ -100,6 +100,70 @@ grant execute on function private.staff_for(uuid) to anon, authenticated;
 -- 2. Every profile belongs to an organisation
 -- ===========================================================================
 
+-- 2a. First, unblock server-side writes to privileged profile columns.
+--
+-- guard_profile_privileged_cols (migration 064) refuses any change to role,
+-- organisation or verification unless private.is_admin() or
+-- private.is_super_admin() returns true. Both read auth.uid(), so both are
+-- false for any caller with no end-user session: a migration running in the SQL
+-- editor, a scheduled job, or the service_role key an Edge Function uses.
+--
+-- That is an accident rather than a policy, and it is already breaking things.
+-- admin-create-learners sets organisation_id on each new learner through the
+-- service_role client, so bulk learner import has been silently failing to
+-- assign an organisation, and it does not check the error. The backfill below
+-- hits the same wall.
+--
+-- Admitting a session-less caller is not a weakening. The guard exists to stop
+-- a learner's own JWT editing privileged columns, and row-level security still
+-- gates every request that carries one: profiles_update_own requires
+-- id = auth.uid(), which is false when auth.uid() is null. The only callers
+-- this admits are the ones that bypass row-level security anyway and are
+-- trusted absolutely.
+create or replace function public.guard_profile_privileged_cols()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, private
+as $$
+begin
+  -- No end-user session: service_role, a migration, or a scheduled job.
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  -- Super admins can change anything.
+  if private.is_super_admin() then
+    return new;
+  end if;
+
+  -- Admins and managers may change role and organisation, but not verification.
+  if private.is_admin() then
+    if new.is_verified is distinct from old.is_verified
+       or new.verified_at is distinct from old.verified_at
+       or new.verified_by is distinct from old.verified_by then
+      raise exception 'Only a super admin may change verification';
+    end if;
+    return new;
+  end if;
+
+  -- Everyone else: privileged columns must not change.
+  if new.role is distinct from old.role
+     or new.is_verified is distinct from old.is_verified
+     or new.verified_at is distinct from old.verified_at
+     or new.verified_by is distinct from old.verified_by
+     or new.organisation_id is distinct from old.organisation_id then
+    raise exception 'Not allowed to change privileged profile fields';
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.guard_profile_privileged_cols()
+  from public, anon, authenticated;
+
+-- 2b. Assign the profiles that have no organisation.
 update public.profiles
 set organisation_id = private.default_organisation_id()
 where organisation_id is null
