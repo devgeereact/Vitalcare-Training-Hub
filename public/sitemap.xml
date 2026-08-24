@@ -166,54 +166,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://vitalcare.uk/our-courses/course/health-safety-and-welfare</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/infection-prevention-and-control</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/moving-and-handling-of-people</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/fire-safety-awareness</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/information-governance-and-data-security</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/basic-life-support</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/safeguarding-adults-level-1</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/safeguarding-children-level-1</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://vitalcare.uk/our-courses/course/person-centred-care</loc>
     <lastmod>2026-06-02</lastmod>
     <changefreq>monthly</changefreq>
@@ -256,36 +208,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://vitalcare.uk/our-courses/course/safeguarding-adults-level-2</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/safeguarding-children-level-2</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/safeguarding-children-level-3</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/mental-capacity-act-and-dols</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/prevent-awareness</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://vitalcare.uk/our-courses/course/domestic-abuse-awareness</loc>
     <lastmod>2026-06-02</lastmod>
     <changefreq>monthly</changefreq>
@@ -293,12 +215,6 @@
   </url>
   <url>
     <loc>https://vitalcare.uk/our-courses/course/modern-slavery-awareness</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/medication-administration</loc>
     <lastmod>2026-06-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -406,6 +322,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://vitalcare.uk/our-courses/course/health-safety-and-welfare</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://vitalcare.uk/our-courses/course/coshh-awareness</loc>
     <lastmod>2026-06-02</lastmod>
     <changefreq>monthly</changefreq>
@@ -485,12 +407,6 @@
   </url>
   <url>
     <loc>https://vitalcare.uk/our-courses/course/paediatric-first-aid</loc>
-    <lastmod>2026-06-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://vitalcare.uk/our-courses/course/basic-life-support-and-aed</loc>
     <lastmod>2026-06-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -592,26 +508,110 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://vitalcare.uk/our-courses/course/safe-administration-of-medication</loc>
-    <lastmod>2026-06-02</lastmod>
+    <loc>https://vitalcare.uk/our-courses/course/safeguarding-adults-level-2</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/safeguarding-children-level-2</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/safeguarding-children-level-3</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/mental-capacity-act-and-dols</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/prevent-awareness</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/medication-administration</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/basic-life-support-and-aed</loc>
+    <lastmod>2026-08-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://vitalcare.uk/our-courses/course/moving-and-handling-people</loc>
-    <lastmod>2026-06-02</lastmod>
+    <lastmod>2026-08-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://vitalcare.uk/our-courses/course/basic-life-support-first-aid</loc>
-    <lastmod>2026-06-02</lastmod>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/infection-prevention-and-control</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/moving-and-handling-of-people</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/fire-safety-awareness</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/information-governance-and-data-security</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/basic-life-support</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/safeguarding-adults-level-1</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/safeguarding-children-level-1</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vitalcare.uk/our-courses/course/safe-administration-of-medication</loc>
+    <lastmod>2026-08-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://vitalcare.uk/our-courses/course/equality-diversity-and-inclusion</loc>
-    <lastmod>2026-08-23</lastmod>
+    <lastmod>2026-08-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

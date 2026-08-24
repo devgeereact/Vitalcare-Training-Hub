@@ -1319,48 +1319,141 @@ correct at this point.
 
 ## Step 5 — The one decision only you can make
 
-**No course has a renewal period set.** After step 3 the platform is *capable*
-of expiring certificates and sending renewal reminders, but it will not do
-either until each course says how long its certificate lasts. CSTF topics are
-usually 12 months.
+**No course has a renewal period set.** Steps 2 and 3 made the platform
+*capable* of expiring certificates and sending renewal reminders. It will not do
+either until each course says how long its certificate lasts.
 
-First see what you have:
+`renewal_months` means: a certificate for this course is valid for this many
+months from the day it is issued. Leaving it `null` means the certificate never
+expires, which is the right answer for some courses and the wrong answer for
+most statutory ones.
+
+### Nothing already issued is at risk
+
+Worth knowing before you decide. Only one certificate on the system has no
+expiry date, and it belongs to the automated test fixture, which is not
+CSTF-aligned and gets no renewal period below. The two real certificates already
+carry an expiry, and the backfill only fills blanks. **Setting the periods below
+changes no existing certificate and sends no reminder to anybody.**
+
+Confirm that for yourself before running anything:
 
 ```sql
-select id, title, is_cstf_aligned, renewal_months
+select lc.certificate_number,
+       c.title as course,
+       c.is_cstf_aligned,
+       lc.issued_at,
+       lc.expires_at
+from public.learner_certificates lc
+left join public.courses c on c.id = lc.course_id
+where lc.expires_at is null
+  and lc.deleted_at is null;
+```
+
+**Expected:** one row, `QA automated journey (do not publish)`. If anything else
+appears, read the "before you backfill" check further down before proceeding.
+
+### Proposed periods, for clinical sign-off
+
+The periods below follow the Core Skills Training Framework's own refresh
+intervals: the practical and clinical subjects that decay are annual, and the
+knowledge-based subjects are three-yearly. This is a **proposal, not a fact**.
+Renewal intervals vary by employer and by commissioner, and this is Harni's call
+as Clinical Director, not mine. Change any number before you run it.
+
+```sql
+-- ---------------------------------------------------------------------------
+-- 5a. CSTF: annual refresh (12 months)
+--     Practical and clinical competence that decays without practice.
+-- ---------------------------------------------------------------------------
+update public.courses set renewal_months = 12 where id in (
+  '7388688e-45c5-4d4f-bd14-a8d81aa93d22',  -- Basic Life Support
+  '04fe5c3e-875f-49c0-8cd9-59083e44bd6d',  -- Basic Life Support (BLS) Essentials
+  '8675f85c-2b72-4788-87f9-6962b0c19cf6',  -- Basic Life Support and AED
+  '9acdc04f-a24f-4511-a99a-3db1806dc750',  -- Basic Life Support and First Aid
+  'cddc5b28-36e6-4cec-ba7b-e157b09ab511',  -- Fire Safety Awareness
+  '4d9f2f9c-eb28-4547-821b-88c87db8f411',  -- Infection Prevention and Control
+  '4eb7cb1d-1d34-441b-a15e-6461cc01012d',  -- Information Governance and Data Security
+  '3c3df748-ef16-470b-ac63-b2f4d199aa2e',  -- Medication Administration
+  '8babc039-6396-427a-8881-a614efd0cacf',  -- Moving and Handling of People
+  '30a4514b-bf0c-4c60-b2fb-5271da2866ac',  -- Moving and Handling People
+  'b88fefdd-57fb-458d-9949-99810749c0f9',  -- Safe Administration of Medication
+  'a417594b-3a6b-409e-a1ce-16f5d179a180'   -- Safeguarding Children Level 3
+);
+
+-- ---------------------------------------------------------------------------
+-- 5b. CSTF: three-yearly refresh (36 months)
+--     Knowledge and legislation, where the content changes slowly.
+-- ---------------------------------------------------------------------------
+update public.courses set renewal_months = 36 where id in (
+  'b367a3d5-cda2-4f27-a5be-a3f6b263460d',  -- Equality and Diversity
+  'cbfb39d5-4a70-4e45-a7b0-971fe7408f1b',  -- Equality, Diversity and Inclusion
+  '6ec9675c-9f8b-47f0-b4e3-929baf52ef2e',  -- Health, Safety and Welfare
+  '7b2795e0-91ff-40f2-b996-744c3c1d23cc',  -- Mental Capacity Act and DoLS
+  '31644ca4-98f9-46a3-8cb7-ebecfd8447a0',  -- Prevent Awareness
+  '7db8cf0d-0d7e-412e-9ff2-663e41cb9de8',  -- Safeguarding Adults Level 1
+  '7b0c52c0-916e-4481-aa14-deb9283c9185',  -- Safeguarding Adults Level 2
+  'bdc5e177-ab9f-4185-9f2b-0cdf27ed3be6',  -- Safeguarding Children Level 1
+  '9fa43137-a253-4d06-9d5a-0a10b6651a3a'   -- Safeguarding Children Level 2
+);
+
+-- ---------------------------------------------------------------------------
+-- 5c. Statutory certificates outside CSTF, where the awarding body sets the
+--     validity period rather than you. First aid and food safety are the
+--     obvious ones: a first aid at work certificate is a three-year
+--     certificate by regulation.
+-- ---------------------------------------------------------------------------
+update public.courses set renewal_months = 36 where id in (
+  '0d0c9c32-a146-4f87-93e5-0b46899e4ff9',  -- First Aid at Work
+  'a8352d56-6bea-4375-9d59-86faf7c97e73',  -- Emergency First Aid at Work
+  '759d95bf-d1fc-4bfe-b665-df7bb1f79717',  -- Paediatric First Aid
+  '648d7c94-da82-4f93-aea2-9df2f3eeccbf',  -- Mental Health First Aid
+  '6842b2e5-cb9d-45a4-b66a-324117519689',  -- Food Safety and Hygiene Level 1
+  'fae07c68-af64-420b-8184-555225fb1b2d'   -- Food Safety and Hygiene Level 2
+);
+
+update public.courses set renewal_months = 12 where id in (
+  'd5e9e938-be2c-45a4-8368-16a9ac4e93bc'   -- Fire Warden / Marshal
+);
+```
+
+### Deliberately left with no expiry
+
+**Care Certificate** (`ad864248-…`) is CSTF-aligned but is an induction standard,
+achieved once. It is not usually re-taken, so it keeps no renewal period. Set one
+if your commissioners expect it:
+
+```sql
+-- Only if the Care Certificate should expire in your organisation.
+-- update public.courses set renewal_months = 36
+-- where id = 'ad864248-c896-4996-b273-d41401ff5107';
+```
+
+Everything else — the Train the Trainer courses, the specialist clinical skills
+(catheterisation, venepuncture, tracheostomy care), the soft skills — is left
+with no expiry, because the right interval there is your organisation's
+competency policy rather than a published standard. Set any of them the same
+way, by id.
+
+### Check what you have set
+
+```sql
+select renewal_months,
+       count(*) as courses,
+       string_agg(title, ', ' order by title) as which
 from public.courses
-where deleted_at is null
-order by is_cstf_aligned desc, title;
+where deleted_at is null and renewal_months is not null
+group by renewal_months
+order by renewal_months;
 ```
 
-Then choose one of these. **Read the comment above each before running it.**
+### Backfill the certificates already issued
+
+Setting a renewal period only affects **certificates issued from that point on**.
+Run this to give an expiry to the ones already issued, measured from their
+original issue date:
 
 ```sql
--- Option A: 12 months for every CSTF-aligned course, and nothing else.
---           The safe starting point for statutory and mandatory training.
-update public.courses
-set renewal_months = 12
-where is_cstf_aligned = true
-  and deleted_at is null
-  and renewal_months is null;
-
--- Option B: a specific course, when the period varies by subject.
---           Repeat per course. Find the id from the select above.
--- update public.courses
--- set renewal_months = 36
--- where id = 'paste-the-course-id-here';
-
--- Option C: do nothing for now, and accept that no certificate expires
---           and no renewal reminder is ever sent.
-```
-
-Setting a renewal period only affects **certificates issued from that point
-on**. To also backfill the certificates already issued for those courses, run
-this afterwards:
-
-```sql
--- Gives an expiry, measured from the original issue date, to certificates
--- whose course now has a renewal period. Safe to re-run.
 update public.learner_certificates lc
 set expires_at = lc.issued_at + (c.renewal_months || ' months')::interval
 from public.courses c
@@ -1370,10 +1463,10 @@ where c.id = lc.course_id
   and coalesce(c.renewal_months, 0) > 0;
 ```
 
-**Be aware of what this does.** A certificate issued more than
-`renewal_months` ago becomes *expired* the moment you run it, and the daily
-reminder job will email its owner. With three certificates on the system that
-is fine. Check first if you would rather know:
+**Before you run it**, know what it does: a certificate issued longer ago than
+its renewal period becomes *expired* the moment this runs, and the daily
+reminder job emails its owner the next morning. On this database that affects
+nothing, but check anyway, and check again on any future run:
 
 ```sql
 select lc.certificate_number,
@@ -1388,6 +1481,9 @@ where lc.expires_at is null
   and lc.deleted_at is null
   and coalesce(c.renewal_months, 0) > 0;
 ```
+
+**Expected right now:** no rows, because the only certificate without an expiry
+belongs to a course with no renewal period.
 
 ---
 
