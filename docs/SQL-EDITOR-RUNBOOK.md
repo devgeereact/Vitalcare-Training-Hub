@@ -1447,6 +1447,31 @@ group by renewal_months
 order by renewal_months;
 ```
 
+### What was actually applied, 24 August 2026
+
+Step 5 has been run. **29 courses** now carry a renewal period: 14 at 12 months
+and 15 at 36 months, matching 5a, 5b and 5c above.
+
+Two notes on what that left behind.
+
+**The Care Certificate is set to 12 months.** An earlier pass set 12 months
+across every CSTF-aligned course, which caught it. The proposal above
+deliberately leaves it with no expiry, because it is an induction standard
+achieved once rather than a qualification that lapses. It was left as you set
+it rather than silently reversed. Decide which you want:
+
+```sql
+-- Keep it as an induction standard that does not expire.
+-- update public.courses set renewal_months = null
+-- where id = 'ad864248-c896-4996-b273-d41401ff5107';
+```
+
+**No existing certificate changed.** The only one without an expiry belongs to
+the automated test fixture, whose course has no renewal period, so the backfill
+below is a confirmed no-op and nobody was emailed. The two real certificates
+already carried expiry dates, and both happen to agree with their course's new
+12-month period exactly.
+
 ### Backfill the certificates already issued
 
 Setting a renewal period only affects **certificates issued from that point on**.
