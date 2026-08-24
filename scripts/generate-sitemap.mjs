@@ -97,11 +97,16 @@ const entries = [
   ...STATIC_ROUTES.map(([p, pr, cf]) => urlEntry(p, pr, cf)),
   ...categorySlugs.map((s) => urlEntry(`/our-courses/${s}`, 0.8, "weekly")),
   ...sectorSlugs.map((s) => urlEntry(`/training-solutions/${s}`, 0.8, "monthly")),
+  // Sorted by slug, not by whatever order the database returned. Without this
+  // the file reorders itself whenever a row is touched, so every build produces
+  // a diff that says nothing and hides the ones that do.
   ...courses
     .filter((c) => c.slug)
+    .sort((a, b) => a.slug.localeCompare(b.slug))
     .map((c) => urlEntry(`/our-courses/course/${c.slug}`, 0.7, "monthly", c.updated_at)),
   ...posts
     .filter((p) => p.slug)
+    .sort((a, b) => a.slug.localeCompare(b.slug))
     .map((p) => urlEntry(`/resources/blog/${p.slug}`, 0.6, "monthly", p.published_at)),
 ]
 

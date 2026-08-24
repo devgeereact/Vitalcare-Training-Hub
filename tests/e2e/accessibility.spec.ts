@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 
+import { ready } from "./ready"
+
 /**
  * Accessibility, measured rather than eyeballed.
  *
@@ -19,29 +21,6 @@ import { expect, test } from "@playwright/test"
 // site: animations off, final state, which is also a scenario worth covering.
 test.use({ reducedMotion: "reduce" })
 
-/**
- * Wait until nothing is still animating.
- *
- * Contrast is measured from the pixels on screen. Sampling a control while its
- * container is still fading in reports a colour nobody ever sees, which shows
- * up as an intermittent failure rather than a real one.
- */
-async function settle(page: import("@playwright/test").Page) {
-  await page.waitForLoadState("networkidle")
-  await page
-    .waitForFunction(
-      () =>
-        typeof document.getAnimations !== "function" ||
-        document.getAnimations().every((a) => a.playState !== "running"),
-      undefined,
-      { timeout: 5000 },
-    )
-    .catch(() => {
-      // A permanently running decorative animation is not a reason to fail the
-      // accessibility check; carry on and measure what is there.
-    })
-}
-
 const PUBLIC_PAGES = [
   "/",
   "/our-courses",
@@ -56,7 +35,7 @@ test.describe("automated checks", () => {
   for (const route of PUBLIC_PAGES) {
     test(`${route} has no WCAG A or AA violations`, async ({ page }) => {
       await page.goto(route)
-      await settle(page)
+      await ready(page)
 
       const results = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -75,7 +54,7 @@ test.describe("automated checks", () => {
 
   test("the 404 page is accessible too", async ({ page }) => {
     await page.goto("/nope")
-    await settle(page)
+    await ready(page)
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
       .analyze()
@@ -90,7 +69,7 @@ test.describe("structure", () => {
       page,
     }) => {
       await page.goto(route)
-      await page.waitForLoadState("networkidle")
+      await ready(page)
 
       const levels = await page.$$eval("h1, h2, h3, h4, h5, h6", (nodes) =>
         nodes
@@ -129,7 +108,7 @@ test.describe("structure", () => {
 test.describe("keyboard", () => {
   test("focus is visible on the first few interactive elements", async ({ page }) => {
     await page.goto("/")
-    await page.waitForLoadState("networkidle")
+    await ready(page)
 
     for (let i = 0; i < 8; i += 1) {
       await page.keyboard.press("Tab")
@@ -149,7 +128,7 @@ test.describe("keyboard", () => {
 
   test("the whole navigation is reachable by keyboard", async ({ page }) => {
     await page.goto("/")
-    await page.waitForLoadState("networkidle")
+    await ready(page)
 
     const navLinks = await page.locator("header a[href], nav a[href]").count()
     expect(navLinks).toBeGreaterThan(0)

@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test"
 
+import { ready } from "./ready"
+
 /**
  * A performance budget for the public homepage, enforced against the
  * production build.
@@ -46,7 +48,8 @@ test.describe("homepage budget", () => {
     })
 
     await page.goto("/")
-    await page.waitForLoadState("networkidle")
+    await page.waitForLoadState("load")
+    await ready(page)
 
     const jsTotal = Object.values(js).reduce((a, b) => a + b, 0)
     const cssTotal = Object.values(css).reduce((a, b) => a + b, 0)
@@ -72,7 +75,8 @@ test.describe("homepage budget", () => {
       requests += 1
     })
     await page.goto("/")
-    await page.waitForLoadState("networkidle")
+    await page.waitForLoadState("load")
+    await ready(page)
     expect(requests).toBeLessThanOrEqual(REQUEST_BUDGET)
   })
 
@@ -84,7 +88,8 @@ test.describe("homepage budget", () => {
       if (r.resourceType() === "script") fetched.push(r.url())
     })
     await page.goto("/")
-    await page.waitForLoadState("networkidle")
+    await page.waitForLoadState("load")
+    await ready(page)
 
     // These belong to the signed-in platform and to features behind a click.
     // A marketing visitor downloading any of them is the regression this whole

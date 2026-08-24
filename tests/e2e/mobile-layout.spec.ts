@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test"
 
+import { ready } from "./ready"
+
 /**
  * The mobile layout problems this suite exists to prevent:
  *
@@ -17,7 +19,7 @@ test.describe("public pages fit their viewport", () => {
   for (const route of ROUTES) {
     test(`${route} does not scroll sideways`, async ({ page }) => {
       await page.goto(route)
-      await page.waitForLoadState("networkidle")
+      await ready(page)
 
       const { overflow, offenders } = await page.evaluate(() => {
         const doc = document.documentElement
