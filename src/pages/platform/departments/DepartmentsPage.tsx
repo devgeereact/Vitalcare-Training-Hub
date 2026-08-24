@@ -2,7 +2,6 @@ import { useState } from "react"
 import { toast } from "sonner"
 import {
   Building2,
-  AlertCircle,
   Plus,
   Loader2,
   ChevronRight,
@@ -51,10 +50,12 @@ import {
   useDeleteDepartment,
   type DepartmentRow,
 } from "@/lib/queries/org.queries"
+import { ErrorState, PermissionState } from "@/components/common/DataState"
+import { isPermissionError } from "@/lib/queries/query-error"
 
 export default function DepartmentsPage() {
   const { profile, isSuperAdmin } = useUser()
-  const { data, isLoading, isError, refetch } = useDepartments()
+  const { data, isLoading, isError, error, refetch } = useDepartments()
   const create = useCreateDepartment()
   const del = useDeleteDepartment()
   const [open, setOpen] = useState(false)
@@ -109,7 +110,9 @@ export default function DepartmentsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-display text-2xl">{active.name}</CardTitle>
+            <CardTitle as="h1" className="font-display text-2xl">
+              {active.name}
+            </CardTitle>
             {active.description && (
               <CardDescription>{active.description}</CardDescription>
             )}
@@ -140,10 +143,23 @@ export default function DepartmentsPage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="flex items-center gap-2 font-display text-3xl text-foreground">
+          <Building2 className="size-7 text-brand-navy" aria-hidden="true" />
+          Departments
+        </h1>
+        <p className="mt-1 text-muted-foreground">
+          The teams inside your organisation, who belongs to each of them, and
+          the work each team is carrying.
+        </p>
+      </div>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border">
-            <CardTitle className="font-display text-2xl">Department list</CardTitle>
+            <CardTitle as="h2" className="font-display text-2xl">
+              Department list
+            </CardTitle>
             {isSuperAdmin && (
               <DialogTrigger asChild>
                 <Button>
@@ -160,14 +176,16 @@ export default function DepartmentsPage() {
                 ))}
               </div>
             ) : isError ? (
-              <div className="flex flex-col items-center gap-3 py-14 text-center">
-                <AlertCircle className="size-8 text-destructive" />
-                <p className="text-sm text-muted-foreground">
-                  Could not load departments. Please try again.
-                </p>
-                <Button variant="outline" size="sm" onClick={() => refetch()}>
-                  Retry
-                </Button>
+              <div className="p-5">
+                {isPermissionError(error) ? (
+                  <PermissionState resource="departments" />
+                ) : (
+                  <ErrorState
+                    error={error}
+                    resource="departments"
+                    onRetry={refetch}
+                  />
+                )}
               </div>
             ) : allRows.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-14 text-center">

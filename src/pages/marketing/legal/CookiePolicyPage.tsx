@@ -3,6 +3,7 @@ import { LegalPage } from "@/pages/marketing/legal/LegalPage"
 export default function CookiePolicyPage() {
   return (
     <LegalPage
+      canonicalPath="/cookie-policy"
       title="Cookie Policy"
       updated="1 June 2026"
       intro="How Vitalcare Training Hub Ltd uses cookies and similar technologies."

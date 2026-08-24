@@ -6,6 +6,7 @@ import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { getSector } from "@/data/sectors"
 import { getCategory } from "@/data/courses"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 export default function TrainingSolutionPage(): React.ReactElement {
   const { sector: sectorSlug } = useParams<{ sector: string }>()
@@ -15,6 +16,11 @@ export default function TrainingSolutionPage(): React.ReactElement {
   if (!sector) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
+        <PageMeta
+          title="Solution not found"
+          description="That training solution does not exist."
+          noIndex
+        />
         <h1 className="font-sans font-semibold tracking-tight text-3xl text-brand-navy">
           Solution not found
         </h1>
@@ -36,12 +42,17 @@ export default function TrainingSolutionPage(): React.ReactElement {
     .filter((c): c is NonNullable<typeof c> => Boolean(c))
 
   const fadeUp = {
-    hidden: { opacity: 0, y: reduce ? 0 : 24 },
+    hidden: { opacity: reduce ? 1 : 0, y: reduce ? 0 : 24 },
     show: { opacity: 1, y: 0 },
   }
 
   return (
     <>
+      <PageMeta
+        title={sector.headline}
+        description={sector.intro}
+        canonicalPath={`/training-solutions/${sector.slug}`}
+      />
       <PageHero
         eyebrow="Training solutions"
         title={sector.headline}
@@ -239,7 +250,7 @@ export default function TrainingSolutionPage(): React.ReactElement {
                   <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-muted-foreground">
                     {category.blurb}
                   </p>
-                  <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-brand-gold">
+                  <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-brand-gold-ink">
                     View courses
                     <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                   </span>

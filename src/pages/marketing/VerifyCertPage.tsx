@@ -12,6 +12,7 @@ import { PageHero } from "@/components/marketing/PageHero"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { callRpc } from "@/lib/supabase/rpc"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 interface CertResult {
   learner_name: string
@@ -85,6 +86,11 @@ export default function VerifyCertPage(): React.ReactElement {
 
   return (
     <>
+      <PageMeta
+        title="Verify a certificate"
+        description="Check that a Vitalcare Training Hub certificate is genuine using the verification code printed on it."
+        canonicalPath="/resources/verify-certificate"
+      />
       <PageHero
         eyebrow="Verify a certificate"
         title="Check a Vitalcare certificate"

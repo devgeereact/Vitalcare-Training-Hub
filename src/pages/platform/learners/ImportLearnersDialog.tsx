@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react"
-import * as XLSX from "xlsx"
 import { toast } from "sonner"
 import { FileSpreadsheet, Loader2 } from "lucide-react"
 
@@ -25,6 +24,11 @@ function normaliseRow(raw: Record<string, unknown>): Record<string, string> {
   return out
 }
 
+/** Load the 1.2MB spreadsheet library only when a file is actually imported. */
+async function loadXlsx() {
+  return await import("xlsx")
+}
+
 export default function ImportLearnersDialog({
   children,
 }: {
@@ -37,6 +41,7 @@ export default function ImportLearnersDialog({
   async function handleFile(file: File) {
     setParsing(true)
     try {
+      const XLSX = await loadXlsx()
       const buf = await file.arrayBuffer()
       const wb = XLSX.read(buf, { type: "array" })
       const sheet = wb.Sheets[wb.SheetNames[0]]

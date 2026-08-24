@@ -47,7 +47,6 @@ import {
 import { SlidersHorizontal } from "lucide-react"
 
 import { Printer } from "lucide-react"
-import * as XLSX from "xlsx"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { saveAs } from "file-saver"
@@ -55,6 +54,17 @@ import { saveAs } from "file-saver"
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+}
+
+/**
+ * Load the spreadsheet library on demand.
+ *
+ * xlsx is roughly 1.2MB and is only needed the moment somebody clicks export or
+ * import. Importing it at the top of the module put that download on the
+ * critical path of every page that renders a table.
+ */
+async function loadXlsx() {
+  return await import("xlsx")
 }
 
 export function DataTable<TData, TValue>({
@@ -113,7 +123,8 @@ export function DataTable<TData, TValue>({
     link.click()
   }
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
+    const XLSX = await loadXlsx()
     const rows = table.getFilteredRowModel().rows.map((row) =>
       row.original
     )

@@ -1,4 +1,6 @@
 import { useEffect } from "react"
+import { Suspense } from "react"
+import { RouteFallback } from "@/routes/route-fallback"
 import { Outlet, useLocation } from "react-router-dom"
 import { Nav } from "@/components/marketing/Nav"
 import { Footer } from "@/components/marketing/Footer"
@@ -25,7 +27,9 @@ export default function MarketingLayout() {
       <ScrollToTop />
       <Nav />
       <main className="flex-1">
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
       <Footer />
       <WhatsAppButton />

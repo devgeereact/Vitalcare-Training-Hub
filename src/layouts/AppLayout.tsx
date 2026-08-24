@@ -1,4 +1,7 @@
 import { Outlet, Link, useLocation } from "react-router-dom"
+import { Suspense } from "react"
+import { RouteFallback } from "@/routes/route-fallback"
+import { PageMeta } from "@/components/seo/PageMeta"
 import { AppSidebar } from "@/components/app-sidebar"
 import BottomTabBar from "@/components/platform/BottomTabBar"
 import SectionTabs from "@/components/platform/SectionTabs"
@@ -126,6 +129,11 @@ export default function AppLayout() {
 
   return (
     <IdleLockProvider>
+    <PageMeta
+      title="Platform"
+      description="The Vitalcare Training Hub learning platform."
+      noIndex
+    />
     <SidebarProvider open={isExpanded} onOpenChange={setOpen}>
       <AppSidebar onHoverChange={setHovered} />
 
@@ -163,10 +171,16 @@ export default function AppLayout() {
 
         <ProfileCompletionBanner />
 
-        {/* PAGE CONTENT */}
-        <main className="flex-1 p-6 pb-24 md:pb-6">
+        {/* PAGE CONTENT
+            Clearance for the fixed mobile tab bar comes from --bottom-nav-height,
+            which is the bar's real height including the device safe area, and 0
+            on md and up where no bar is rendered. Pages do not add their own
+            bottom padding: one variable keeps every screen consistent. */}
+        <main className="flex-1 p-6 pb-safe-nav">
           <SectionTabs />
-          <Outlet />
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
 
         <Footer />

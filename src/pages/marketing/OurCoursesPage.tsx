@@ -17,6 +17,7 @@ import { Pagination } from "@/components/marketing/Pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { COURSE_CATEGORIES, TOTAL_COURSE_COUNT } from "@/data/courses"
 import { usePublishedCourses } from "@/lib/queries/public-courses.queries"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 const ALL = "all" as const
 
@@ -82,12 +83,17 @@ export default function OurCoursesPage(): React.ReactElement {
   )
 
   const fadeUp = {
-    hidden: { opacity: 0, y: reduce ? 0 : 24 },
+    hidden: { opacity: reduce ? 1 : 0, y: reduce ? 0 : 24 },
     show: { opacity: 1, y: 0 },
   }
 
   return (
     <>
+      <PageMeta
+        title="Healthcare training courses"
+        description="CSTF-aligned, CPD-accredited training across mandatory care, safeguarding, clinical skills, first aid, fire safety and more."
+        canonicalPath="/our-courses"
+      />
       <PageHero
         eyebrow="Our courses"
         title="Training across every area of care"
@@ -115,9 +121,12 @@ export default function OurCoursesPage(): React.ReactElement {
                 <item.icon className="size-5" aria-hidden />
               </span>
               <div>
-                <h3 className="text-base font-semibold text-brand-navy">
+                {/* h2, not h3: this band sits directly under the page h1 and
+                    there is no section heading between them, so h3 left a gap
+                    in the outline a screen-reader user navigates by. */}
+                <h2 className="text-base font-semibold text-brand-navy">
                   {item.title}
-                </h3>
+                </h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                   {item.body}
                 </p>

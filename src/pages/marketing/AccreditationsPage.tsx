@@ -21,6 +21,7 @@ import { PageHero } from "@/components/marketing/PageHero"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { LEADERSHIP, CREDENTIAL_PHRASE } from "@/lib/constants"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
@@ -134,16 +135,21 @@ export default function AccreditationsPage() {
     show: { transition: { staggerChildren: reduce ? 0 : 0.09 } },
   }
   const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 20 },
+    hidden: { opacity: reduce ? 1 : 0, y: reduce ? 0 : 20 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] },
+      transition: { duration: reduce ? 0 : 0.5, ease: [0.21, 0.47, 0.32, 0.98] },
     },
   }
 
   return (
     <>
+      <PageMeta
+        title="Accreditations and standards"
+        description="How Vitalcare training maps to the Core Skills Training Framework, what CPD accreditation covers, and how each certificate can be verified."
+        canonicalPath="/resources/accreditations"
+      />
       <PageHero
         eyebrow="Accreditations"
         title="Standards you can evidence"

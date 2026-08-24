@@ -86,15 +86,19 @@ export interface CourseRow {
   thumbnailUrl: string | null
 }
 
-export async function getCourses(): Promise<CourseRow[]> {
+export async function getCourses(
+  { archived = false }: { archived?: boolean } = {},
+): Promise<CourseRow[]> {
+  const base = supabase
+    .from("courses")
+    .select(
+      "id, title, category_id, is_cstf_aligned, cpd_hours, is_published, updated_at, thumbnail_url",
+    )
   const [courses, categories] = await Promise.all([
-    supabase
-      .from("courses")
-      .select(
-        "id, title, category_id, is_cstf_aligned, cpd_hours, is_published, updated_at, thumbnail_url",
-      )
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: false }),
+    (archived
+      ? base.not("deleted_at", "is", null)
+      : base.is("deleted_at", null)
+    ).order("updated_at", { ascending: false }),
     getCategories(),
   ])
   if (courses.error) {
@@ -115,7 +119,16 @@ export async function getCourses(): Promise<CourseRow[]> {
 }
 
 export function useCourses() {
-  return useQuery({ queryKey: coursesKeys.list(), queryFn: getCourses })
+  return useQuery({ queryKey: coursesKeys.list(), queryFn: () => getCourses() })
+}
+
+/** Courses that have been archived, so an administrator can restore one. */
+export function useArchivedCourses(enabled = true) {
+  return useQuery({
+    queryKey: [...coursesKeys.all, "archived"],
+    enabled,
+    queryFn: () => getCourses({ archived: true }),
+  })
 }
 
 // ─── Single course ───────────────────────────────────────────────────────────
@@ -238,20 +251,117 @@ export function useUpdateCourse(id: string) {
   })
 }
 
-export function useDeleteCourse() {
+/**
+ * What a course is entangled with. Read before offering to remove it, so the
+ * administrator is told exactly what happens rather than asked to guess.
+ */
+export interface CourseDeletionImpact {
+  enrolments: number
+  certificates: number
+  assessments: number
+  orders: number
+  sessions: number
+  resources: number
+  /** True only when the course has no learner records at all. */
+  canHardDelete: boolean
+}
+
+interface ImpactRow {
+  enrolments: number
+  certificates: number
+  assessments: number
+  orders: number
+  sessions: number
+  resources: number
+  can_hard_delete: boolean
+}
+
+export function useCourseDeletionImpact(id: string | null) {
+  return useQuery({
+    queryKey: [...coursesKeys.all, "deletion-impact", id ?? "none"],
+    enabled: !!id,
+    staleTime: 0,
+    queryFn: async (): Promise<CourseDeletionImpact> => {
+      const { data, error } = await callRpc<ImpactRow[]>("course_deletion_impact", {
+        p_course: id!,
+      })
+      if (error) {
+        console.error("[useCourseDeletionImpact]", error)
+        throw error
+      }
+      const row = data?.[0]
+      if (!row) throw new Error("No impact returned")
+      return {
+        enrolments: Number(row.enrolments),
+        certificates: Number(row.certificates),
+        assessments: Number(row.assessments),
+        orders: Number(row.orders),
+        sessions: Number(row.sessions),
+        resources: Number(row.resources),
+        canHardDelete: Boolean(row.can_hard_delete),
+      }
+    },
+  })
+}
+
+/**
+ * Withdraw a course from the catalogue, keeping every learner record intact.
+ *
+ * This is the right default for regulated training: certificates, assessment
+ * results and invoices all point at the course, and a certificate whose course
+ * has vanished is not evidence of anything. The server checks the caller is an
+ * administrator, unpublishes the linked assessments, and writes an audit entry.
+ */
+export function useArchiveCourse() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("courses")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id)
+      const { data, error } = await callRpc<boolean>("archive_course", { p_course: id })
       if (error) {
-        console.error("[useDeleteCourse]", error)
-        throw error
+        console.error("[useArchiveCourse]", error)
+        throw new Error(error.message)
+      }
+      return data === true
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: coursesKeys.all }),
+  })
+}
+
+/** Put an archived course back, as a draft. */
+export function useRestoreCourse() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await callRpc<boolean>("restore_course", { p_course: id })
+      if (error) {
+        console.error("[useRestoreCourse]", error)
+        throw new Error(error.message)
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: coursesKeys.list() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: coursesKeys.all }),
+  })
+}
+
+/**
+ * Permanently remove a course and its curriculum.
+ *
+ * The server refuses unless the course has no enrolments, certificates, orders
+ * or sessions, so this can only ever remove something nobody has used. It is
+ * the escape hatch for a course created by mistake, not a tidy-up tool.
+ */
+export function useDeleteCoursePermanently() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await callRpc<boolean>("delete_course_permanently", {
+        p_course: id,
+      })
+      if (error) {
+        console.error("[useDeleteCoursePermanently]", error)
+        throw new Error(error.message)
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: coursesKeys.all }),
   })
 }
 

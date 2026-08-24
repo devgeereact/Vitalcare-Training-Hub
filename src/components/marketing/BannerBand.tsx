@@ -58,7 +58,7 @@ export function BannerBand({
               className={
                 isNavy
                   ? "inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold"
-                  : "inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-navy/80"
+                  : "inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-navy"
               }
             >
               <span
@@ -86,7 +86,7 @@ export function BannerBand({
               className={
                 isNavy
                   ? "mt-5 text-lg leading-relaxed text-white/80"
-                  : "mt-5 text-lg leading-relaxed text-brand-navy/80"
+                  : "mt-5 text-lg leading-relaxed text-brand-navy"
               }
             >
               {description}

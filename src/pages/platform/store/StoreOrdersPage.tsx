@@ -21,10 +21,10 @@ const STATUS_STYLE: Record<OrderStatus, string> = {
 }
 
 export default function StoreOrdersPage() {
-  const { isAdmin, profile } = useUser()
+  const { isAdmin } = useUser()
   const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useOrders(isAdmin, user?.id)
-  const confirm = useConfirmOrder(profile?.id)
+  const confirm = useConfirmOrder()
   const [searchParams] = useSearchParams()
   const highlightId = searchParams.get("id")
   const rowRef = useRef<HTMLTableRowElement | null>(null)

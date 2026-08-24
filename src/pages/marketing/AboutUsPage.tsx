@@ -15,6 +15,7 @@ import { PageHero } from "@/components/marketing/PageHero"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { SectionHeading } from "@/components/marketing/SectionHeading"
 import { LEADERSHIP, COMPANY } from "@/lib/constants"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
@@ -69,16 +70,21 @@ export default function AboutUsPage() {
     show: { transition: { staggerChildren: reduce ? 0 : 0.1 } },
   }
   const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 20 },
+    hidden: { opacity: reduce ? 1 : 0, y: reduce ? 0 : 20 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] },
+      transition: { duration: reduce ? 0 : 0.5, ease: [0.21, 0.47, 0.32, 0.98] },
     },
   }
 
   return (
     <>
+      <PageMeta
+        title="About us"
+        description="Vitalcare Training Hub is a CPD-accredited healthcare training provider working with NHS Trusts, care homes and independent practitioners across the UK."
+        canonicalPath="/about-us"
+      />
       <PageHero
         eyebrow="About us"
         title="About Vitalcare Training Hub"
@@ -332,7 +338,7 @@ export default function AboutUsPage() {
               <BookOpen className="size-8" aria-hidden="true" />
             </span>
             <div>
-              <p className="inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold">
+              <p className="inline-flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-brand-gold-ink">
                 <span className="h-px w-8 bg-brand-gold/70" aria-hidden="true" />
                 Our publishing imprint
               </p>

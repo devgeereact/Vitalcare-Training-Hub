@@ -19,7 +19,7 @@ export default function BottomTabBar() {
   return (
     <nav
       aria-label="Platform"
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80"
     >
       <ul className="grid grid-cols-5">
         {TABS.map((tab) => {

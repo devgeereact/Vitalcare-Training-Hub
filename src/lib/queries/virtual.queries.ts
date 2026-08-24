@@ -68,7 +68,7 @@ export function useMyJoinRequests(userId: string | undefined) {
         .eq("learner_id", userId!)
       if (error) {
         console.error("[useMyJoinRequests]", error)
-        return {}
+        throw error
       }
       const out: Record<string, JoinStatus> = {}
       for (const r of data ?? []) {
@@ -99,7 +99,7 @@ export function usePendingJoinRequests(enabled: boolean) {
         .order("created_at", { ascending: true })
       if (error) {
         console.error("[usePendingJoinRequests]", error)
-        return []
+        throw error
       }
       const rows = data ?? []
       const learnerIds = [...new Set(rows.map((r) => String(r.learner_id)))]

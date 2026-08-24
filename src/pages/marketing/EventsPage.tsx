@@ -14,6 +14,7 @@ import { EventCard } from "@/components/marketing/EventCard"
 import { BannerBand } from "@/components/marketing/BannerBand"
 import { Pagination } from "@/components/marketing/Pagination"
 import { usePublicEvents } from "@/lib/queries/public-events.queries"
+import { PageMeta } from "@/components/seo/PageMeta"
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
@@ -59,6 +60,11 @@ export default function EventsPage(): React.ReactElement {
 
   return (
     <>
+      <PageMeta
+        title="Upcoming training sessions"
+        description="Scheduled classroom and virtual healthcare training sessions, with dates, places remaining and how to book."
+        canonicalPath="/resources/events"
+      />
       <PageHero
         eyebrow="Events"
         title="Upcoming training sessions"

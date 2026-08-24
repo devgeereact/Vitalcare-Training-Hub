@@ -1,5 +1,3 @@
-import mammoth from "mammoth"
-
 export interface ParsedLesson {
   title: string
   content: string // HTML
@@ -19,6 +17,9 @@ export interface ParsedModule {
 export async function parseImportFile(file: File): Promise<ParsedModule[]> {
   const name = file.name.toLowerCase()
   if (name.endsWith(".docx")) {
+    // mammoth is around 500kB and only a .docx import needs it, so it is
+    // fetched at that point rather than shipped with the course builder.
+    const { default: mammoth } = await import("mammoth")
     const { value: html } = await mammoth.convertToHtml({
       arrayBuffer: await file.arrayBuffer(),
     })

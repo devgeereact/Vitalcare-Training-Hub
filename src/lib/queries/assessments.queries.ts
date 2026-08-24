@@ -24,10 +24,10 @@ export const assessmentsKeys = {
 }
 
 /** How many attempts the current learner has used on an assessment. */
-export function useAttemptCount(assessmentId: string) {
+export function useAttemptCount(assessmentId: string, enabled = true) {
   return useQuery({
     queryKey: [...assessmentsKeys.all, "attempt-count", assessmentId],
-    enabled: !!assessmentId,
+    enabled: enabled && !!assessmentId,
     queryFn: async (): Promise<number> => {
       const { data: auth } = await supabase.auth.getUser()
       if (!auth.user) return 0
@@ -176,7 +176,14 @@ export async function getQuestions(assessmentId: string): Promise<QuestionWithOp
   const { data: optRows, error: optErr } = await callRpc<
     { id: string; question_id: string; label: string; position: number; is_correct: boolean }[]
   >("get_question_options", { p_assessment: assessmentId })
-  if (optErr) console.error("[getQuestions:options]", optErr)
+  // A failed options fetch used to be logged and swallowed, which handed the
+  // page a list of questions with no answers to choose from. The screen then
+  // showed "this assessment has no questions yet", blaming the administrator
+  // for a broken request. Fail loudly so the error state is reached instead.
+  if (optErr) {
+    console.error("[getQuestions:options]", optErr)
+    throw optErr
+  }
   const options = (optRows ?? []).map((o) => ({
     ...o,
     created_at: "",
@@ -381,7 +388,7 @@ export function useAssessmentReview(assessmentId: string, enabled: boolean) {
       })
       if (error) {
         console.error("[useAssessmentReview]", error)
-        return []
+        throw error
       }
       const byQ = new Map<string, ReviewQuestion>()
       for (const r of data ?? []) {
@@ -405,9 +412,10 @@ export function useAssessmentReview(assessmentId: string, enabled: boolean) {
 }
 
 // ─── Take + auto-grade ───────────────────────────────────────────────────────
-// NOTE: graded client-side for MVP. question_options.is_correct is readable by
-// learners (RLS), so this is not exam-secure. Secure server-side grading via an
-// Edge Function is a follow-up (see docs/FEATURES.md — proctoring/secure grading).
+// Grading runs server-side in submit_assessment_attempt (migration 063), which
+// is the only write path to assessment_attempts. get_question_options masks
+// is_correct for anyone who is not staff (migration 068), so a learner cannot
+// read the answer key or forge a score.
 export interface SubmitAnswer {
   questionId: string
   selectedOptionIds: string[]
@@ -479,7 +487,17 @@ async function completeCourseAfterAttempt(assessmentId: string): Promise<void> {
     return
   }
 
-  const certId = await issueCourseCertificate(assessment.course_id)
+  // The attempt itself is already recorded and passed. If issuance fails now,
+  // saying "could not submit" would be a lie about the thing that mattered, so
+  // this step is logged and left for the course page to retry: issuance is
+  // idempotent and runs again the next time the learner opens the course.
+  let certId: string | null = null
+  try {
+    certId = await issueCourseCertificate(assessment.course_id)
+  } catch (err) {
+    console.error("[completeCourseAfterAttempt:issue]", err)
+    return
+  }
   if (!certId) return
 
   const { data: auth } = await supabase.auth.getUser()

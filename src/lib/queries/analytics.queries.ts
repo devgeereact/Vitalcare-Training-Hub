@@ -13,11 +13,17 @@ export interface AnalyticsSummary {
   upcomingSessions: number
 }
 
-/** Extract a row count from a Supabase head query result, logging any error. */
+/**
+ * Extract a row count from a Supabase head query result.
+ *
+ * Throws rather than returning 0. A failed count rendered as "0 learners" is a
+ * statistic that is not merely missing but wrong, and it is wrong in the
+ * direction that looks like a business problem rather than a defect.
+ */
 function asCount(res: { count: number | null; error: unknown }): number {
   if (res.error) {
     console.error("[analytics:count]", res.error)
-    return 0
+    throw res.error
   }
   return res.count ?? 0
 }

@@ -9,6 +9,8 @@ import { Pagination } from "@/components/marketing/Pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { driveImageUrl } from "@/lib/drive-image"
 import { usePublishedPosts, type PublicBlogPost } from "@/lib/queries/blog.queries"
+import { PageMeta } from "@/components/seo/PageMeta"
+import { ErrorState } from "@/components/common/DataState"
 
 const PAGE_SIZE = 12
 
@@ -70,7 +72,7 @@ function PostCard({ post }: { post: PublicBlogPost }) {
 
 export default function BlogPage(): React.ReactElement {
   const reduce = useReducedMotion()
-  const { data, isLoading } = usePublishedPosts()
+  const { data, isLoading, isError, error, refetch } = usePublishedPosts()
   const posts = useMemo(() => data ?? [], [data])
 
   const featured = posts.slice(0, 3)
@@ -82,6 +84,11 @@ export default function BlogPage(): React.ReactElement {
 
   return (
     <>
+      <PageMeta
+        title="Insight on healthcare training"
+        description="Practical guidance on CSTF compliance, mandatory training, safeguarding and clinical skills, written for the people who run training."
+        canonicalPath="/resources/blog"
+      />
       <PageHero
         eyebrow="Insights"
         title="Insight on healthcare training"
@@ -95,6 +102,12 @@ export default function BlogPage(): React.ReactElement {
               <Skeleton key={i} className="h-80 w-full rounded-2xl" />
             ))}
           </div>
+        ) : isError ? (
+          <ErrorState
+            error={error}
+            resource="our articles"
+            onRetry={refetch}
+          />
         ) : posts.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-14 text-center">
             <BookOpen className="mx-auto size-8 text-brand-navy/40" aria-hidden />

@@ -3,6 +3,7 @@ import { LegalPage } from "@/pages/marketing/legal/LegalPage"
 export default function RefundPolicyPage() {
   return (
     <LegalPage
+      canonicalPath="/refund-policy"
       title="Refund Policy"
       updated="1 June 2026"
       intro="How refunds and rescheduling work for training purchased from Vitalcare Training Hub Ltd."

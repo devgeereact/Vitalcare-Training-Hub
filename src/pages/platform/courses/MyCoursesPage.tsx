@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  Archive,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Link as RLink } from "react-router-dom"
@@ -44,11 +45,20 @@ import {
   useEnrolSelf,
   useCategoryNameMap,
   useCourses,
+  useArchivedCourses,
+  useRestoreCourse,
   useEnrolmentCounts,
 } from "@/lib/queries/courses.queries"
 import { CourseCard } from "@/components/courses/CourseCard"
 import { courseColumns } from "./columns"
 import { useUser } from "@/hooks/use-user"
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PermissionState,
+} from "@/components/common/DataState"
+import { isPermissionError } from "@/lib/queries/query-error"
 import type { Course } from "@/types/database.types"
 
 interface CardData {
@@ -73,6 +83,98 @@ type StaffView = "catalogue" | "manage"
 interface CoursesPageProps {
   /** Initial staff view. The legacy /courses/manage route opens on "manage". */
   initialStaffView?: StaffView
+}
+
+/**
+ * Archived courses, with a way back.
+ *
+ * Archiving is reversible by design, so an administrator who withdrew the wrong
+ * course is not stuck: the record never left, only the catalogue listing did.
+ * Collapsed by default because on a healthy catalogue this list is empty.
+ */
+function ArchivedCourses() {
+  const { isAdmin } = useUser()
+  const [open, setOpen] = useState(false)
+  const archived = useArchivedCourses(isAdmin && open)
+  const restore = useRestoreCourse()
+
+  if (!isAdmin) return null
+
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex w-full items-center justify-between gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a843] focus-visible:ring-offset-2"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Archive className="size-4 text-muted-foreground" aria-hidden="true" />
+            Archived courses
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {open ? "Hide" : "Show"}
+          </span>
+        </button>
+
+        {open && (
+          <div className="mt-4">
+            {archived.isLoading ? (
+              <LoadingState rows={2} />
+            ) : archived.isError ? (
+              <ErrorState
+                error={archived.error}
+                resource="archived courses"
+                onRetry={archived.refetch}
+              />
+            ) : (archived.data?.length ?? 0) === 0 ? (
+              <EmptyState
+                icon={Archive}
+                title="Nothing archived"
+                description="Courses you withdraw from the catalogue appear here."
+              />
+            ) : (
+              <ul className="divide-y divide-border">
+                {archived.data!.map((c) => (
+                  <li
+                    key={c.id}
+                    className="flex flex-wrap items-center gap-3 py-2.5"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                      {c.title}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {c.categoryName}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={restore.isPending}
+                      onClick={() =>
+                        restore
+                          .mutateAsync(c.id)
+                          .then(() => toast.success(`"${c.title}" restored as a draft`))
+                          .catch((err: unknown) =>
+                            toast.error(
+                              err instanceof Error
+                                ? err.message
+                                : "Could not restore the course",
+                            ),
+                          )
+                      }
+                    >
+                      Restore
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
 }
 
 export default function MyCoursesPage({ initialStaffView = "catalogue" }: CoursesPageProps = {}) {
@@ -267,6 +369,8 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
         </div>
       </div>
 
+      {showManageTable && <ArchivedCourses />}
+
       {showManageTable ? (
         <Card>
           <CardContent className="p-5">
@@ -278,27 +382,26 @@ export default function MyCoursesPage({ initialStaffView = "catalogue" }: Course
                 ))}
               </div>
             ) : manage.isError ? (
-              <div className="flex flex-col items-center gap-3 py-12 text-center">
-                <AlertCircle className="size-8 text-destructive" />
-                <p className="text-sm text-muted-foreground">
-                  Could not load courses. Please try again.
-                </p>
-                <Button variant="outline" size="sm" onClick={() => manage.refetch()}>
-                  Retry
-                </Button>
-              </div>
+              isPermissionError(manage.error) ? (
+                <PermissionState resource="the course list" />
+              ) : (
+                <ErrorState
+                  error={manage.error}
+                  resource="courses"
+                  onRetry={manage.refetch}
+                />
+              )
             ) : (manage.data?.length ?? 0) === 0 ? (
-              <div className="flex flex-col items-center gap-3 py-12 text-center">
-                <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                  <TableIcon className="size-6" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  No courses yet. Build your first course.
-                </p>
-                <Button asChild size="sm">
-                  <Link to="/platform/courses/builder">New course</Link>
-                </Button>
-              </div>
+              <EmptyState
+                icon={TableIcon}
+                title="No courses yet"
+                description="Build your first course to get started."
+                action={
+                  <Button asChild size="sm">
+                    <Link to="/platform/courses/builder">New course</Link>
+                  </Button>
+                }
+              />
             ) : (
               <DataTable columns={courseColumns} data={manage.data!} />
             )}

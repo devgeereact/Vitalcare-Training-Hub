@@ -72,7 +72,7 @@ export function usePublicTestimonials(limit = 9) {
         .limit(limit)
       if (error) {
         console.error("[usePublicTestimonials]", error)
-        return []
+        throw error
       }
       return (data ?? [])
         .filter((r) => r.comment && (r.rating ?? 0) >= 4)

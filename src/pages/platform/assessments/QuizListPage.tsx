@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { format } from "date-fns"
-import { Plus, ClipboardCheck, AlertCircle, Pencil, PlayCircle } from "lucide-react"
+import { Plus, ClipboardCheck, AlertCircle, Pencil, PlayCircle, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -98,12 +98,35 @@ export default function QuizListPage() {
                     <TableCell>{format(new Date(a.updatedAt), "d MMM yyyy")}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-1">
-                        <Button asChild variant="ghost" size="icon" className="size-8" aria-label="Take">
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          aria-label={`Preview ${a.title}`}
+                        >
+                          <Link to={`/platform/assessments/${a.id}?preview=1`}>
+                            <Eye className="size-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          aria-label={`Take ${a.title}`}
+                        >
                           <Link to={`/platform/assessments/${a.id}`}>
                             <PlayCircle className="size-4" />
                           </Link>
                         </Button>
-                        <Button asChild variant="ghost" size="icon" className="size-8" aria-label="Edit">
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          aria-label={`Edit ${a.title}`}
+                        >
                           <Link to={`/platform/assessments/builder/${a.id}`}>
                             <Pencil className="size-4" />
                           </Link>

@@ -19,6 +19,8 @@ import {
   setPostLiked,
   incrementBlogView,
 } from "@/lib/queries/blog.queries"
+import { PageMeta, SITE_URL } from "@/components/seo/PageMeta"
+import { ErrorState } from "@/components/common/DataState"
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -30,7 +32,7 @@ function formatDate(iso: string): string {
 
 export default function BlogPostPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>()
-  const { data: post, isLoading } = usePublishedPost(slug)
+  const { data: post, isLoading, isError, error, refetch } = usePublishedPost(slug)
   const toggle = useToggleBlogLike()
 
   // Register a view once the post resolves.
@@ -48,9 +50,26 @@ export default function BlogPostPage(): React.ReactElement {
     )
   }
 
+  // A failed request is not a missing article. Saying "that article does not
+  // exist" when the fetch broke tells the reader the wrong thing and buries the
+  // defect.
+  if (isError) {
+    return (
+      <section className="mx-auto max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
+        <PageMeta title="Article unavailable" noIndex />
+        <ErrorState error={error} resource="this article" onRetry={refetch} />
+      </section>
+    )
+  }
+
   if (!post) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
+        <PageMeta
+          title="Article not found"
+          description="That article does not exist or is no longer published."
+          noIndex
+        />
         <h1 className="font-sans text-3xl font-semibold tracking-tight text-brand-navy">
           Article not found
         </h1>
@@ -111,8 +130,36 @@ export default function BlogPostPage(): React.ReactElement {
 
   const heroImage = post.featureImageUrl ? driveImageUrl(post.featureImageUrl, 1600) : null
 
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.publishedAt,
+    author: { "@type": "Person", name: post.authorName },
+    publisher: {
+      "@type": "Organization",
+      name: "Vitalcare Training Hub",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logos/logo-round-navy.svg`,
+      },
+    },
+    mainEntityOfPage: `${SITE_URL}/resources/blog/${post.slug}`,
+    ...(heroImage ? { image: heroImage } : {}),
+  }
+
   return (
     <article className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
+      <PageMeta
+        title={post.title}
+        description={post.excerpt}
+        canonicalPath={`/resources/blog/${post.slug}`}
+        image={heroImage ?? undefined}
+        type="article"
+        publishedTime={post.publishedAt}
+        jsonLd={articleSchema}
+      />
       <Link
         to="/resources/blog"
         className="inline-flex items-center gap-2 text-sm font-medium text-brand-navy/70 transition-colors hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"

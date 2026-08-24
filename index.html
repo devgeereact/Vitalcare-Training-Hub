@@ -3,12 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logos/logo-round-navy.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Vitalcare Training Hub | CSTF-aligned Healthcare Training</title>
-    <meta
-      name="description"
-      content="CSTF-aligned, CPD-accredited healthcare training for NHS Trusts, care homes and healthcare professionals across the UK."
-    />
+    <!--
+      No description, Open Graph or canonical tag here.
+
+      React 19 hoists head tags rendered by a component, but for <meta> it adds
+      rather than replaces: a static description here plus a per-page one from
+      PageMeta means every page ships two contradictory descriptions, and the
+      generic one wins as often as not. The title below is a bootstrap only, and
+      React does replace that.
+
+      Page metadata lives in src/components/seo/PageMeta.tsx.
+    -->
     <meta name="theme-color" content="#1b2e6b" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/logos/logo-round-navy.svg" />
@@ -16,20 +23,74 @@
     <!-- Fonts: DM Serif Display (headings) + DM Sans (body/UI) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Loaded without blocking the first paint: the stylesheet is fetched as a
+      low-priority resource and promoted to a stylesheet once it arrives, with
+      a plain <link> inside <noscript> so it still applies without JavaScript.
+      display=swap means text is readable in the fallback face meanwhile.
+    -->
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&family=Dancing+Script:wght@500;600;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&family=Dancing+Script:wght@500;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
 
-    <!-- Template icon fonts (used by base component pages) -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-      rel="stylesheet"
-    />
-    <link href="https://cdn.boxicons.com/fonts/basic/boxicons.min.css" rel="stylesheet" />
+    <!--
+      Bootstrap Icons and Boxicons came with the base template and were loaded
+      from two third-party CDNs on every page. Nothing in this application uses
+      either icon set (Lucide and Tabler are the icon libraries), so they were
+      two render-blocking cross-origin requests buying nothing. Removed.
+    -->
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      A first paint that does not wait for JavaScript.
+
+      The document body was an empty div, so on a throttled connection the
+      screen stayed blank until the bundle parsed and React mounted: no
+      first-contentful-paint entry at all, and roughly two seconds of nothing on
+      a mid-range phone. This markup is styled inline so it needs no stylesheet,
+      and React replaces it the moment it mounts.
+    -->
+    <div id="root">
+      <div
+        style="
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 1rem;
+          background: #f8fafc;
+          color: #1b2e6b;
+          font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        "
+      >
+        <img
+          src="/logos/logo-round-navy.svg"
+          alt=""
+          width="56"
+          height="56"
+          style="opacity: 0.9"
+        />
+        <p style="margin: 0; font-size: 0.875rem; letter-spacing: 0.01em">
+          Loading Vitalcare Training Hub...
+        </p>
+        <noscript>
+          <p style="margin: 0; max-width: 28rem; text-align: center; font-size: 0.875rem">
+            This site needs JavaScript. Turn it on, or call us on 020 8059 8757
+            and we will help you book training.
+          </p>
+        </noscript>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

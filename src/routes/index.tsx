@@ -1,131 +1,165 @@
-import { createBrowserRouter } from "react-router-dom"
+import { Suspense, lazy, type ReactElement } from "react"
+import { createBrowserRouter, Navigate } from "react-router-dom"
 
-import AppLayout from "@/layouts/AppLayout"
-import ModuleComingSoon from "@/pages/platform/ModuleComingSoon"
-import DashboardPage from "@/pages/platform/DashboardPage"
-import LearnersListPage from "@/pages/platform/learners/LearnersListPage"
-import LearnerNewPage from "@/pages/platform/learners/LearnerNewPage"
-import LearnerDetailPage from "@/pages/platform/learners/LearnerDetailPage"
-import LearnerEditPage from "@/pages/platform/learners/LearnerEditPage"
-import CoursesManagePage from "@/pages/platform/courses/CoursesManagePage"
-import CourseBuilderPage from "@/pages/platform/courses/CourseBuilderPage"
-import CourseOverviewPage from "@/pages/platform/courses/CourseOverviewPage"
-import MyCoursesPage from "@/pages/platform/courses/MyCoursesPage"
-import EnrolledCoursesPage from "@/pages/platform/courses/EnrolledCoursesPage"
-import LessonPlayerPage from "@/pages/platform/courses/LessonPlayerPage"
-import QuizListPage from "@/pages/platform/assessments/QuizListPage"
-import QuizBuilderPage from "@/pages/platform/assessments/QuizBuilderPage"
-import TakeAssessmentPage from "@/pages/platform/assessments/TakeAssessmentPage"
-import ResultsPage from "@/pages/platform/assessments/ResultsPage"
-import SessionsListPage from "@/pages/platform/sessions/SessionsListPage"
-import SessionFormPage from "@/pages/platform/sessions/SessionFormPage"
-import SessionDetailPage from "@/pages/platform/sessions/SessionDetailPage"
-import CheckInPage from "@/pages/platform/sessions/CheckInPage"
-import PlatformCalendarPage from "@/pages/platform/sessions/CalendarPage"
-import AttendanceLogPage from "@/pages/platform/sessions/AttendanceLogPage"
-import CertificatesListPage from "@/pages/platform/certificates/CertificatesListPage"
-import CertTemplatesPage from "@/pages/platform/certificates/CertTemplatesPage"
-import CertVerifyPage from "@/pages/platform/certificates/CertVerifyPage"
-import AiAssistantPage from "@/pages/platform/ai/AiAssistantPage"
-import SettingsPage from "@/pages/platform/settings/SettingsPage"
-import NotificationsPage from "@/pages/platform/notifications/NotificationsPage"
-import MessagesPage from "@/pages/platform/messages/MessagesPage"
-import AnnouncementsPage from "@/pages/platform/announcements/AnnouncementsPage"
-import TrainersListPage from "@/pages/platform/trainers/TrainersListPage"
-import AnalyticsPage from "@/pages/platform/analytics/AnalyticsPage"
-import ReportsPage from "@/pages/platform/reports/ReportsPage"
-import ComplianceMatrixPage from "@/pages/platform/compliance/ComplianceMatrixPage"
-import AuditLogPage from "@/pages/platform/audit/AuditLogPage"
-import PaymentsPage from "@/pages/platform/payments/PaymentsPage"
-import FeesReceiptsPage from "@/pages/platform/payments/FeesReceiptsPage"
-import EnrolmentsPage from "@/pages/platform/enrolments/EnrolmentsPage"
-import StaffPage from "@/pages/platform/staff/StaffPage"
-import DepartmentsPage from "@/pages/platform/departments/DepartmentsPage"
-import VirtualTrainingPage from "@/pages/platform/virtual/VirtualTrainingPage"
-import LibraryPage from "@/pages/platform/library/LibraryPage"
-import MyResourcesPage from "@/pages/platform/library/MyResourcesPage"
-import BlogAdminPage from "@/pages/platform/blog/BlogAdminPage"
-import BlogEditPage from "@/pages/platform/blog/BlogEditPage"
-import LearningPathsPage from "@/pages/platform/courses/LearningPathsPage"
-import LearningPathDetailPage from "@/pages/platform/courses/LearningPathDetailPage"
-import CohortsPage from "@/pages/platform/cohorts/CohortsPage"
-import ForumsPage from "@/pages/platform/forums/ForumsPage"
-import HolidaysPage from "@/pages/platform/sessions/HolidaysPage"
-import StoreCataloguePage from "@/pages/platform/store/StoreCataloguePage"
-import StoreOrdersPage from "@/pages/platform/store/StoreOrdersPage"
-import StoreCouponsPage from "@/pages/platform/store/StoreCouponsPage"
-import ThreadPage from "@/pages/platform/forums/ThreadPage"
-import QaWallPage from "@/pages/platform/qa/QaWallPage"
-import FeedbackPage from "@/pages/platform/feedback/FeedbackPage"
-import FeedbackResultsPage from "@/pages/platform/feedback/FeedbackResultsPage"
-import EmailComposerPage from "@/pages/platform/email/EmailComposerPage"
-import CohortDetailPage from "@/pages/platform/cohorts/CohortDetailPage"
-import IntegrationsPage from "@/pages/platform/settings/IntegrationsPage"
-import OneToOnePage from "@/pages/platform/one-to-one/OneToOnePage"
-import UserManagementPage from "@/pages/platform/people/UserManagementPage"
-import ProfilePage from "@/pages/platform/profile/ProfilePage"
-import InboxPage from "@/pages/platform/email/InboxPage"
-import MailDetailPage from "@/pages/platform/email/MailDetailPage"
-import MySessionsPage from "@/pages/platform/sessions/MySessionsPage"
-import TrainerTimetablePage from "@/pages/platform/sessions/TrainerTimetablePage"
-import PayrollPage from "@/pages/platform/payroll/PayrollPage"
-import PasswordSettingsPage from "@/pages/platform/account/PasswordSettingsPage"
-import InvoicesPage from "@/pages/platform/invoices/InvoicesPage"
-import FileManagerPage2 from "@/pages/platform/files/FileManagerPage"
-import MyFilesPage from "@/pages/platform/files/MyFilesPage"
+import { RouteFallback } from "@/routes/route-fallback"
+
 import { RoleGuard } from "@/guards/RoleGuard"
-import AuthLayout from "@/layouts/AuthLayout"
 
 
 
 
-import LoginPage from "@/auth/basic/LoginPage"
-import RegisterPage from "@/auth/basic/RegisterPage"
-import ForgotPasswordPage from "@/auth/basic/ForgotPasswordPage"
 
 import NotFound from "@/pages/NotFound"
 import ErrorPage from "@/pages/ErrorPage"
-import { ResetPasswordForm } from "@/auth/basic/ResetPasswordForm"
-import { VerifyEmailForm } from "@/auth/basic/VerifyEmailForm"
-import { PasswordResetSuccess } from "@/auth/basic/PasswordResetSuccess"
-import CoverLoginPage from "@/auth/cover/CoverLoginPage"
-import CoverForgotPasswordPage from "@/auth/cover/CoverForgotPasswordPage"
-import CoverRegisterPage from "@/auth/cover/CoverRegisterPage"
-import CoverResetPasswordPage from "@/auth/cover/CoverResetPasswordPage"
-import CoverVerifyEmailPage from "@/auth/cover/CoverVerifyEmailPage"
-import CoverPasswordResetSuccessPage from "@/auth/cover/CoverPasswordResetSuccessPage"
-import Error404 from "@/pages/error/Error404"
-import Error500 from "@/pages/error/Error500"
-import ComingSoon from "@/pages/error/ComingSoon"
 
-import AuthCallback from "@/pages/auth/callback"
 import { AuthGuard } from "@/guards/AuthGuard"
 
 // Marketing (public)
 import MarketingLayout from "@/layouts/MarketingLayout"
 import HomePage from "@/pages/marketing/HomePage"
-import AboutUsPage from "@/pages/marketing/AboutUsPage"
-import OurCoursesPage from "@/pages/marketing/OurCoursesPage"
-import CategoryPage from "@/pages/marketing/CategoryPage"
-import CourseDetailPage from "@/pages/marketing/CourseDetailPage"
-import TrainingSolutionPage from "@/pages/marketing/TrainingSolutionPage"
-import VerifyCertPage from "@/pages/marketing/VerifyCertPage"
-import AccreditationsPage from "@/pages/marketing/AccreditationsPage"
-import BlogPage from "@/pages/marketing/BlogPage"
-import BlogPostPage from "@/pages/marketing/BlogPostPage"
-import EventsPage from "@/pages/marketing/EventsPage"
-import ContactPage from "@/pages/marketing/ContactPage"
-import FAQLegalPage from "@/pages/marketing/legal/FAQPage"
-import PrivacyPolicyPage from "@/pages/marketing/legal/PrivacyPolicyPage"
-import RefundPolicyPage from "@/pages/marketing/legal/RefundPolicyPage"
-import CookiePolicyPage from "@/pages/marketing/legal/CookiePolicyPage"
-import TermsPage from "@/pages/marketing/legal/TermsPage"
+
+/* ---------------------------------------------------------------------------
+   Route-level code splitting
+   ---------------------------------------------------------------------------
+   Every page below was a static import, so one bundle carried the whole
+   platform: a visitor reading the public homepage downloaded the course
+   builder, the calendar, the payroll module and the spreadsheet exporter
+   before the page became usable. Each route now loads only when it is first
+   visited.
+
+   Deliberately eager: the marketing layout and the homepage (they are the
+   first paint for most visitors), the guards (they decide what to render at
+   all), and the error pages (they must work when a chunk fails to load).
+   --------------------------------------------------------------------------- */
+
+const AppLayout = lazy(() => import("@/layouts/AppLayout"))
+const ModuleComingSoon = lazy(() => import("@/pages/platform/ModuleComingSoon"))
+const DashboardPage = lazy(() => import("@/pages/platform/DashboardPage"))
+const LearnersListPage = lazy(() => import("@/pages/platform/learners/LearnersListPage"))
+const LearnerNewPage = lazy(() => import("@/pages/platform/learners/LearnerNewPage"))
+const LearnerDetailPage = lazy(() => import("@/pages/platform/learners/LearnerDetailPage"))
+const LearnerEditPage = lazy(() => import("@/pages/platform/learners/LearnerEditPage"))
+const CoursesManagePage = lazy(() => import("@/pages/platform/courses/CoursesManagePage"))
+const CourseBuilderPage = lazy(() => import("@/pages/platform/courses/CourseBuilderPage"))
+const CourseOverviewPage = lazy(() => import("@/pages/platform/courses/CourseOverviewPage"))
+const MyCoursesPage = lazy(() => import("@/pages/platform/courses/MyCoursesPage"))
+const EnrolledCoursesPage = lazy(() => import("@/pages/platform/courses/EnrolledCoursesPage"))
+const LessonPlayerPage = lazy(() => import("@/pages/platform/courses/LessonPlayerPage"))
+const QuizListPage = lazy(() => import("@/pages/platform/assessments/QuizListPage"))
+const QuizBuilderPage = lazy(() => import("@/pages/platform/assessments/QuizBuilderPage"))
+const TakeAssessmentPage = lazy(() => import("@/pages/platform/assessments/TakeAssessmentPage"))
+const ResultsPage = lazy(() => import("@/pages/platform/assessments/ResultsPage"))
+const SessionsListPage = lazy(() => import("@/pages/platform/sessions/SessionsListPage"))
+const SessionFormPage = lazy(() => import("@/pages/platform/sessions/SessionFormPage"))
+const SessionDetailPage = lazy(() => import("@/pages/platform/sessions/SessionDetailPage"))
+const CheckInPage = lazy(() => import("@/pages/platform/sessions/CheckInPage"))
+const PlatformCalendarPage = lazy(() => import("@/pages/platform/sessions/CalendarPage"))
+const AttendanceLogPage = lazy(() => import("@/pages/platform/sessions/AttendanceLogPage"))
+const CertificatesListPage = lazy(() => import("@/pages/platform/certificates/CertificatesListPage"))
+const CertTemplatesPage = lazy(() => import("@/pages/platform/certificates/CertTemplatesPage"))
+const CertVerifyPage = lazy(() => import("@/pages/platform/certificates/CertVerifyPage"))
+const AiAssistantPage = lazy(() => import("@/pages/platform/ai/AiAssistantPage"))
+const SettingsPage = lazy(() => import("@/pages/platform/settings/SettingsPage"))
+const NotificationsPage = lazy(() => import("@/pages/platform/notifications/NotificationsPage"))
+const MessagesPage = lazy(() => import("@/pages/platform/messages/MessagesPage"))
+const AnnouncementsPage = lazy(() => import("@/pages/platform/announcements/AnnouncementsPage"))
+const TrainersListPage = lazy(() => import("@/pages/platform/trainers/TrainersListPage"))
+const AnalyticsPage = lazy(() => import("@/pages/platform/analytics/AnalyticsPage"))
+const ReportsPage = lazy(() => import("@/pages/platform/reports/ReportsPage"))
+const ComplianceMatrixPage = lazy(() => import("@/pages/platform/compliance/ComplianceMatrixPage"))
+const AuditLogPage = lazy(() => import("@/pages/platform/audit/AuditLogPage"))
+const PaymentsPage = lazy(() => import("@/pages/platform/payments/PaymentsPage"))
+const FeesReceiptsPage = lazy(() => import("@/pages/platform/payments/FeesReceiptsPage"))
+const EnrolmentsPage = lazy(() => import("@/pages/platform/enrolments/EnrolmentsPage"))
+const StaffPage = lazy(() => import("@/pages/platform/staff/StaffPage"))
+const DepartmentsPage = lazy(() => import("@/pages/platform/departments/DepartmentsPage"))
+const VirtualTrainingPage = lazy(() => import("@/pages/platform/virtual/VirtualTrainingPage"))
+const LibraryPage = lazy(() => import("@/pages/platform/library/LibraryPage"))
+const MyResourcesPage = lazy(() => import("@/pages/platform/library/MyResourcesPage"))
+const BlogAdminPage = lazy(() => import("@/pages/platform/blog/BlogAdminPage"))
+const BlogEditPage = lazy(() => import("@/pages/platform/blog/BlogEditPage"))
+const LearningPathsPage = lazy(() => import("@/pages/platform/courses/LearningPathsPage"))
+const LearningPathDetailPage = lazy(() => import("@/pages/platform/courses/LearningPathDetailPage"))
+const CohortsPage = lazy(() => import("@/pages/platform/cohorts/CohortsPage"))
+const ForumsPage = lazy(() => import("@/pages/platform/forums/ForumsPage"))
+const HolidaysPage = lazy(() => import("@/pages/platform/sessions/HolidaysPage"))
+const StoreCataloguePage = lazy(() => import("@/pages/platform/store/StoreCataloguePage"))
+const StoreOrdersPage = lazy(() => import("@/pages/platform/store/StoreOrdersPage"))
+const StoreCouponsPage = lazy(() => import("@/pages/platform/store/StoreCouponsPage"))
+const ThreadPage = lazy(() => import("@/pages/platform/forums/ThreadPage"))
+const QaWallPage = lazy(() => import("@/pages/platform/qa/QaWallPage"))
+const FeedbackPage = lazy(() => import("@/pages/platform/feedback/FeedbackPage"))
+const FeedbackResultsPage = lazy(() => import("@/pages/platform/feedback/FeedbackResultsPage"))
+const EmailComposerPage = lazy(() => import("@/pages/platform/email/EmailComposerPage"))
+const CohortDetailPage = lazy(() => import("@/pages/platform/cohorts/CohortDetailPage"))
+const IntegrationsPage = lazy(() => import("@/pages/platform/settings/IntegrationsPage"))
+const OneToOnePage = lazy(() => import("@/pages/platform/one-to-one/OneToOnePage"))
+const UserManagementPage = lazy(() => import("@/pages/platform/people/UserManagementPage"))
+const ProfilePage = lazy(() => import("@/pages/platform/profile/ProfilePage"))
+const InboxPage = lazy(() => import("@/pages/platform/email/InboxPage"))
+const MailDetailPage = lazy(() => import("@/pages/platform/email/MailDetailPage"))
+const MySessionsPage = lazy(() => import("@/pages/platform/sessions/MySessionsPage"))
+const TrainerTimetablePage = lazy(() => import("@/pages/platform/sessions/TrainerTimetablePage"))
+const PayrollPage = lazy(() => import("@/pages/platform/payroll/PayrollPage"))
+const PasswordSettingsPage = lazy(() => import("@/pages/platform/account/PasswordSettingsPage"))
+const InvoicesPage = lazy(() => import("@/pages/platform/invoices/InvoicesPage"))
+const FileManagerPage2 = lazy(() => import("@/pages/platform/files/FileManagerPage"))
+const MyFilesPage = lazy(() => import("@/pages/platform/files/MyFilesPage"))
+const AuthLayout = lazy(() => import("@/layouts/AuthLayout"))
+const LoginPage = lazy(() => import("@/auth/basic/LoginPage"))
+const RegisterPage = lazy(() => import("@/auth/basic/RegisterPage"))
+const ForgotPasswordPage = lazy(() => import("@/auth/basic/ForgotPasswordPage"))
+const ResetPasswordForm = lazy(() =>
+  import("@/auth/basic/ResetPasswordForm").then((m) => ({ default: m.ResetPasswordForm })),
+)
+const VerifyEmailForm = lazy(() =>
+  import("@/auth/basic/VerifyEmailForm").then((m) => ({ default: m.VerifyEmailForm })),
+)
+const PasswordResetSuccess = lazy(() =>
+  import("@/auth/basic/PasswordResetSuccess").then((m) => ({ default: m.PasswordResetSuccess })),
+)
+const CoverLoginPage = lazy(() => import("@/auth/cover/CoverLoginPage"))
+const CoverForgotPasswordPage = lazy(() => import("@/auth/cover/CoverForgotPasswordPage"))
+const CoverRegisterPage = lazy(() => import("@/auth/cover/CoverRegisterPage"))
+const CoverResetPasswordPage = lazy(() => import("@/auth/cover/CoverResetPasswordPage"))
+const CoverVerifyEmailPage = lazy(() => import("@/auth/cover/CoverVerifyEmailPage"))
+const CoverPasswordResetSuccessPage = lazy(() => import("@/auth/cover/CoverPasswordResetSuccessPage"))
+const Error404 = lazy(() => import("@/pages/error/Error404"))
+const Error500 = lazy(() => import("@/pages/error/Error500"))
+const ComingSoon = lazy(() => import("@/pages/error/ComingSoon"))
+const AuthCallback = lazy(() => import("@/pages/auth/callback"))
+const AboutUsPage = lazy(() => import("@/pages/marketing/AboutUsPage"))
+const OurCoursesPage = lazy(() => import("@/pages/marketing/OurCoursesPage"))
+const CategoryPage = lazy(() => import("@/pages/marketing/CategoryPage"))
+const CourseDetailPage = lazy(() => import("@/pages/marketing/CourseDetailPage"))
+const TrainingSolutionPage = lazy(() => import("@/pages/marketing/TrainingSolutionPage"))
+const VerifyCertPage = lazy(() => import("@/pages/marketing/VerifyCertPage"))
+const AccreditationsPage = lazy(() => import("@/pages/marketing/AccreditationsPage"))
+const BlogPage = lazy(() => import("@/pages/marketing/BlogPage"))
+const BlogPostPage = lazy(() => import("@/pages/marketing/BlogPostPage"))
+const EventsPage = lazy(() => import("@/pages/marketing/EventsPage"))
+const ContactPage = lazy(() => import("@/pages/marketing/ContactPage"))
+const FAQLegalPage = lazy(() => import("@/pages/marketing/legal/FAQPage"))
+const PrivacyPolicyPage = lazy(() => import("@/pages/marketing/legal/PrivacyPolicyPage"))
+const RefundPolicyPage = lazy(() => import("@/pages/marketing/legal/RefundPolicyPage"))
+const CookiePolicyPage = lazy(() => import("@/pages/marketing/legal/CookiePolicyPage"))
+const TermsPage = lazy(() => import("@/pages/marketing/legal/TermsPage"))
+
+
+/** Wrap a route element in its own Suspense boundary. */
+function route(Component: React.ComponentType): ReactElement {
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      <Component />
+    </Suspense>
+  )
+}
 
 export const router = createBrowserRouter (
   [
     // 🌐 MARKETING (public)
     {
-      element: <MarketingLayout />,
+      element: route(MarketingLayout),
       errorElement: <ErrorPage />,
       children: [
         { index: true, element: <HomePage /> },
@@ -135,6 +169,9 @@ export const router = createBrowserRouter (
         { path: "our-courses/:categorySlug", element: <CategoryPage /> },
         { path: "training-solutions/:sector", element: <TrainingSolutionPage /> },
         { path: "resources/verify-certificate", element: <VerifyCertPage /> },
+        // Every certificate, and the standard credentialing line, prints
+        // "verifiable at vitalcare.uk/verify". That address has to resolve.
+        { path: "verify", element: <Navigate to="/resources/verify-certificate" replace /> },
         { path: "resources/accreditations", element: <AccreditationsPage /> },
         { path: "resources/blog", element: <BlogPage /> },
         { path: "resources/blog/:slug", element: <BlogPostPage /> },
@@ -150,7 +187,7 @@ export const router = createBrowserRouter (
 
     // 🔐 AUTH ROUTES
     {
-      element: <AuthLayout />,
+      element: route(AuthLayout),
       errorElement: <ErrorPage />,
       children: [
         // 🔑 Vitalcare auth (canonical paths)
@@ -185,9 +222,11 @@ export const router = createBrowserRouter (
     {
       path: "platform",
       element: (
-        <AuthGuard>
-          <AppLayout />
-        </AuthGuard>
+        <Suspense fallback={<RouteFallback />}>
+          <AuthGuard>
+            <AppLayout />
+          </AuthGuard>
+        </Suspense>
       ),
       errorElement: <ErrorPage />,
       children: [

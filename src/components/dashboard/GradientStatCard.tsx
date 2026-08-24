@@ -50,23 +50,30 @@ export function GradientStatCard({
   const t = TONE[tone]
   return (
     <Card className={`h-full overflow-hidden border-0 shadow-sm ${t.card}`}>
-      <CardContent className="flex h-full items-center gap-4 p-5">
+      {/* Stacked at phone widths and side by side from sm up. The old layout was
+          always side by side, which left roughly 80px for the label inside a
+          two-column grid on a 375px screen, so every headline read "Total l…".
+          The label now wraps instead of truncating: a statistic nobody can read
+          is not a statistic. */}
+      <CardContent className="flex h-full flex-col items-start gap-2.5 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
         <div
-          className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${t.icon}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-xl sm:size-12 ${t.icon}`}
         >
-          <Icon className="size-6" aria-hidden="true" />
+          <Icon className="size-5 sm:size-6" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className={`truncate text-sm font-medium ${t.label}`}>{label}</p>
+          <p className={`text-xs font-medium leading-snug sm:text-sm ${t.label}`}>
+            {label}
+          </p>
           {loading ? (
-            <Skeleton className="mt-1.5 h-8 w-16 bg-white/30" />
+            <Skeleton className="mt-1.5 h-7 w-16 bg-white/30 sm:h-8" />
           ) : (
-            <p className="mt-0.5 font-display text-3xl leading-none tabular-nums">
+            <p className="mt-1 font-display text-2xl leading-none tabular-nums sm:text-3xl">
               {value}
             </p>
           )}
           {hint && !loading && (
-            <p className={`mt-1 truncate text-xs ${t.label}`}>{hint}</p>
+            <p className={`mt-1 line-clamp-2 text-xs ${t.label}`}>{hint}</p>
           )}
         </div>
       </CardContent>

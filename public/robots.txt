@@ -1,0 +1,17 @@
+# Vitalcare Training Hub
+#
+# The public catalogue is meant to be found. Everything behind a sign-in is
+# not: those routes hold learner records, and a crawler has no business there.
+
+User-agent: *
+Allow: /
+
+Disallow: /platform/
+Disallow: /auth/
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /error/
+
+Sitemap: https://vitalcare.uk/sitemap.xml

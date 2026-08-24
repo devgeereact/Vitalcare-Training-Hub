@@ -13,16 +13,20 @@ interface StatCardProps {
 export function StatCard({ label, value, icon: Icon, loading, hint }: StatCardProps) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-4 p-5">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="size-6" />
+      {/* Same responsive shape as GradientStatCard: stacked on phones so the
+          label has the full card width to wrap into. */}
+      <CardContent className="flex flex-col items-start gap-2.5 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:size-12">
+          <Icon className="size-5 sm:size-6" aria-hidden="true" />
         </div>
-        <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">{label}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs leading-snug text-muted-foreground sm:text-sm">
+            {label}
+          </p>
           {loading ? (
             <Skeleton className="mt-1 h-7 w-16" />
           ) : (
-            <p className="font-display text-2xl leading-tight text-foreground">
+            <p className="font-display text-2xl leading-tight text-foreground sm:text-3xl">
               {value}
             </p>
           )}

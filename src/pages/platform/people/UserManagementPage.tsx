@@ -1,5 +1,4 @@
 import { useState } from "react"
-import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
 import { Users, AlertCircle, Search, UserPlus, Download } from "lucide-react"
 
@@ -37,7 +36,13 @@ function name(p: Profile) {
   )
 }
 
-function exportUsers(users: Profile[]): void {
+/** Load the 1.2MB spreadsheet library only when an export runs. */
+async function loadXlsx() {
+  return await import("xlsx")
+}
+
+async function exportUsers(users: Profile[]): Promise<void> {
+  const XLSX = await loadXlsx()
   const rows = users.map((u) => ({
     Name: name(u),
     Email: u.email,
@@ -85,7 +90,7 @@ export default function UserManagementPage() {
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
-            onClick={() => exportUsers(users)}
+            onClick={() => void exportUsers(users)}
             disabled={users.length === 0}
           >
             <Download className="mr-2 size-4" /> Export

@@ -29,11 +29,21 @@ const CardHeader = React.forwardRef<
 ))
 CardHeader.displayName = "CardHeader"
 
+/**
+ * Renders a real heading, not a <div>.
+ *
+ * Every card on the platform used a <div> here, so a screen-reader user could
+ * not navigate by heading at all: the page announced a wall of text with no
+ * structure. Defaults to <h3>, which sits correctly under a page <h1> and a
+ * section <h2>; pass `as` where a card title is genuinely a section heading.
+ */
 const CardTitle = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement> & {
+    as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "div"
+  }
+>(({ className, as: Comp = "h3", ...props }, ref) => (
+  <Comp
     ref={ref}
     className={cn("font-semibold leading-none tracking-tight", className)}
     {...props}

@@ -120,7 +120,7 @@ export default function FileManagerPage(): React.JSX.Element {
         <div>
           <h1 className="font-display text-3xl text-foreground">File manager</h1>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
-            Files organised by type. Private, staff access only.
+            <span>Files organised by type. Private, staff access only.</span>
             <Badge variant="secondary" className="gap-1.5">
               {backend === "drive" ? (
                 <>
