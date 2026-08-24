@@ -357,15 +357,34 @@ type UserRole = 'super_admin' | 'admin' | 'trainer' | 'learner'
 
 ---
 
-## DEV ACCOUNT
+## TEST ACCOUNTS
 
-```
-Email:    gideon@vitalcare.uk
-Password: Testing123!
-Role:     super_admin
-```
+> ⚠️ **This file previously printed the password for a super_admin account on
+> the live Supabase project, in a public repository.** It has been removed, but
+> removing it does not unpublish it: it remains in this repository's git
+> history, which anyone can read. **Those passwords must be rotated.** Until
+> they are, anyone who has ever seen this file can sign in to the live platform
+> with full administrative rights.
 
-For local development only. Seeded via `supabase/migrations/003_seed.sql`.
+Six accounts exist for development and for the automated authorisation suite,
+one per role, all on the live project:
+
+| Email | Role |
+|-------|------|
+| gideon@vitalcare.uk | super_admin |
+| admin@vitalcare.uk | admin |
+| trainer@vitalcare.uk | trainer |
+| manager@vitalcare.uk | manager |
+| content_editor@vitalcare.uk | content_editor |
+| learner@vitalcare.uk | learner |
+
+**Passwords live in the password manager, and nowhere in this repository.**
+Locally they go in `.env.test.local`, which is git-ignored; see
+`tests/security/.env.example` for the variable names. In CI they are repository
+secrets.
+
+Rotate them with `scripts/rotate-test-passwords.mjs`, which changes each
+password through the Auth API and prints the new values once.
 
 ---
 

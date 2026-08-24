@@ -158,8 +158,30 @@ jobs:
       - name: Install
         run: npm ci
 
-      # Skips itself, loudly, when the secrets are not configured. A skipped
-      # authorisation test is not a passing one, so read the log rather than the
-      # tick.
+      # A job that skipped every test and reported success is exactly the
+      # failure this suite exists to prevent, so refuse to be green without
+      # the credentials rather than quietly proving nothing.
+      - name: Require credentials
+        run: |
+          missing=0
+          for v in VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY \
+                   TEST_SUPER_ADMIN_EMAIL TEST_SUPER_ADMIN_PASSWORD \
+                   TEST_ADMIN_EMAIL TEST_ADMIN_PASSWORD \
+                   TEST_TRAINER_EMAIL TEST_TRAINER_PASSWORD \
+                   TEST_LEARNER_EMAIL TEST_LEARNER_PASSWORD \
+                   TEST_OTHER_USER_EMAIL TEST_OTHER_USER_PASSWORD; do
+            if [ -z "${!v}" ]; then echo "::error::$v is not set"; missing=1; fi
+          done
+          if [ "$missing" = "1" ]; then
+            echo "::error::The authorisation suite cannot run. Configure the"
+            echo "::error::repository secrets listed in tests/security/.env.example."
+            exit 1
+          fi
+          for v in MIGRATION_092_APPLIED MIGRATION_093_APPLIED; do
+            if [ "${!v}" != "1" ]; then
+              echo "::warning::$v is not 1, so its assertions will be skipped."
+            fi
+          done
+
       - name: Authorisation and journey tests
         run: npm run test:security
