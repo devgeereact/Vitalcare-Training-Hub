@@ -131,6 +131,21 @@ export default function AccountSettingsCard(): React.ReactElement {
             onChange={(e) => setEcPhone(e.target.value)}
           />
         </div>
+        {/*
+          A just-in-time notice, because the emergency contact is a different
+          person from the one filling the form. They cannot be told about this
+          by our Privacy Policy, since they will never read it, so the learner
+          entering their details has to know what the details are for and that
+          telling them is their job.
+        */}
+        <p
+          id="emergency-contact-note"
+          className="text-xs text-muted-foreground sm:col-span-2"
+        >
+          We use your emergency contact only to reach someone on your behalf if
+          you become unwell during training. Please tell them you have given us
+          their name and number.
+        </p>
         <div className="sm:col-span-2">
           <div className="mb-1.5 flex items-center justify-between">
             <Label className="text-xs">About me</Label>
