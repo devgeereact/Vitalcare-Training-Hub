@@ -194,6 +194,30 @@ export default function CoverRegisterPage() {
           </Button>
         </form>
 
+        {/*
+          The terms being agreed to, and the notice describing what happens to
+          the name, email and password just handed over, have to be readable at
+          the moment of signing up. Linking them only from the marketing footer
+          asks people to accept terms they were never shown.
+        */}
+        <p className="text-center text-xs text-muted-foreground">
+          By creating an account you agree to our{" "}
+          <Link
+            to="/terms-and-conditions"
+            className="text-primary underline underline-offset-4"
+          >
+            Terms and Conditions
+          </Link>{" "}
+          and confirm you have read our{" "}
+          <Link
+            to="/privacy-policy"
+            className="text-primary underline underline-offset-4"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
+
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
