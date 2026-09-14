@@ -21,7 +21,9 @@ export const SUMMARY_COURSES = [
 ] as const
 
 export const PAYMENT_STATUSES = ["Paid", "Part Paid", "Pending"] as const
-export const INVOICE_STATUSES = ["Paid", "Pending", "Overdue"] as const
+// Matches the invoice statuses the platform actually stores, plus Overdue for
+// a sheet filled in by hand. "Pending" covered draft, sent and void alike.
+export const INVOICE_STATUSES = ["Paid", "Sent", "Draft", "Void", "Overdue"] as const
 export const CONFIRMATION = ["Yes", "No"] as const
 export const CERT_STATUSES = ["Active", "Expired", "Revoked"] as const
 export const ACCOUNT_STATUSES = ["Active", "Lapsed", "Prospect"] as const
@@ -69,3 +71,14 @@ export const MONTHS_2026 = [
   "November 2026",
   "December 2026",
 ] as const
+
+/**
+ * Appended to the tab name of a sheet that is always blank.
+ *
+ * Several sheets have no source in the application. Rendered with the same
+ * navy header and gold totals as a populated sheet, they read as a report
+ * saying zero. The tab name is the one label a reader cannot miss.
+ *
+ * Excel caps a tab name at 31 characters, so keep this short.
+ */
+export const TEMPLATE_SUFFIX = "(blank template)"

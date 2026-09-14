@@ -14,7 +14,7 @@ import {
 import { useCertificates } from "@/lib/queries/certificates.queries"
 import { useLearners } from "@/lib/queries/learners.queries"
 import { useInvoices } from "@/lib/queries/invoices.queries"
-import { useAnalyticsSummary } from "@/lib/queries/analytics.queries"
+import { useBusinessMeasures } from "@/lib/queries/analytics.queries"
 import { useStaffMatrix } from "@/lib/queries/compliance.queries"
 import { downloadWorkbook } from "@/lib/exports/download"
 import { REPORTS, type ReportId, type ReportMeta } from "@/lib/exports/registry"
@@ -31,7 +31,7 @@ export default function ReportsPage(): JSX.Element {
   const certificates = useCertificates()
   const learners = useLearners()
   const invoices = useInvoices(true)
-  const summary = useAnalyticsSummary()
+  const measures = useBusinessMeasures()
   const matrix = useStaffMatrix()
 
   // Key is `${id}:${mode}` so each button tracks its own spinner.
@@ -47,7 +47,7 @@ export default function ReportsPage(): JSX.Element {
       case "finance-tracker":
         return invoices.isLoading
       case "business-overview":
-        return summary.isLoading || invoices.isLoading
+        return measures.isLoading
       case "training-matrix":
         return matrix.isLoading
       default:
@@ -73,7 +73,7 @@ export default function ReportsPage(): JSX.Element {
       case "finance-tracker":
         return invoices.isError
       case "business-overview":
-        return summary.isError || invoices.isError
+        return measures.isError
       case "training-matrix":
         return matrix.isError
       default:
@@ -90,13 +90,8 @@ export default function ReportsPage(): JSX.Element {
         return buildLearnerProgressLive(learners.data ?? [])
       case "finance-tracker":
         return buildFinanceTrackerLive(invoices.data ?? [])
-      case "business-overview": {
-        if (!summary.data) return null
-        const paidPence = (invoices.data ?? [])
-          .filter((inv) => inv.status === "paid")
-          .reduce((sum, inv) => sum + inv.total_pence, 0)
-        return buildBusinessOverviewLive(summary.data, paidPence / 100)
-      }
+      case "business-overview":
+        return measures.data ? buildBusinessOverviewLive(measures.data) : null
       case "training-matrix":
         return matrix.data ? buildTrainingMatrixLive(matrix.data) : null
       default:
@@ -114,7 +109,7 @@ export default function ReportsPage(): JSX.Element {
       case "finance-tracker":
         return invoices.data?.length ?? 0
       case "business-overview":
-        return summary.data ? 1 : 0
+        return measures.data ? 1 : 0
       case "training-matrix":
         return matrix.data?.staff.length ?? 0
       default:
