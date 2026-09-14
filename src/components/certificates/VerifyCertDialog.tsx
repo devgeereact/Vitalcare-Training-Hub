@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/dialog"
 import { verifyByCode, type VerifyResult } from "@/lib/queries/certificates.queries"
 
-function fmt(iso: string): string {
+function fmt(iso: string | null): string {
+  if (!iso) return "Withheld"
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
@@ -110,18 +111,18 @@ export default function VerifyCertDialog({
                   {state.cert.is_valid ? "Valid certificate" : "Not currently valid"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {state.cert.is_valid
+                  {state.cert.state === "valid"
                     ? "Genuine and currently in date."
-                    : state.expired
+                    : state.cert.state === "expired"
                       ? "This certificate has expired."
-                      : "This certificate is awaiting approval."}
+                      : "This certificate is awaiting approval, so it has not been issued. Its details are withheld until it is."}
                 </p>
               </div>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border/70 pt-4">
-              <Field label="Learner" value={state.cert.learner_name} />
-              <Field label="Course" value={state.cert.course_title} />
-              <Field label="CPD hours" value={`${state.cert.cpd_hours}`} />
+              <Field label="Learner" value={state.cert.learner_name ?? "Withheld"} />
+              <Field label="Course" value={state.cert.course_title ?? "Withheld"} />
+              <Field label="CPD hours" value={state.cert.cpd_hours === null ? "Withheld" : `${state.cert.cpd_hours}`} />
               <Field label="Issued" value={fmt(state.cert.issued_at)} />
               {state.cert.expires_at ? (
                 <Field label="Expires" value={fmt(state.cert.expires_at)} />

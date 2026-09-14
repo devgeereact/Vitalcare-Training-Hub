@@ -236,13 +236,15 @@ export function useCertStats() {
 }
 
 export interface VerifyResult {
-  learner_name: string
-  course_title: string
-  cpd_hours: number
-  issued_at: string
+  /** Null for a certificate that has not been issued: the server withholds it. */
+  learner_name: string | null
+  course_title: string | null
+  cpd_hours: number | null
+  issued_at: string | null
   expires_at: string | null
   verification_code: string
   is_valid: boolean
+  state: "valid" | "expired" | "not_issued"
 }
 
 export async function verifyByCode(code: string): Promise<VerifyResult | null> {

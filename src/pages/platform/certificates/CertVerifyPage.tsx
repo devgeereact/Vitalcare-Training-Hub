@@ -41,7 +41,8 @@ type LookupState =
   | { kind: "not_found" }
   | { kind: "error" }
 
-function fmt(iso: string): string {
+function fmt(iso: string | null): string {
+  if (!iso) return "Withheld"
   return format(new Date(iso), "d MMM yyyy")
 }
 
@@ -163,7 +164,11 @@ export default function CertVerifyPage() {
 }
 
 function ResultCard({ cert, id }: { cert: VerifyResult; id: string }) {
-  const valid = cert.is_valid
+  const valid = cert.state === "valid"
+  // "Expired" and "never issued" are different answers. Showing both as
+  // "Certificate expired" told a verifier that a certificate awaiting approval
+  // was genuine, which the company has not said.
+  const notIssued = cert.state === "not_issued"
   return (
     <div
       className={`overflow-hidden rounded-xl border ${
@@ -178,12 +183,18 @@ function ResultCard({ cert, id }: { cert: VerifyResult; id: string }) {
         )}
         <div className="flex-1">
           <p className="font-display text-xl text-brand-navy">
-            {valid ? "Valid certificate" : "Certificate expired"}
+            {valid
+              ? "Valid certificate"
+              : notIssued
+                ? "Not issued"
+                : "Certificate expired"}
           </p>
           <p className="text-sm text-muted-foreground">
             {valid
               ? "Genuine and currently in date."
-              : "Genuine, but no longer in date. A refresher is due."}
+              : notIssued
+                ? "This certificate has not been approved, so it has not been issued. Its details are withheld until it is."
+                : "Genuine, but no longer in date. A refresher is due."}
           </p>
         </div>
         <Badge
@@ -194,13 +205,13 @@ function ResultCard({ cert, id }: { cert: VerifyResult; id: string }) {
               : "border-warning/50 bg-warning/10 text-warning"
           }
         >
-          {valid ? "In date" : "Expired"}
+          {valid ? "In date" : notIssued ? "Not issued" : "Expired"}
         </Badge>
       </div>
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 px-5 py-4 text-sm sm:grid-cols-3">
-        <Field label="Learner" value={cert.learner_name} />
-        <Field label="Course" value={cert.course_title} />
-        <Field label="CPD hours" value={String(cert.cpd_hours)} />
+        <Field label="Learner" value={cert.learner_name ?? "Withheld"} />
+        <Field label="Course" value={cert.course_title ?? "Withheld"} />
+        <Field label="CPD hours" value={cert.cpd_hours === null ? "Withheld" : String(cert.cpd_hours)} />
         <Field label="Issued" value={fmt(cert.issued_at)} />
         {cert.expires_at ? (
           <Field label="Expires" value={fmt(cert.expires_at)} />

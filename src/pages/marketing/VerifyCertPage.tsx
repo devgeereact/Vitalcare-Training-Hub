@@ -14,14 +14,22 @@ import { Button } from "@/components/ui/button"
 import { callRpc } from "@/lib/supabase/rpc"
 import { PageMeta } from "@/components/seo/PageMeta"
 
+/**
+ * What `verify_certificate` returns.
+ *
+ * The personal fields are null for a certificate that has not been issued,
+ * because the server does not send them. `state` says which of the three
+ * answers applies; `is_valid` is kept for older callers.
+ */
 interface CertResult {
-  learner_name: string
-  course_title: string
-  cpd_hours: number
-  issued_at: string
+  learner_name: string | null
+  course_title: string | null
+  cpd_hours: number | null
+  issued_at: string | null
   expires_at: string | null
   verification_code: string
   is_valid: boolean
+  state: "valid" | "expired" | "not_issued"
 }
 
 type State =
@@ -38,7 +46,8 @@ const CODE_RE = /^(VC-[A-Z0-9]{6}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
 
-function formatDate(iso: string): string {
+function formatDate(iso: string | null): string {
+  if (!iso) return "Not recorded"
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
@@ -148,7 +157,7 @@ export default function VerifyCertPage(): React.ReactElement {
         </div>
 
         <div className="mt-8">
-          {state.kind === "found" && state.cert.is_valid ? (
+          {state.kind === "found" && state.cert.state === "valid" ? (
             <div className="overflow-hidden rounded-2xl border border-success/30 bg-success/[0.04] shadow-sm">
               <div className="flex items-center gap-3 border-b border-success/20 px-6 py-5">
                 <BadgeCheck className="size-9 shrink-0 text-success" />
@@ -162,9 +171,9 @@ export default function VerifyCertPage(): React.ReactElement {
                 </div>
               </div>
               <dl className="grid gap-5 px-6 py-6 sm:grid-cols-2">
-                <Field label="Learner" value={state.cert.learner_name} />
-                <Field label="Course" value={state.cert.course_title} />
-                <Field label="CPD hours" value={`${state.cert.cpd_hours}`} />
+                <Field label="Learner" value={state.cert.learner_name ?? "Not recorded"} />
+                <Field label="Course" value={state.cert.course_title ?? "Not recorded"} />
+                <Field label="CPD hours" value={state.cert.cpd_hours === null ? "Not recorded" : `${state.cert.cpd_hours}`} />
                 <Field label="Issued" value={formatDate(state.cert.issued_at)} />
                 {state.cert.expires_at ? (
                   <Field
@@ -183,7 +192,7 @@ export default function VerifyCertPage(): React.ReactElement {
             </div>
           ) : null}
 
-          {state.kind === "found" && !state.cert.is_valid ? (
+          {state.kind === "found" && state.cert.state === "expired" ? (
             <div className="overflow-hidden rounded-2xl border border-warning/40 bg-warning/[0.05] shadow-sm">
               <div className="flex items-center gap-3 border-b border-warning/30 px-6 py-5">
                 <ShieldAlert className="size-9 shrink-0 text-warning" />
@@ -197,8 +206,8 @@ export default function VerifyCertPage(): React.ReactElement {
                 </div>
               </div>
               <dl className="grid gap-5 px-6 py-6 sm:grid-cols-2">
-                <Field label="Learner" value={state.cert.learner_name} />
-                <Field label="Course" value={state.cert.course_title} />
+                <Field label="Learner" value={state.cert.learner_name ?? "Not recorded"} />
+                <Field label="Course" value={state.cert.course_title ?? "Not recorded"} />
                 {state.cert.expires_at ? (
                   <Field
                     label="Expired on"
@@ -207,6 +216,14 @@ export default function VerifyCertPage(): React.ReactElement {
                 ) : null}
               </dl>
             </div>
+          ) : null}
+
+          {state.kind === "found" && state.cert.state === "not_issued" ? (
+            <Notice
+              icon={<ShieldX className="size-6 text-muted-foreground" />}
+              title="No valid certificate for that code"
+              body="That code does not identify a certificate we have issued. If you were given it by a learner, ask them to check it against the certificate itself, or contact us."
+            />
           ) : null}
 
           {state.kind === "invalid_input" ? (
