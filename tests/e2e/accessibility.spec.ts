@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 
-import { ready } from "./ready"
+import { ready, settleInView } from "./ready"
 
 /**
  * Accessibility, measured rather than eyeballed.
@@ -36,6 +36,7 @@ test.describe("automated checks", () => {
     test(`${route} has no WCAG A or AA violations`, async ({ page }) => {
       await page.goto(route)
       await ready(page)
+      await settleInView(page)
 
       const results = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -55,6 +56,7 @@ test.describe("automated checks", () => {
   test("the 404 page is accessible too", async ({ page }) => {
     await page.goto("/nope")
     await ready(page)
+    await settleInView(page)
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
       .analyze()
@@ -99,6 +101,10 @@ test.describe("structure", () => {
   test("every page has a main landmark", async ({ page }) => {
     for (const route of PUBLIC_PAGES) {
       await page.goto(route)
+      // Settle before moving on, for the same reason as the tabindex loop
+      // below: on WebKit the next navigation can otherwise begin while this
+      // one is still committing.
+      await ready(page)
       const mains = await page.locator("main, [role=main]").count()
       expect(mains, `${route} main landmark count`).toBeGreaterThanOrEqual(1)
     }
@@ -144,6 +150,12 @@ test.describe("keyboard", () => {
   test("no positive tabindex reorders the page", async ({ page }) => {
     for (const route of PUBLIC_PAGES) {
       await page.goto(route)
+      // Wait for the route to settle before moving on. Without this the next
+      // `goto` can start while the previous page is still committing its own
+      // navigation, which WebKit on a phone viewport is slow enough to hit:
+      // "Navigation to /resources/blog is interrupted by another navigation
+      // to /contact-us".
+      await ready(page)
       const positive = await page.$$eval("[tabindex]", (nodes) =>
         nodes
           .map((n) => Number(n.getAttribute("tabindex")))

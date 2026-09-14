@@ -195,7 +195,7 @@ export default function AboutUsPage() {
                     <figcaption className="text-lg font-semibold text-brand-navy">
                       {person.name}
                     </figcaption>
-                    <p className="text-sm font-medium text-brand-gold">
+                    <p className="text-sm font-medium text-brand-gold-ink">
                       {person.role}
                     </p>
                   </div>

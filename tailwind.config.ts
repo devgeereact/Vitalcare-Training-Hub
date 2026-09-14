@@ -85,6 +85,13 @@ const config: Config = {
         },
         // Semantic (CSTF/CPD badges, status)
         success: "#16a34a",
+        // Success green as *text*, and as a background behind white text.
+        // #16a34a is 3.3:1 on white and 2.96:1 on its own 10% tint, so the
+        // CSTF and CPD badges on every course card failed WCAG AA. This darker
+        // tone reads as the same green and clears AA at 7.1:1 on white and
+        // 6.4:1 on the tint. Same division of labour as brand gold: the
+        // brighter colour for fills, borders and icons, this one for text.
+        "success-ink": "#166534",
         warning: "#d97706",
       },
       fontFamily: {

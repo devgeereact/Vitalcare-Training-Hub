@@ -278,7 +278,7 @@ export default function AccreditationsPage() {
                   <span className="flex size-12 items-center justify-center rounded-xl bg-brand-navy/5 text-brand-navy">
                     <Icon className="size-6" aria-hidden="true" />
                   </span>
-                  <span className="font-sans text-2xl font-semibold tracking-tight text-brand-gold">
+                  <span className="font-sans text-2xl font-semibold tracking-tight text-brand-gold-ink">
                     {step}
                   </span>
                 </div>
@@ -318,7 +318,7 @@ export default function AccreditationsPage() {
                 <span className="flex size-12 items-center justify-center rounded-xl bg-brand-gold/15 text-brand-navy">
                   <Icon className="size-6" aria-hidden="true" />
                 </span>
-                <span className="font-sans text-2xl font-semibold tracking-tight text-brand-gold">
+                <span className="font-sans text-2xl font-semibold tracking-tight text-brand-gold-ink">
                   {step}
                 </span>
               </div>
