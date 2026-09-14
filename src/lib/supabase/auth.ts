@@ -145,6 +145,24 @@ function friendlyAuthError(message: string): string {
   if (m.includes("password") && m.includes("least")) {
     return "That password is too short. Use at least eight characters."
   }
+  if (m.includes("new password should be different")) {
+    return "That is your current password. Choose a different one."
+  }
+  // The reset link never became a session: expired, already used, or opened in
+  // a different browser. "Please try again" sends someone round the same loop.
+  if (
+    m.includes("auth session missing") ||
+    m.includes("session_not_found") ||
+    m.includes("invalid claim")
+  ) {
+    return (
+      "Your reset link is no longer valid. Request a new one and use the most " +
+      "recent email."
+    )
+  }
+  if (m.includes("token has expired") || m.includes("otp_expired")) {
+    return "That link has expired. Request a new one."
+  }
   if (m.includes("signups not allowed") || m.includes("signup is disabled")) {
     return "New accounts are not open at the moment. Contact info@vitalcare.uk."
   }
