@@ -24,8 +24,23 @@ export const SKIP_REASON =
   "Set JOURNEY_SUPABASE_URL, JOURNEY_SUPABASE_KEY and JOURNEY_PASSWORD, " +
   "pointed at an isolated local stack. Skipped is not passed."
 
-/** Sign in through the real form and wait for the platform to load. */
+/**
+ * Sign in through the real form and wait for the platform to load.
+ *
+ * Any existing session is discarded first. These specs switch between a
+ * learner and an administrator inside one test, and signing in over a live
+ * session left the page on /sign-in with no navigation: the form submitted
+ * against a session that was already there.
+ */
 export async function signIn(page: Page, email: string): Promise<void> {
+  await page.goto("/sign-in")
+  await page.evaluate(() => {
+    try {
+      window.localStorage.removeItem("vitalcare-auth")
+    } catch {
+      // A browser with storage blocked has no session to clear.
+    }
+  })
   await page.goto("/sign-in")
   await page.locator("#email").fill(email)
   await page.locator("#password").fill(PASSWORD)
