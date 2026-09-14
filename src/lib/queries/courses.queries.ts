@@ -667,6 +667,20 @@ export interface MyCourse {
   enrolmentId: string | null
 }
 
+/**
+ * The catalogue a learner sees, with their own enrolments marked.
+ *
+ * Built from the published catalogue *and* from the courses they are enrolled
+ * on. Starting from the published list alone meant that unpublishing a course
+ * removed it from "My learning" for everybody already enrolled: the enrolment,
+ * the lesson progress and the assessment attempts all survived, but the thing
+ * they were attached to vanished with no explanation. Somebody who had paid
+ * for training lost it because a catalogue flag changed.
+ *
+ * Migration 096 lets a learner read a course they hold a live enrolment on, so
+ * the second query returns those rows. A course that is neither published nor
+ * one they are enrolled on stays invisible.
+ */
 export async function getMyCourses(): Promise<MyCourse[]> {
   const { data: auth } = await supabase.auth.getUser()
   const uid = auth.user?.id
@@ -689,10 +703,34 @@ export async function getMyCourses(): Promise<MyCourse[]> {
     console.error("[getMyCourses]", published.error)
     throw published.error
   }
+  if (enrolments.error) {
+    console.error("[getMyCourses:enrolments]", enrolments.error)
+    throw enrolments.error
+  }
+
   const byCourse = new Map(
     (enrolments.data ?? []).map((e) => [e.course_id, e]),
   )
-  return (published.data as Course[]).map((c) => {
+  const courses = [...(published.data as Course[])]
+  const seen = new Set(courses.map((c) => c.id))
+
+  // Enrolled but not in the published list: fetch those courses directly.
+  const missing = [...byCourse.keys()].filter((id) => !seen.has(id))
+  if (missing.length > 0) {
+    const { data: extra, error: exErr } = await supabase
+      .from("courses")
+      .select("*")
+      .in("id", missing)
+      .is("deleted_at", null)
+    if (exErr) {
+      console.error("[getMyCourses:enrolled]", exErr)
+      throw exErr
+    }
+    courses.push(...((extra ?? []) as Course[]))
+    courses.sort((a, b) => a.title.localeCompare(b.title, "en-GB"))
+  }
+
+  return courses.map((c) => {
     const e = byCourse.get(c.id)
     return {
       course: c,
