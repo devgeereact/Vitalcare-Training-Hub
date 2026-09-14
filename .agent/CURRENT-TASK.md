@@ -2,34 +2,45 @@
 
 ## Outcome
 
-Adopt GEE OS 0.5.0 locally without replacing existing project knowledge or changing application behaviour.
+Prepare Vitalcare Training Hub for a controlled launch: correct the defects
+that affect the core customer journey, prove the corrections against an
+isolated database, and produce one dated readiness record with the decisions
+and configuration still outstanding.
 
 ## Scope
 
-- Add missing agent-neutral routing and MCP contracts.
-- Preserve existing `AGENTS.md`, `CLAUDE.md`, source code, documentation and untracked work.
-- Record a project-specific plan for later knowledge modularisation.
+- Local application and database changes needed for booking, payment,
+  enrolment, account access, compliance dates, certificate verification and
+  the two reporting workbooks.
+- Regression tests for each correction, run against an isolated local Supabase
+  stack, never the live project.
+- One current readiness record, one operating guide, one deployment plan, and
+  status labels on the historical documents.
 
 ## Outside scope
 
-- Feature or defect work.
-- Dependency changes.
-- File deletion or renaming.
-- Git commits, remote synchronisation and pushes.
-- Deployment or external-system mutation.
+- Production changes, deployment, external messages, real payments.
+- New AI features, payment processor integrations, subscriptions, dashboard
+  expansion, cosmetic redesign.
+- Rewriting the architecture or adding a second management system.
 
 ## Mode and workflow
 
 - Primary mode: Existing Application.
-- Workflow: Project Recovery for documentation state, then Change Safety for later edits.
+- Workflow: Change Safety, then Release Gate.
 
 ## Evidence
 
-- Before and after `git status`.
-- Added-file inventory.
-- YAML and link checks.
-- Confirmation that existing dirty files are unchanged.
+`docs/TEST-REPORT.md` holds exact pass, fail and skip counts.
+`docs/LAUNCH-READINESS.md` holds the issue register and the verdict.
 
 ## Completion
 
-The local project discovers the shared GEE OS, all original project files remain intact, and remaining modularisation work is recorded honestly.
+Local work is complete. The verdict is **not ready for a controlled pilot**:
+six items remain, all of them configuration or decisions outside this
+repository, listed in `docs/LAUNCH-READINESS.md` §2.
+
+## Superseded
+
+The previous contract, adopting GEE OS 0.5.0 locally, was completed in commit
+`2b3310d`. It described instruction-layer migration, not this work.

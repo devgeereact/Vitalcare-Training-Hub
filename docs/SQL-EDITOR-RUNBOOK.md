@@ -1,3 +1,21 @@
+> **Historical working document, retained for its SQL and its reasoning.** Not
+> a statement of current state. Two things in particular:
+>
+> - The "What was actually applied, 24 August 2026" section is the most recent
+>   dated evidence about the live database, and it contradicts
+>   `DEPLOYMENT-092-093.md`. Confirm with `LAUNCH-READINESS.md` §2.2 rather
+>   than trusting either.
+> - "Registration is still broken", at the end, is an undated observation about
+>   Supabase Auth having no SMTP provider. It was **not reproduced** in the
+>   September 2026 review. The application's side of registration and password
+>   recovery is now proved end to end against an isolated stack; whether the
+>   live project can send mail is a configuration question. See
+>   `LAUNCH-READINESS.md` §2.3.
+>
+> Two further migrations, `094` and `095`, have been added since this runbook
+> was written. `DEPLOYMENT.md` covers them. The current record is
+> `LAUNCH-READINESS.md`.
+
 # SQL Editor runbook
 
 Everything below is meant to be pasted into the **Supabase SQL Editor** for

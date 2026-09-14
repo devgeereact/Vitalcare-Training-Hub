@@ -1,3 +1,11 @@
+> **Backlog and roadmap, not a status report.** Written during the build. It
+> lists modules as planned that now exist, and mixes scope, ideas and
+> verification in one table. Useful for what was intended and why; useless as
+> evidence of what works.
+>
+> For what has actually been tested, see `TEST-REPORT.md`. For what is blocking
+> launch, see `LAUNCH-READINESS.md`.
+
 # Vitalcare Training Hub — Feature Matrix & Roadmap
 
 Living reconciliation of the full product vision against the current build.
