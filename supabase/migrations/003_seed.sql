@@ -39,45 +39,19 @@ insert into public.subscription_plans (name, slug, price_pence, interval, featur
 on conflict (slug) do nothing;
 
 -- ----------------------------------------------------------------------------
--- Dev super_admin account (local development only)
--- Email: gideon@vitalcare.uk  Password: Testing123!
+-- Super admin promotion
 --
--- If your Supabase version rejects direct auth.users inserts, instead create
--- the user in Dashboard > Authentication > Users, then run only the final
--- "promote to super_admin" UPDATE below.
+-- This migration used to create `gideon@vitalcare.uk` in `auth.users` with a
+-- password written in plain text a few lines above it, in a public repository.
+-- Anyone who read the file knew a super_admin password for every environment
+-- the migration had ever been applied to. The account creation has been
+-- removed; rotate that password in Supabase Auth if it has not been rotated
+-- already, because removing it here does not unpublish it from Git history.
+--
+-- Create accounts through Supabase Auth, or, for an isolated local stack, with
+-- `scripts/seed-local-test-data.mjs`. The promotion below then gives the named
+-- account its role, and is safe to run on its own.
 -- ----------------------------------------------------------------------------
-do $$
-declare
-  dev_id uuid;
-begin
-  select id into dev_id from auth.users where email = 'gideon@vitalcare.uk';
-
-  if dev_id is null then
-    dev_id := gen_random_uuid();
-    insert into auth.users (
-      instance_id, id, aud, role, email, encrypted_password,
-      email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
-      created_at, updated_at
-    ) values (
-      '00000000-0000-0000-0000-000000000000',
-      dev_id,
-      'authenticated',
-      'authenticated',
-      'gideon@vitalcare.uk',
-      crypt('Testing123!', gen_salt('bf')),
-      now(),
-      '{"provider":"email","providers":["email"]}',
-      '{"first_name":"Gideon","last_name":"Akinlotan"}',
-      now(),
-      now()
-    );
-  end if;
-
-  -- Ensure a profile exists (the on_auth_user_created trigger normally makes it)
-  insert into public.profiles (id, email, first_name, last_name, role)
-  values (dev_id, 'gideon@vitalcare.uk', 'Gideon', 'Akinlotan', 'super_admin')
-  on conflict (id) do update set role = 'super_admin';
-end $$;
 
 -- Promote by email (safe to run on its own if the user was made via Dashboard)
 update public.profiles
