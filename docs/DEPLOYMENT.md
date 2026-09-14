@@ -10,8 +10,8 @@ the server has no Node, so the build runs locally and ships as static files.
 
 | | |
 |---|---|
-| Database | Two new migrations, `094_order_integrity.sql` and `095_certificate_verification_states.sql`. One amended file, `003_seed.sql`, which is already applied and will not re-run. |
-| Application | Ordering, order status, the reset-password page, certificate verification, the two reporting workbooks, the compliance date rule, and the `/platform/store/orders` route. |
+| Database | Four new migrations, `094` to `097`. One amended file, `003_seed.sql`, which is already applied and will not re-run. |
+| Application | Ordering, order status, the reset-password page, certificate verification, the two reporting workbooks, the compliance date rule, the `/platform/store/orders` route, the "My learning" list, and the tab order on the sign-in form. |
 | Configuration | `PAYMENT` and `VAT` blocks in `src/lib/constants.ts`, both needing real values first. |
 
 ## Before anything
@@ -38,6 +38,8 @@ Apply in this order, one at a time, reading each result:
 093_assessment_and_expiry_guards.sql    (if §2.2 shows it is not applied)
 094_order_integrity.sql
 095_certificate_verification_states.sql
+096_enrolled_course_visibility.sql
+097_completion_certificate_expiry.sql
 ```
 
 Either `supabase db push` from an account that administers the project, or the
@@ -73,7 +75,24 @@ where polrelid = 'public.orders'::regclass order by polname;
 -- After 095
 select state from public.verify_certificate('VC-ZZZZZZ');
 -- expect no rows, and no error
+
+-- After 096
+select pg_get_expr(polqual, polrelid) from pg_policy
+where polrelid = 'public.courses'::regclass and polcmd = 'r';
+-- expect the expression to mention public.enrollments
+
+-- After 097
+select pg_get_functiondef(oid) ilike '%expires_at%'
+from pg_proc where proname = 'sync_course_completion';
+-- expect true
 ```
+
+**097 does not backfill.** Certificates already issued without an expiry stay
+as they are, on purpose: giving one an expiry can make it lapse the instant the
+statement runs, and the daily alert job emails its holder the next morning.
+`SQL-EDITOR-RUNBOOK.md` has that backfill with a pre-flight query showing
+exactly who it would affect. Run it separately, having looked, and tell the
+affected people first.
 
 ## Deploying the application
 
@@ -130,12 +149,14 @@ Then delete the test records you created.
 | The application is broken but the database is fine | Rebuild from the previous commit and `npm run deploy` again. The static site has no state. |
 | `094` is applied but the application deploy failed | Buyers cannot place orders until the application lands, because the browser can no longer insert directly. Either finish the application deploy, or restore the previous `orders_insert` and `order_items_insert` policies from `supabase/migrations/016_store.sql`. |
 | `095` broke public verification | Re-apply the `verify_certificate(text)` definition from `083_certificate_approval.sql`. The page tolerates the missing `state` column badly, so restore the application to its previous commit at the same time. |
+| `096` or `097` needs reverting | Re-apply the previous definitions: `courses_read` from `002_rls.sql` and `sync_course_completion` from `091_course_completion_server_side.sql`. Reverting `096` hides unpublished courses from the learners enrolled on them again, which is the defect, so prefer fixing forward. |
 | Data damage | Restore from the backup taken before the deployment. This is the step nobody has rehearsed: see §2.6. |
 
-None of the four migrations drops a table, a column or a row. `094` adds a
-sequence, an index and three functions, and narrows two insert policies. `095`
-replaces one function. Both are reversible by re-applying the previous
-definitions, which are in the repository.
+None of these migrations drops a table, a column or a row, and none writes to
+an existing one. `094` adds a sequence, an index and three functions, and
+narrows two insert policies. `095` replaces one function. `096` widens one
+select policy. `097` replaces one function. All are reversible by re-applying
+the previous definitions, which are in the repository.
 
 ## Not covered here
 

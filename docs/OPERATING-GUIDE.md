@@ -109,6 +109,15 @@ Expiry comes from the course's renewal period, counted in calendar months from
 issue. 31 January plus one month is 28 February, not 3 March: the platform and
 the database now agree on that.
 
+**A course with no renewal period issues certificates that never expire.** That
+is the right answer for some courses and the wrong one for most statutory
+ones, and it is a clinical decision, not a technical default. Certificates
+issued before September 2026 may also carry no expiry, because of a defect in
+the completion path that is now fixed going forward. Backfilling those is a
+deliberate step, with a pre-flight query, in `SQL-EDITOR-RUNBOOK.md`: doing it
+can make an old certificate lapse instantly and email its holder the next
+morning.
+
 ## Where things live
 
 | | |

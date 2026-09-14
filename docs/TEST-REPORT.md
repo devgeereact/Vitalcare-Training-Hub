@@ -59,8 +59,8 @@ organisation-scoping, attempt-cap, enrolment-guard and concurrency assertions
 were **enabled**, not skipped.
 
 ```
-Test Files  7 passed (7)
-     Tests  95 passed | 7 skipped (102)
+Test Files  9 passed (9)
+     Tests  103 passed | 9 skipped (112)
 ```
 
 | Suite | Passed | Skipped |
@@ -72,8 +72,10 @@ Test Files  7 passed (7)
 | `feature-coverage.test.ts` | 17 | 1 |
 | `learner-journey.test.ts` | 13 | 1 |
 | `order-integrity.test.ts` (new) | 19 | 1 |
+| `certificate-expiry.test.ts` (new) | 4 | 1 |
+| `course-access.test.ts` (new) | 4 | 1 |
 
-The seven skips are one per file: each suite carries an inverted `describe` that
+The nine skips are one per file: each suite carries an inverted `describe` that
 runs only when credentials are absent, and asserts that a skip is not a pass.
 No business assertion was skipped.
 
@@ -95,30 +97,77 @@ authorisation first, and both passed.
 isolated stack.
 
 ```
-34 passed (1.4m)   # 17 assertions at desktop width, the same 17 at 375px
+62 passed (2.8m)   # 31 assertions at desktop width, the same 31 at 375px
 ```
 
-Covering: registration, confirmation email followed to the platform, sign-in,
-sign-out, a wrong password, a complete password reset, the old password ceasing
-to work, an expired reset link, a reset link with nothing in it, the platform
-guard against anonymous visitors, publishing a product, ordering it, the
-reference and amount shown, the buyer seeing their own pending order, staff
-confirming payment and the buyer being enrolled, a confirmed order offering a
-refund rather than a second confirmation, cancelling an unpaid order, and three
-public certificate-verification cases.
+Four specs:
+
+- **account-access** — registration, the confirmation email followed to the
+  platform, sign-in, sign-out, a wrong password, a complete password reset, the
+  old password ceasing to work, an expired reset link, a reset link with
+  nothing in it, and the platform guard against anonymous visitors.
+- **booking** — publishing a product, ordering it, the reference and amount
+  shown, the buyer seeing their own pending order, staff confirming payment,
+  a confirmed order offering a refund rather than a second confirmation, and
+  cancelling an unpaid order.
+- **learning** — a confirmed payment becoming an enrolment, working through
+  both lessons, failing the assessment and sitting it again, passing, the
+  certificate that produces, the fact that it is not vouched for publicly until
+  approved, approving it, the renewal date landing a calendar year later on the
+  same day, and re-entering the course not minting a second certificate.
+- **exceptions and access** — a payment for the wrong amount cancelled rather
+  than confirmed, a cancelled order not offering confirmation, signing in using
+  the keyboard alone, opening and dismissing the buy dialogue from the
+  keyboard, and a visible focus indicator on the sign-in fields.
+
+Three of these were written to close gaps this report previously listed as not
+tested: the browser rehearsal of course completion, the certificate exception,
+and the payment discrepancy.
 
 ### Public site
 
-`playwright.config.ts`, production build, Chromium at six widths, pointed at
-the isolated stack rather than the live project.
+`playwright.config.ts`, production build, pointed at the isolated stack rather
+than the live project. Chromium at six widths, plus WebKit at desktop and as an
+iPhone 14, because every browser on an iPhone is WebKit whatever its badge
+says.
 
 ```
-330 passed | 6 skipped (1.1m)
+438 passed | 10 skipped (2.0m)
 ```
 
-The six skips are the deployment-only missing-asset check, one per browser
-project. It exercises Apache's behaviour and cannot run locally. That remains
-**not tested**.
+The ten skips are two checks that cannot run in this setting, one per browser
+project. The deployment-only missing-asset check exercises Apache's behaviour
+and cannot run locally: that remains **not tested**. The Core Web Vitals
+measurement throttles the network through the Chrome DevTools Protocol, which
+WebKit does not speak, so it is skipped there rather than failing.
+
+Adding WebKit found three races, all in the tests rather than in the product.
+
+Two checks walked the public pages in a loop without waiting for each route to
+settle, so the next navigation began while the previous one was still
+committing: "Navigation to /about-us is interrupted by another navigation to
+/our-courses". Both now wait, as the rest of that file already did.
+
+The third is worth reading properly, because it turned out to be hiding real
+defects.
+
+axe reported serious contrast failures on the privacy policy, with body text at
+`#e1e4e8` on white. No such colour exists in the design. Sections animate on
+`whileInView`, so they sit in their starting state until something scrolls them
+into view, and axe scrolls the page itself while it scans: it was starting
+those fades and then measuring colour part-way through one. The suite already
+ran with reduced motion, which covers fades that start on load, but not the
+ones axe itself triggers.
+
+Making the scan scroll the page and wait for the fades to finish fixed the
+false failure and immediately produced four true ones. While those sections
+were still faded out, axe had been *skipping* them: an element at zero opacity
+is not visible, and axe does not judge what nobody can see. The homepage,
+the course catalogue, the About page and the Accreditations page all contained
+text that fails WCAG 2.1 AA, and the suite had been reporting them clean.
+
+That is the uncomfortable part of this report. The accessibility suite was
+green for months because it was looking at the pages before they appeared.
 
 ## What remains untested
 
@@ -129,8 +178,7 @@ project. It exercises Apache's behaviour and cannot run locally. That remains
 | Real payments and refunds | No processor exists. The manual process was exercised end to end with synthetic orders. |
 | Backup and restore | Never rehearsed. |
 | The deployed site's deep links and missing-asset handling | Requires Apache. |
-| Safari and Firefox | The suites run Chromium only. |
-| Course completion through the browser | Proved at the API level by `learner-journey.test.ts`. A browser rehearsal of lessons and assessment was not built. |
+| Firefox | Not covered. The public suite runs Chromium and WebKit; the signed-in rehearsal is Chromium only. |
 | Accreditation claims, CPD hours and course content | Not something a test can establish. |
 
 ## Reproducing this

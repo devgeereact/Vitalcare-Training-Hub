@@ -9,8 +9,15 @@ code, the database migrations and the test suites are in a state where the
 remaining work is configuration and decisions, not development.
 
 Last updated 14 September 2026, against local revision `0619b92` plus the
-changes described here. This is the single current readiness record. Earlier
-documents are historical and are labelled as such.
+changes on branch `feature/launch-readiness`. This is the single current
+readiness record. Earlier documents are historical and are labelled as such.
+
+Five of the defects below were found by driving the application in a browser
+rather than by reading the code, including three that every previous review had
+passed over: certificates that never expired despite a migration written to
+give them one, a sign-in form nobody could use from a keyboard, and contrast
+failures on the course cards that the accessibility suite was reporting as
+clean because it scanned them mid-fade.
 
 ---
 
@@ -48,6 +55,10 @@ defect returns.
 | The Business Overview workbook counted every learner account as "Learners Trained" and every session as "Courses Delivered", cancelled and future ones included, under a heading of "Year to date" with no date filter anywhere. | Three headline figures overstated the business, in a workbook people file. | `useBusinessMeasures` produces dated measures. The workbook reports one row per measure with the rule that produced it, keeps delivered, cancelled and future sessions apart, and keeps invoiced separate from received. | `scripts/verify-workbooks.mjs`, seven new assertions. |
 | The Finance Tracker added VAT at 20% to every line and to the total. Every unpaid invoice, including voided ones, read "Pending". | A voided invoice looked like a debt, and a tax figure nobody had approved was presented as fact. | VAT columns appear only when `VAT.registered` is true in `src/lib/constants.ts`, at the rate recorded there, with the rate in the column heading. Invoiced and Received are separate columns with separate totals. Statuses are Paid, Sent, Draft and Void. | `scripts/verify-workbooks.mjs`, both arms of the VAT rule. |
 | Sheets with no data source rendered exactly like populated ones. | A styled empty sheet inside a workbook labelled "live export" reads as a real answer of zero. | Clients, Forecast, Expenses and Dashboard tabs are named "(blank template)". | `scripts/verify-workbooks.mjs`: blank sheets are named as templates. |
+| Certificates issued by completing a course still had no expiry, after migration 093 was written to give them one. 093 fixed `issue_course_certificate`; it did not fix `sync_course_completion`, the trigger-driven function in 091 that also creates certificates and runs first. | A course set to renew every twelve months issued certificates that never expire. No reminder, no renewal, and a compliance register saying everybody is in date for ever: exactly the failure 093 set out to end. | Migration `097_completion_certificate_expiry.sql` applies the same rule in the trigger path. Certificates already issued are deliberately left alone, because backfilling one can make it lapse the instant the statement runs and email its holder the next morning. | Reproduced in a browser against a course with a twelve-month renewal period, which produced `expires_at` null. `tests/security/certificate-expiry.test.ts`, 4 assertions, and `tests/journey/learning.spec.ts`: the renewal date is a calendar month away. |
+| A learner enrolled on a course that was not published could not see it. `courses_read` allowed `is_published or is_staff()`. | Unpublishing a course took it away from everybody already enrolled. The enrolment, the lesson progress and the assessment attempts survived; the course they were attached to vanished, with no explanation. Somebody who had paid for training lost it because a catalogue flag changed. | Migration `096_enrolled_course_visibility.sql` lets a learner read a course they hold a live enrolment on, and nothing more. `getMyCourses` builds its list from the published catalogue and the learner's enrolments, rather than from the catalogue alone. | `tests/security/course-access.test.ts`, 4 assertions, including that somebody not enrolled still cannot see it and that withdrawing the enrolment withdraws the course with it. |
+| Course cards, the About page and the Accreditations page failed WCAG 2.1 AA contrast. Brand gold `#d4a843` on white is 2.21:1, and the CSTF and CPD badge text, success green on its own tint, is 2.96:1. Both need 4.5:1. | Small print on every course card, on both the homepage and the catalogue, was not readable by anybody with reduced vision. The accessibility suite claimed the public pages had no violations, because it was scanning them while those sections were still faded out, and axe skips what it cannot see. | The palette already had `brand-gold-ink` for gold text on light backgrounds; the course card and two marketing pages now use it. A matching `success-ink` (`#166534`, 7.1:1 on white, 6.4:1 on the tint) was added for the badges. Bright gold and bright green stay for fills, borders and decorative icons. | `tests/e2e/accessibility.spec.ts`, which now scrolls the page and waits for the fades to finish before scanning, so axe measures what a reader sees. |
+| A keyboard user could not sign in. "Forgot password?" sat in the DOM between the email input and the password input, and tab order follows the DOM: Tab from the email field moved focus to the link, the password was typed into nothing, and Enter opened the reset page. | Anyone using a keyboard, a screen reader or a switch device was locked out of the platform entirely. | The link now sits after the password field, right-aligned, so the order is email, password, sign in. It looks almost the same and works. | Reproduced in a browser, then re-checked: Tab now lands on `password`, and Enter signs in. `tests/journey/exceptions.spec.ts`: someone can sign in using the keyboard alone. |
 | Migration `003_seed.sql` created a `super_admin` account with its password written in plain text, in a public repository. | Anyone who read the file knew a super_admin password for every environment the migration had been applied to. | The account creation is removed; the role promotion by email remains. Local environments use `scripts/seed-local-test-data.mjs`. | See item 2.1 below: **removing it does not unpublish it.** |
 | The fixture-writing test suites would run against whatever `VITE_SUPABASE_URL` pointed at. | A mistyped environment file writes courses, orders and certificates into the live register. | The suites refuse any target that is not on the loopback address unless `SECURITY_SUITE_TARGET_CONFIRMED=1` is set for that run. CI sets it deliberately. | `tests/security/helpers.ts`. |
 
@@ -216,7 +227,7 @@ contact and a named backup for the pilot window.
 | Consumer cancellation and refund wording. The refund page makes first access the trigger for losing the right to cancel; the consent flow that requires was not established. | Gideon, with advice | Check the Consumer Contracts Regulations position before consumer (as opposed to employer) sales. |
 | Retention periods. "Seven years" is treated in places as a universal rule. It is not. | Gideon | Record a purpose and a period per data category in `docs/PRIVACY-DATA-MAP.md`. |
 | VAT registration and treatment. `VAT.registered` is `false`, so reports show no VAT at all. | Accountant | Confirm registration status and the rate that applies to training services, then set `VAT.registered`, `ratePercent` and `registrationNumber`. |
-| No Safari or Firefox coverage. The browser suites run Chromium only. | Technical owner | `npx playwright install webkit` and add a project, or accept and state the limitation. |
+| No Firefox coverage. The public suite now runs WebKit as well as Chromium; the signed-in rehearsal is Chromium only. | Technical owner | Accept, or add a WebKit project to `playwright.journey.config.ts`. Firefox is the smallest slice of this audience. |
 | Certificate verification codes are six characters from a 32-character alphabet, roughly a billion combinations, behind an unthrottled public function. | Technical owner | Acceptable at pilot volume. Add rate limiting before the code is printed on certificates at scale. |
 
 ---
@@ -235,6 +246,15 @@ contact and a named backup for the pilot window.
   on re-run. Recorded as a local flake, not an application defect.
 - The spreadsheet vendor chunk is 1.37 MB. The build warns. No user-visible
   problem; it is lazily imported.
+- `src/lib/supabase/client.ts` falls back to a hard-coded live project URL and
+  publishable key when the environment variables are absent. It warns in the
+  console and `CLAUDE.md` describes it as deliberate, so the application boots
+  without configuration. The hazard is that it boots *pointing at production*:
+  during this work a build made without the environment set sent a test sign-in
+  to the live project. It failed, wrote nothing and read nothing, but a build
+  intended for a local database had quietly aimed at the real one. Consider
+  making the fallback apply only to `import.meta.env.DEV`, so a production
+  build without configuration fails loudly instead.
 
 ---
 
@@ -244,11 +264,11 @@ From the launch proposal, with what is now evidenced against each.
 
 | Condition | Status | Evidence |
 |---|---|---|
-| People can get in | **Application verified. Live configuration not tested.** | 17 browser assertions against an isolated stack, desktop and 375px. Live SMTP unconfirmed: see 2.3. |
-| Money and access agree | **Application verified. Payment details not approved.** | 19 database assertions and 6 browser assertions covering pricing, atomicity, duplicate confirmation, cancellation, refund and coupon integrity. See 2.4. |
-| Learners can finish | **Verified at the API level. Browser rehearsal of course completion not built.** | `tests/security/learner-journey.test.ts`: enrol, learn, fail, retry, pass, certificate, one certificate only. |
-| Records are protected | **Verified against a database with 092 and 093 applied.** | 95 assertions across six suites with both migration gates on. Live migration state unconfirmed: see 2.2. |
-| Training evidence is correct | **Dates verified. Clinical approval outstanding.** | 30 date assertions; certificate verification states proved. See 2.5. |
+| People can get in | **Application verified, including from a keyboard. Live configuration not tested.** | Registration, confirmation email, sign-in, sign-out, password recovery and three broken-link cases, in a browser against an isolated stack, at desktop width and 375px. Live SMTP unconfirmed: see 2.3. |
+| Money and access agree | **Application verified. Payment details not approved.** | 19 database assertions and 13 browser assertions covering pricing, atomicity, the reference shown to the buyer, duplicate confirmation, cancellation, refund, a payment for the wrong amount, and coupon integrity. See 2.4. |
+| Learners can finish | **Verified, at the API level and in a browser.** | `tests/security/learner-journey.test.ts`: enrol, learn, fail, retry, pass, certificate, one certificate only. `tests/journey/learning.spec.ts`: the same journey through the screens, from a confirmed payment to an approved certificate that verifies publicly. |
+| Records are protected | **Verified against a database with 092 and 093 applied.** | 103 assertions across nine suites with both migration gates on. Live migration state unconfirmed: see 2.2. |
+| Training evidence is correct | **Dates and expiry verified. Clinical approval outstanding.** | 30 date assertions, the three certificate verification states, and the expiry a completed course now produces. See 2.5. |
 | Operations can recover | **Not tested.** | See 2.6. |
 
 **Verdict: not ready.** Close 2.1 through 2.6 and the pilot can open. None of
