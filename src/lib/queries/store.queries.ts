@@ -117,7 +117,14 @@ export function useCouponMutations() {
   return { create, toggle }
 }
 
-/** Resolve a coupon code to a discount on a given pence total. */
+/**
+ * Quote a coupon for display, before the order is placed.
+ *
+ * This is a preview only. The discount that counts is the one `place_order`
+ * calculates on the server, under a row lock, from the catalogue price. If a
+ * coupon lapses between this quote and the order, the order is placed at the
+ * honest price and the confirmation screen shows what was actually charged.
+ */
 export async function applyCoupon(
   code: string,
   totalPence: number,
@@ -140,68 +147,69 @@ export async function applyCoupon(
 
 /* ---------------------------------------------------------------- orders -- */
 
-export function useCreateOrder(buyerId: string | undefined) {
+/** What the server actually charged, returned by `place_order`. */
+export interface PlacedOrder {
+  orderId: string
+  reference: string
+  totalPence: number
+  discountPence: number
+  couponCode: string | null
+}
+
+/**
+ * Place an order.
+ *
+ * Everything happens in one server-side transaction: the price is read from
+ * the catalogue rather than taken from the browser, the order and its item are
+ * written together, the coupon is re-checked and counted once, and a unique
+ * reference comes back for the buyer to quote on the payment.
+ *
+ * The previous version priced the order in the browser and wrote the order and
+ * its item as two calls, without reading the second one's error, so a failed
+ * item insert still reported success.
+ */
+export function useCreateOrder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: {
       product: Product
       paymentMethod: "bank_transfer" | "paypal"
       couponCode?: string
-    }): Promise<string> => {
-      let total = input.product.price_pence
-      let coupon: string | null = null
-      if (input.couponCode) {
-        const applied = await applyCoupon(input.couponCode, total)
-        if (applied) {
-          total -= applied.discountPence
-          coupon = applied.code
-        }
-      }
-      const reference = `VC-${Date.now().toString(36).toUpperCase()}`
-      const { data: order, error } = await supabase
-        .from("orders")
-        .insert({
-          buyer_id: buyerId,
-          status: "pending",
-          total_pence: total,
-          payment_method: input.paymentMethod,
-          coupon_code: coupon,
-          reference,
-        })
-        .select("id")
-        .single()
+    }): Promise<PlacedOrder> => {
+      const { data, error } = await callRpc<PlacedOrderRow[]>("place_order", {
+        p_product: input.product.id,
+        p_payment_method: input.paymentMethod,
+        p_coupon: input.couponCode?.trim() || null,
+      })
       if (error) {
         console.error("[useCreateOrder]", error)
         throw error
       }
-      await supabase.from("order_items").insert({
-        order_id: order.id,
-        product_id: input.product.id,
-        quantity: 1,
-        unit_price_pence: input.product.price_pence,
-      })
-      // Record the redemption against this order. The RPC locks the coupon
-      // row, re-checks the cap and expiry on the server, and is keyed on the
-      // order, so a retry or a second confirmation cannot count it twice.
-      if (coupon) {
-        const { data: redeemed, error: rErr } = await callRpc<boolean>(
-          "redeem_coupon_for_order",
-          { p_order: order.id },
-        )
-        if (rErr) console.error("[useCreateOrder:redeem]", rErr)
-        if (redeemed === false) {
-          // The coupon lapsed between the quote and the write. Keep the order,
-          // drop the discount, and charge the honest price.
-          await supabase
-            .from("orders")
-            .update({ coupon_code: null, total_pence: input.product.price_pence })
-            .eq("id", order.id)
-        }
+      const row = data?.[0]
+      if (!row) {
+        throw new Error("The order was not created. Please try again.")
       }
-      return order.id as string
+      return {
+        orderId: row.order_id,
+        reference: row.reference,
+        totalPence: row.total_pence,
+        discountPence: row.discount_pence,
+        couponCode: row.coupon_code,
+      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["store", "orders"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["store", "orders"] })
+      qc.invalidateQueries({ queryKey: ["store", "stats"] })
+    },
   })
+}
+
+interface PlacedOrderRow {
+  order_id: string
+  reference: string
+  total_pence: number
+  discount_pence: number
+  coupon_code: string | null
 }
 
 export interface OrderRow extends Order {
@@ -414,11 +422,16 @@ export function useStoreStats(): ReturnType<typeof useQuery<StoreStats>> {
  *
  * The confirming user is taken from the session on the server, not passed in,
  * so the audit trail cannot be spoofed by the caller.
+ *
+ * `confirm_order` returns false when the order is not waiting for payment:
+ * already paid, cancelled, refunded or gone. That is reported as a refusal
+ * rather than swallowed, because "Payment confirmed, buyer enrolled" after a
+ * confirmation that did nothing is the message that hides a double booking.
  */
 export function useConfirmOrder() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (orderId: string) => {
+    mutationFn: async (orderId: string): Promise<boolean> => {
       // One server-side transaction: mark paid, enrol the buyer on every course
       // in the order, and count the coupon once. Doing this from the browser
       // let a double click count a coupon twice, enrol twice, and re-confirm an
@@ -432,6 +445,45 @@ export function useConfirmOrder() {
       }
       return data === true
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["store", "orders"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["store", "orders"] })
+      qc.invalidateQueries({ queryKey: ["store", "stats"] })
+    },
+  })
+}
+
+export type OrderExceptionStatus = "cancelled" | "refunded"
+
+/**
+ * Staff: cancel an unpaid order, or record a refund against a paid one.
+ *
+ * The server allows pending -> cancelled and paid -> refunded, and nothing
+ * else; marking an order paid stays with `confirm_order`, which also enrols.
+ * Cancelling returns the coupon use the order reserved. A refund does not: the
+ * sale happened.
+ */
+export function useSetOrderStatus() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      orderId: string
+      status: OrderExceptionStatus
+      reason?: string
+    }): Promise<boolean> => {
+      const { data, error } = await callRpc<boolean>("set_order_status", {
+        p_order: input.orderId,
+        p_status: input.status,
+        p_reason: input.reason?.trim() || null,
+      })
+      if (error) {
+        console.error("[useSetOrderStatus]", error)
+        throw error
+      }
+      return data === true
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["store", "orders"] })
+      qc.invalidateQueries({ queryKey: ["store", "stats"] })
+    },
   })
 }

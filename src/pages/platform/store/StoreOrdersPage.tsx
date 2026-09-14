@@ -1,7 +1,14 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
-import { Package, AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
+import {
+  Package,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Undo2,
+  XCircle,
+} from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,7 +17,12 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useUser } from "@/hooks/use-user"
 import { useAuth } from "@/hooks/use-auth"
-import { useOrders, useConfirmOrder, gbp } from "@/lib/queries/store.queries"
+import {
+  useOrders,
+  useConfirmOrder,
+  useSetOrderStatus,
+  gbp,
+} from "@/lib/queries/store.queries"
 import type { OrderStatus } from "@/types/database.types"
 
 const STATUS_STYLE: Record<OrderStatus, string> = {
@@ -25,9 +37,73 @@ export default function StoreOrdersPage() {
   const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useOrders(isAdmin, user?.id)
   const confirm = useConfirmOrder()
+  const setStatus = useSetOrderStatus()
+  // Only the row being acted on shows a spinner. One shared flag covered the
+  // whole table and made it look as though every order was being confirmed.
+  const [busyId, setBusyId] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
   const highlightId = searchParams.get("id")
   const rowRef = useRef<HTMLTableRowElement | null>(null)
+
+  /**
+   * Confirm a payment.
+   *
+   * The server returns false when the order was not waiting for payment:
+   * already confirmed, cancelled, refunded or deleted. Saying "confirmed,
+   * buyer enrolled" in that case is how a double booking goes unnoticed, so
+   * the refusal is reported.
+   */
+  async function confirmOrder(id: string, reference: string | null): Promise<void> {
+    setBusyId(id)
+    try {
+      const done = await confirm.mutateAsync(id)
+      if (done) {
+        toast.success("Payment confirmed, buyer enrolled", {
+          description: reference ? `Order ${reference}` : undefined,
+        })
+      } else {
+        toast.warning("Nothing to confirm", {
+          description:
+            "This order is no longer awaiting payment. Reload to see its current status.",
+        })
+      }
+    } catch (err) {
+      console.error("[StoreOrdersPage:confirm]", err)
+      toast.error("Could not confirm this payment")
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  /** Cancel an unpaid order, or record a refund against a paid one. */
+  async function changeStatus(
+    id: string,
+    reference: string | null,
+    status: "cancelled" | "refunded",
+  ): Promise<void> {
+    setBusyId(id)
+    try {
+      const done = await setStatus.mutateAsync({ orderId: id, status })
+      if (done) {
+        toast.success(
+          status === "cancelled" ? "Order cancelled" : "Refund recorded",
+          { description: reference ? `Order ${reference}` : undefined },
+        )
+      } else {
+        toast.warning("That order could not be found")
+      }
+    } catch (err) {
+      console.error("[StoreOrdersPage:changeStatus]", err)
+      toast.error(
+        status === "cancelled"
+          ? "Could not cancel this order"
+          : "Could not record this refund",
+        { description: "Reload to see its current status." },
+      )
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   // Deep link from a notification (?id=) scrolls to and highlights that order.
   useEffect(() => {
@@ -41,7 +117,9 @@ export default function StoreOrdersPage() {
       <div>
         <h1 className="font-display text-3xl text-foreground">Orders</h1>
         <p className="mt-1 text-muted-foreground">
-          {isAdmin ? "Confirm payments to enrol buyers automatically." : "Your purchases."}
+          {isAdmin
+            ? "Confirm a payment to enrol the buyer. Cancel an unpaid order, or record a refund against a paid one."
+            : "Your purchases."}
         </p>
       </div>
 
@@ -103,27 +181,52 @@ export default function StoreOrdersPage() {
                         </Badge>
                       </td>
                       {isAdmin && (
-                        <td className="px-5 py-3 text-right">
-                          {o.status === "pending" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={confirm.isPending}
-                              onClick={() =>
-                                confirm
-                                  .mutateAsync(o.id)
-                                  .then(() => toast.success("Payment confirmed, buyer enrolled"))
-                                  .catch(() => toast.error("Could not confirm"))
-                              }
-                            >
-                              {confirm.isPending ? (
-                                <Loader2 className="mr-1.5 size-4 animate-spin" />
-                              ) : (
-                                <CheckCircle2 className="mr-1.5 size-4" />
-                              )}
-                              Confirm
-                            </Button>
-                          )}
+                        <td className="px-5 py-3">
+                          <div className="flex justify-end gap-2">
+                            {o.status === "pending" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={busyId === o.id}
+                                  onClick={() => confirmOrder(o.id, o.reference)}
+                                >
+                                  {busyId === o.id ? (
+                                    <Loader2 className="mr-1.5 size-4 animate-spin" />
+                                  ) : (
+                                    <CheckCircle2 className="mr-1.5 size-4" />
+                                  )}
+                                  Confirm
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-muted-foreground hover:text-destructive"
+                                  disabled={busyId === o.id}
+                                  onClick={() =>
+                                    changeStatus(o.id, o.reference, "cancelled")
+                                  }
+                                >
+                                  <XCircle className="mr-1.5 size-4" />
+                                  Cancel
+                                </Button>
+                              </>
+                            )}
+                            {o.status === "paid" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-muted-foreground hover:text-destructive"
+                                disabled={busyId === o.id}
+                                onClick={() =>
+                                  changeStatus(o.id, o.reference, "refunded")
+                                }
+                              >
+                                <Undo2 className="mr-1.5 size-4" />
+                                Record refund
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>

@@ -163,7 +163,9 @@ export const PLATFORM_SECTIONS: PlatformSection[] = [
     icon: ShoppingCart,
     items: [
       { label: "Catalogue", to: "/platform/store", prefix: "/platform/store" },
-      { label: "Orders", to: "/platform/store/orders", prefix: "/platform/store/orders", roles: MGMT },
+      // Buyers need this too: it is where their own order and its payment
+      // status live. The page scopes what each person sees.
+      { label: "Orders", to: "/platform/store/orders", prefix: "/platform/store/orders" },
       { label: "Coupons", to: "/platform/store/coupons", prefix: "/platform/store/coupons", roles: MGMT },
     ],
   },

@@ -630,14 +630,12 @@ export const router = createBrowserRouter (
 
         // 🛍️ STORE
         { path: "store", element: <StoreCataloguePage /> },
-        {
-          path: "store/orders",
-          element: (
-            <RoleGuard roles={["super_admin", "admin", "manager"]}>
-              <StoreOrdersPage />
-            </RoleGuard>
-          ),
-        },
+        // Any signed-in person: the page shows staff every order and shows a
+        // buyer only their own, and row-level security enforces that. Behind a
+        // management-only guard, a learner who had just been told to "track
+        // the status under Store, Orders" was bounced to the dashboard, with
+        // no way to see whether their payment had been confirmed.
+        { path: "store/orders", element: <StoreOrdersPage /> },
         {
           path: "store/coupons",
           element: (
