@@ -112,7 +112,7 @@ test.describe("homepage budget", () => {
 })
 
 test.describe("measured, not asserted", () => {
-  test("reports Core Web Vitals on a throttled connection", async ({ page, browser }) => {
+  test("reports Core Web Vitals on a throttled connection", async ({ browser }) => {
     test.slow()
     const context = await browser.newContext()
     const throttled = await context.newPage()

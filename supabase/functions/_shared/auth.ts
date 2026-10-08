@@ -4,7 +4,7 @@
 // anon key satisfies it. So privileged functions MUST verify the caller is a
 // real staff user with the service-role client. Use requireStaff() at the top
 // of any function that performs a privileged or paid action.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const STAFF_ROLES = ["super_admin", "admin", "manager", "trainer", "content_editor"]
 
@@ -28,4 +28,23 @@ export async function requireStaff(req: Request): Promise<string | null> {
     .single()
   if (!profile || !STAFF_ROLES.includes(profile.role as string)) return null
   return u.user.id
+}
+
+/**
+ * The requireStaff role check for a known user id, for callers with no bearer
+ * token (the Google OAuth callbacks, where the id comes from a verified signed
+ * state). `admin` must be a service-role client.
+ */
+export async function isStaffUserId(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  if (!userId) return false
+  const { data: profile, error } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single()
+  if (error || !profile) return false
+  return STAFF_ROLES.includes((profile as { role: string }).role)
 }
