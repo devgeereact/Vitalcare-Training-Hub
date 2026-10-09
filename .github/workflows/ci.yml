@@ -105,8 +105,9 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      # playwright.config.ts runs Chromium and WebKit projects, so both are needed.
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
 
       # The sitemap generator reaches for the database and warns rather than
       # failing when it cannot, so the build works here without credentials.
@@ -145,6 +146,16 @@ jobs:
       TEST_OTHER_USER_PASSWORD: ${{ secrets.TEST_OTHER_USER_PASSWORD }}
       MIGRATION_092_APPLIED: ${{ vars.MIGRATION_092_APPLIED }}
       MIGRATION_093_APPLIED: ${{ vars.MIGRATION_093_APPLIED }}
+      # These suites write fixtures, so they refuse any target that is not on
+      # the loopback address unless the run says the target is intended. CI
+      # points at the project held in the repository secrets on purpose.
+      #
+      # Worth revisiting: those fixtures land in whichever project the secrets
+      # name. A dedicated staging project, or a local `supabase start` stack in
+      # this job, would keep the courses, orders and certificates this suite
+      # creates out of a register that real people read.
+      SECURITY_SUITE_TARGET_CONFIRMED: '1'
+
     steps:
       - uses: actions/checkout@v7
         with:
@@ -180,6 +191,10 @@ jobs:
           for v in MIGRATION_092_APPLIED MIGRATION_093_APPLIED; do
             if [ "${!v}" != "1" ]; then
               echo "::warning::$v is not 1, so its assertions will be skipped."
+              echo "::warning::Set the repository variable to 1 once that"
+              echo "::warning::migration is applied. A skipped test is not a"
+              echo "::warning::passing one, and these are the organisation"
+              echo "::warning::scoping, attempt-cap and concurrency checks."
             fi
           done
 

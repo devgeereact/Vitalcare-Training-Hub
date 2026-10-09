@@ -90,16 +90,16 @@ export default function CoverLoginPage() {
             ) : null}
           </div>
 
+          {/*
+            "Forgot password?" sits after the password field, not beside its
+            label. In the label row it came between the email input and the
+            password input in the DOM, and tab order follows the DOM: pressing
+            Tab after typing an email moved focus to the link, the password was
+            typed into nothing, and Enter opened the reset page. Someone using a
+            keyboard could not sign in at all.
+          */}
           <div className="grid gap-2">
-            <div className="flex items-center">
-              <Label htmlFor="password">Password</Label>
-              <Link
-                to="/forgot-password"
-                className="ml-auto text-sm text-primary underline-offset-4 hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -126,6 +126,12 @@ export default function CoverLoginPage() {
             {errors.password ? (
               <p className="text-sm text-destructive">{errors.password.message}</p>
             ) : null}
+            <Link
+              to="/forgot-password"
+              className={`self-end text-sm text-primary underline-offset-4 hover:underline ${FOCUS}`}
+            >
+              Forgot password?
+            </Link>
           </div>
 
           <Button

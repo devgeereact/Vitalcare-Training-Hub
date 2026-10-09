@@ -1,3 +1,14 @@
+> **Partly implemented since this was written.** "No code written yet" is no
+> longer true: `src/lib/queries/compliance.queries.ts`, the compliance matrix
+> page, the staff training tables and the live Training Matrix export all
+> exist.
+>
+> The snapshot behaviour this specification describes was **not** implemented
+> correctly at first: the matrix applied each course's current renewal period
+> to historical records. That is fixed, and the fix is recorded in
+> `LAUNCH-READINESS.md` §1. Renewal periods themselves remain a clinical
+> decision: §2.5.
+
 # Spec: Training Matrix module (staff compliance)
 
 Status: Draft for review. No code written yet.

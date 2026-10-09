@@ -1,10 +1,17 @@
 /**
- * Business Overview workbook. The KPIs sheet supports a live export with a
- * single year-to-date row drawn from platform analytics and paid invoices.
- * New/repeat client segmentation and NPS are not tracked, so those stay blank.
- * Clients and Forecast ship as styled templates.
+ * Business Overview workbook.
+ *
+ * The live export reports year-to-date measures that say what they count. The
+ * previous version put every learner account under "Learners Trained", every
+ * training session under "Courses Delivered" (cancelled and future ones
+ * included), and headed the row "Year to date" without applying a date filter
+ * anywhere. Three of those figures were wrong in the flattering direction.
+ *
+ * Clients and Forecast have no source in the application, so they ship as
+ * blank templates. Their tabs say so, because a styled empty sheet inside a
+ * workbook named "live export" reads as a real answer of zero.
  */
-import type { AnalyticsSummary } from "@/lib/queries/analytics.queries"
+import type { BusinessMeasures } from "@/lib/queries/analytics.queries"
 import type { WorkbookSpec } from "../types"
 import { sheet } from "../engine"
 import { FMT_DATE, FMT_MONEY } from "../theme"
@@ -13,17 +20,13 @@ import {
   CREATOR,
   MONTHS_2026,
   ORG_TYPES,
+  TEMPLATE_SUFFIX,
 } from "./shared"
 
 interface KpiRow {
-  period: string
-  coursesDelivered: number | null
-  learnersTrained: number | null
-  revenue: number | null
-  newClients: number | null
-  repeatClients: number | null
-  nps: number | null
-  certificates: number | null
+  measure: string
+  value: number | string | null
+  basis: string
 }
 
 interface ClientRow {
@@ -34,27 +37,40 @@ interface ForecastRow {
   month: string
 }
 
+function formatPeriod(measures: BusinessMeasures): string {
+  const from = new Date(measures.periodStart)
+  const to = new Date(measures.periodEnd)
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+  return `${fmt(from)} to ${fmt(to)}`
+}
+
+function pounds(pence: number): number {
+  return Math.round(pence) / 100
+}
+
+/**
+ * One row per measure, each carrying the rule used to produce it.
+ *
+ * A number in a spreadsheet outlives the conversation that explained it, so
+ * the definition travels in the next column rather than in somebody's memory.
+ */
 function kpiSheet(rows: ReadonlyArray<KpiRow>) {
   return sheet<KpiRow>({
     name: "KPIs",
     rows,
-    templateRowCount: 12,
+    templateRowCount: 10,
     columns: [
-      { header: "Month", width: 16, value: (r) => r.period },
-      { header: "Courses Delivered", width: 18, align: "center", value: (r) => r.coursesDelivered },
-      { header: "Learners Trained", width: 16, align: "center", value: (r) => r.learnersTrained },
-      { header: "Revenue (£)", width: 14, numFmt: FMT_MONEY, align: "right", value: (r) => r.revenue },
-      { header: "New Clients", width: 14, align: "center", value: (r) => r.newClients },
-      { header: "Repeat Clients", width: 14, align: "center", value: (r) => r.repeatClients },
-      { header: "NPS Score", width: 12, align: "center", value: (r) => r.nps },
-      { header: "Certificates Issued", width: 16, align: "center", value: (r) => r.certificates },
+      { header: "Measure", width: 30, value: (r) => r.measure },
+      { header: "Value", width: 16, align: "right", value: (r) => r.value },
+      { header: "What this counts", width: 74, value: (r) => r.basis },
     ],
   })
 }
 
 function clientsSheet() {
   return sheet<ClientRow>({
-    name: "Clients",
+    name: `Clients ${TEMPLATE_SUFFIX}`,
     templateRowCount: 12,
     rows: [],
     columns: [
@@ -71,7 +87,7 @@ function clientsSheet() {
 
 function forecastSheet() {
   return sheet<ForecastRow>({
-    name: "Forecast",
+    name: `Forecast ${TEMPLATE_SUFFIX}`,
     rows: MONTHS_2026.map((month) => ({ month })),
     columns: [
       { header: "Month", width: 16, value: (r) => r.month },
@@ -102,18 +118,75 @@ export function buildBusinessOverviewTemplate(): WorkbookSpec {
 }
 
 export function buildBusinessOverviewLive(
-  summary: AnalyticsSummary,
-  revenuePounds: number | null,
+  measures: BusinessMeasures,
 ): WorkbookSpec {
-  const ytd: KpiRow = {
-    period: "Year to date",
-    coursesDelivered: summary.sessions,
-    learnersTrained: summary.learners,
-    revenue: revenuePounds,
-    newClients: null,
-    repeatClients: null,
-    nps: null,
-    certificates: summary.certificates,
-  }
-  return workbook([ytd])
+  const period = formatPeriod(measures)
+  const rows: KpiRow[] = [
+    {
+      measure: "Period",
+      value: period,
+      basis: "1 January to the moment this workbook was exported. Every figure below is filtered to it.",
+    },
+    {
+      measure: "Learners trained",
+      value: measures.learnersTrained,
+      basis:
+        "People who completed at least one course in the period, counted once each. Not the number of registered accounts.",
+    },
+    {
+      measure: "Course completions",
+      value: measures.completions,
+      basis:
+        "Enrolments marked completed in the period. One learner finishing three courses counts three times here and once above.",
+    },
+    {
+      measure: "Enrolments started",
+      value: measures.enrolments,
+      basis: "Enrolments created in the period, whether or not they were finished.",
+    },
+    {
+      measure: "Sessions delivered",
+      value: measures.sessionsDelivered,
+      basis:
+        "Training sessions marked completed whose end time has passed. Cancelled and future sessions are excluded.",
+    },
+    {
+      measure: "Sessions cancelled",
+      value: measures.sessionsCancelled,
+      basis: "Sessions in the period whose status is cancelled. Shown separately, never in the delivered figure.",
+    },
+    {
+      measure: "Sessions still to come",
+      value: measures.sessionsScheduled,
+      basis: "Scheduled sessions starting after the export time. Not yet delivered.",
+    },
+    {
+      measure: "Certificates issued",
+      value: measures.certificatesIssued,
+      basis: "Approved certificates issued in the period. Certificates awaiting approval are excluded.",
+    },
+    {
+      measure: "Invoiced (£)",
+      value: pounds(measures.invoicedPence),
+      basis:
+        "Value of invoices raised in the period and either sent or paid. Drafts and voided invoices are excluded. This is what was billed, not what was received.",
+    },
+    {
+      measure: "Received, invoices (£)",
+      value: pounds(measures.receivedPence),
+      basis: "Value of invoices marked paid in the period, dated by the payment.",
+    },
+    {
+      measure: "Received, store orders (£)",
+      value: pounds(measures.orderReceiptsPence),
+      basis:
+        "Value of store orders confirmed as paid in the period. Separate from invoices, so the two are not double counted.",
+    },
+    {
+      measure: "New and repeat clients, NPS",
+      value: null,
+      basis: "Not tracked by the platform. Left blank rather than estimated.",
+    },
+  ]
+  return workbook(rows)
 }

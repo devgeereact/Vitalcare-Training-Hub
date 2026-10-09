@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import { startOfYearUtc } from "@/lib/dates"
 
 export interface AnalyticsSummary {
   learners: number
@@ -121,6 +122,171 @@ export function useEnrolmentTrend() {
       return [...buckets.entries()]
         .slice(-6)
         .map(([month, enrolments]) => ({ month, enrolments }))
+    },
+  })
+}
+
+/**
+ * Year-to-date business measures, with the filters their names imply.
+ *
+ * `useAnalyticsSummary` counts what exists: every learner account, every
+ * training session, every certificate. Those are the right numbers for an
+ * operational dashboard and the wrong ones for a report headed "Year to date",
+ * which is how the Business Overview workbook came to describe registered
+ * accounts as "Learners Trained" and scheduled sessions as "Courses
+ * Delivered", including sessions that had been cancelled or had not happened
+ * yet.
+ *
+ * Each figure here is dated, and each one says what it counts:
+ *
+ * - `learnersTrained` counts people who completed a course this year, once
+ *   each, not people who hold an account.
+ * - `sessionsDelivered` counts sessions marked completed whose end time has
+ *   passed. Cancelled and future sessions are excluded.
+ * - `invoicedPence` is what was billed. `receivedPence` is what was actually
+ *   paid. They are different numbers and the report keeps them apart.
+ */
+export interface BusinessMeasures {
+  /** Inclusive start of the period, ISO. */
+  periodStart: string
+  /** The moment the figures were taken, ISO. */
+  periodEnd: string
+  learnersTrained: number
+  completions: number
+  sessionsDelivered: number
+  sessionsScheduled: number
+  sessionsCancelled: number
+  certificatesIssued: number
+  enrolments: number
+  invoicedPence: number
+  receivedPence: number
+  orderReceiptsPence: number
+}
+
+export function useBusinessMeasures() {
+  return useQuery({
+    queryKey: ["analytics", "business-measures"],
+    staleTime: 2 * 60 * 1000,
+    queryFn: async (): Promise<BusinessMeasures> => {
+      const now = new Date()
+      const periodStart = startOfYearUtc(now).toISOString()
+      const nowIso = now.toISOString()
+      const head = { count: "exact" as const, head: true }
+
+      const [
+        completionRows,
+        sessionsDelivered,
+        sessionsScheduled,
+        sessionsCancelled,
+        certificates,
+        enrolments,
+        invoiceRows,
+        orderRows,
+      ] = await Promise.all([
+        // Distinct learners, so somebody who finished three courses is one
+        // person trained, not three.
+        supabase
+          .from("enrollments")
+          .select("learner_id")
+          .eq("status", "completed")
+          .gte("completed_at", periodStart)
+          .lte("completed_at", nowIso)
+          .is("deleted_at", null)
+          .limit(10_000),
+        supabase
+          .from("training_sessions")
+          .select("*", head)
+          .eq("status", "completed")
+          .gte("ends_at", periodStart)
+          .lte("ends_at", nowIso)
+          .is("deleted_at", null),
+        supabase
+          .from("training_sessions")
+          .select("*", head)
+          .eq("status", "scheduled")
+          .gt("starts_at", nowIso)
+          .is("deleted_at", null),
+        supabase
+          .from("training_sessions")
+          .select("*", head)
+          .eq("status", "cancelled")
+          .gte("starts_at", periodStart)
+          .is("deleted_at", null),
+        supabase
+          .from("learner_certificates")
+          .select("*", head)
+          .eq("approved", true)
+          .gte("issued_at", periodStart)
+          .lte("issued_at", nowIso)
+          .is("deleted_at", null),
+        supabase
+          .from("enrollments")
+          .select("*", head)
+          .gte("enrolled_at", periodStart)
+          .lte("enrolled_at", nowIso)
+          .is("deleted_at", null),
+        // Raised in the period, or paid in it. An invoice raised in December
+        // and paid in January belongs in this year's received figure and not
+        // in its invoiced figure, so filtering on one date alone loses it.
+        supabase
+          .from("invoices")
+          .select("total_pence, status, created_at, paid_at")
+          .or(`created_at.gte.${periodStart},paid_at.gte.${periodStart}`)
+          .limit(10_000),
+        supabase
+          .from("orders")
+          .select("total_pence, status, paid_at")
+          .eq("status", "paid")
+          .gte("paid_at", periodStart)
+          .limit(10_000),
+      ])
+
+      if (completionRows.error) {
+        console.error("[businessMeasures:completions]", completionRows.error)
+        throw completionRows.error
+      }
+      if (invoiceRows.error) {
+        console.error("[businessMeasures:invoices]", invoiceRows.error)
+        throw invoiceRows.error
+      }
+      if (orderRows.error) {
+        console.error("[businessMeasures:orders]", orderRows.error)
+        throw orderRows.error
+      }
+
+      const completions = completionRows.data ?? []
+      const invoices = invoiceRows.data ?? []
+
+      // A void or draft invoice is not money billed.
+      const invoicedPence = invoices
+        .filter(
+          (i) =>
+            (i.status === "sent" || i.status === "paid") &&
+            i.created_at >= periodStart,
+        )
+        .reduce((sum, i) => sum + i.total_pence, 0)
+      const receivedPence = invoices
+        .filter((i) => i.status === "paid" && i.paid_at && i.paid_at >= periodStart)
+        .reduce((sum, i) => sum + i.total_pence, 0)
+      const orderReceiptsPence = (orderRows.data ?? []).reduce(
+        (sum, o) => sum + o.total_pence,
+        0,
+      )
+
+      return {
+        periodStart,
+        periodEnd: nowIso,
+        learnersTrained: new Set(completions.map((c) => c.learner_id)).size,
+        completions: completions.length,
+        sessionsDelivered: asCount(sessionsDelivered),
+        sessionsScheduled: asCount(sessionsScheduled),
+        sessionsCancelled: asCount(sessionsCancelled),
+        certificatesIssued: asCount(certificates),
+        enrolments: asCount(enrolments),
+        invoicedPence,
+        receivedPence,
+        orderReceiptsPence,
+      }
     },
   })
 }

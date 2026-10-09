@@ -1,11 +1,12 @@
 import { useMemo } from "react"
 import { useSearchParams } from "react-router-dom"
-import { Bell, KeyRound, Palette, Plug, UserRound } from "lucide-react"
+import { Bell, KeyRound, Palette, Plug, ShieldCheck, UserRound } from "lucide-react"
 
 import { useUser } from "@/hooks/use-user"
 import MailSettingsCard from "@/components/platform/MailSettingsCard"
 import AccountSettingsCard from "@/components/settings/AccountSettingsCard"
 import PasswordCard from "@/components/settings/PasswordCard"
+import PrivacyDataCard from "@/components/settings/PrivacyDataCard"
 import AppearanceSettingsCard from "@/components/settings/AppearanceSettingsCard"
 import NotificationSettingsCard from "@/components/settings/NotificationSettingsCard"
 import GoogleIntegrationCard from "@/components/settings/GoogleIntegrationCard"
@@ -19,6 +20,7 @@ type TabId =
   | "appearance"
   | "notifications"
   | "integrations"
+  | "privacy"
   | "password"
 
 export default function SettingsPage(): React.ReactElement {
@@ -34,6 +36,7 @@ export default function SettingsPage(): React.ReactElement {
     if (isSuperAdmin) {
       base.push({ id: "integrations", label: "Integrations", icon: Plug })
     }
+    base.push({ id: "privacy", label: "Privacy", icon: ShieldCheck })
     base.push({ id: "password", label: "Password", icon: KeyRound })
     return base
   }, [isSuperAdmin])
@@ -83,6 +86,8 @@ export default function SettingsPage(): React.ReactElement {
             <GoogleIntegrationCard />
           </div>
         )}
+
+        {active === "privacy" && <PrivacyDataCard />}
 
         {active === "password" && <PasswordCard />}
       </div>

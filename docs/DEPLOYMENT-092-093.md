@@ -1,3 +1,14 @@
+> **Historical, and contradicted.** Written before 24 August 2026. It says 092
+> and 093 are unapplied and that no course has a renewal period. A later dated
+> note inside `SQL-EDITOR-RUNBOOK.md` ("What was actually applied, 24 August
+> 2026") says step 5 has been run and 29 courses carry a renewal period, which
+> implies both migrations were applied on or before that date.
+>
+> Neither is proof. **Confirm the live state with the read-only queries in
+> `LAUNCH-READINESS.md` §2.2 before acting on anything below.** Do not re-run
+> updates on the strength of this file. The current record is
+> `LAUNCH-READINESS.md`.
+
 # Pending database migrations: 092 and 093
 
 Two migrations in `supabase/migrations/` are written, reviewed and committed but

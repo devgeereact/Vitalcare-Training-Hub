@@ -386,6 +386,17 @@ secrets.
 Rotate them with `scripts/rotate-test-passwords.mjs`, which changes each
 password through the Auth API and prints the new values once.
 
+**A second published password.** `supabase/migrations/003_seed.sql` also
+created `gideon@vitalcare.uk` with a hard-coded password. The account creation
+has been removed from that file, but the password is in this repository's Git
+history too, and must be rotated in Supabase Auth as well. See
+`docs/LAUNCH-READINESS.md` §2.1.
+
+**For anything that writes test data, do not use the live project at all.**
+`docs/LOCAL-ENVIRONMENT.md` stands up an isolated Supabase stack with synthetic
+accounts on the reserved `.test` domain. The authorisation and rehearsal suites
+refuse a non-loopback target unless a run explicitly confirms it.
+
 ---
 
 ## ENVIRONMENT VARIABLES

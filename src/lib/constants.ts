@@ -71,3 +71,45 @@ export const ACCREDITATION = {
 } as const
 
 export type UserRole = "super_admin" | "admin" | "trainer" | "learner"
+
+/**
+ * Payment hand-off for the manual booking process.
+ *
+ * There is no payment processor. A buyer places an order, pays by the route
+ * below, and a member of staff confirms receipt, which is what enrols them.
+ * So the buyer has to be told exactly where to pay and what to quote.
+ *
+ * The destination details are deliberately empty here. Publishing an account
+ * number nobody has approved is worse than not publishing one: the screen
+ * falls back to "we will email you the details" until the real ones are filled
+ * in, and no invented figure is ever shown. Fill these in only from details
+ * approved by the person who owns the bank account.
+ *
+ * `VAT_REGISTERED` drives whether prices and reports mention VAT at all. It is
+ * false until the accountant confirms the registration and the rate that
+ * applies to training services.
+ */
+export const PAYMENT = {
+  /** Sort code and account number, once approved. Empty means "not published". */
+  bankAccountName: "",
+  bankSortCode: "",
+  bankAccountNumber: "",
+  /** The PayPal address or payment link, once approved. */
+  paypalAddress: "",
+  /** How long a buyer should expect to wait for confirmation. */
+  confirmationWindow: "one working day",
+  /** Where a buyer chases an unconfirmed payment. */
+  supportEmail: "info@vitalcare.uk",
+} as const
+
+/**
+ * VAT treatment. Not a universal 20%: whether VAT applies to a given training
+ * service, and at what rate, is a decision for the company's accountant.
+ * Reports show a VAT column only when `registered` is true.
+ */
+export const VAT = {
+  registered: false,
+  /** Standard UK rate, used only when `registered` is true. */
+  ratePercent: 20,
+  registrationNumber: "",
+} as const

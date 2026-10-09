@@ -113,6 +113,13 @@ test.describe("homepage budget", () => {
 
 test.describe("measured, not asserted", () => {
   test("reports Core Web Vitals on a throttled connection", async ({ page, browser }) => {
+    // Network and CPU throttling come from the Chrome DevTools Protocol, which
+    // WebKit does not speak. The measurement is Chromium-only by construction;
+    // the structural assertions in this file run everywhere.
+    test.skip(
+      browser.browserType().name() !== "chromium",
+      "Throttling needs the Chrome DevTools Protocol",
+    )
     test.slow()
     const context = await browser.newContext()
     const throttled = await context.newPage()

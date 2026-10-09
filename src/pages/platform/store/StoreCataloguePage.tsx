@@ -38,9 +38,10 @@ import {
   useCreateOrder,
   applyCoupon,
   gbp,
+  type PlacedOrder,
 } from "@/lib/queries/store.queries"
 import { useCourses } from "@/lib/queries/courses.queries"
-import { COMPANY } from "@/lib/constants"
+import { COMPANY, PAYMENT } from "@/lib/constants"
 import { driveImageUrl } from "@/lib/drive-image"
 import type { Product } from "@/types/database.types"
 
@@ -49,7 +50,7 @@ export default function StoreCataloguePage() {
   const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useProducts()
   const prodMut = useProductMutations()
-  const createOrder = useCreateOrder(user?.id)
+  const createOrder = useCreateOrder()
   const courses = useCourses()
 
   // Add product form (admin)
@@ -64,7 +65,8 @@ export default function StoreCataloguePage() {
   const [method, setMethod] = useState<"bank_transfer" | "paypal">("bank_transfer")
   const [coupon, setCoupon] = useState("")
   const [discount, setDiscount] = useState(0)
-  const [placed, setPlaced] = useState<{ reference: string; total: number } | null>(null)
+  // What the server actually charged, not what the browser quoted.
+  const [placed, setPlaced] = useState<PlacedOrder | null>(null)
 
   function addProduct() {
     if (!name.trim() || !profile?.id) return
@@ -103,11 +105,25 @@ export default function StoreCataloguePage() {
     if (!buy) return
     createOrder
       .mutateAsync({ product: buy, paymentMethod: method, couponCode: coupon || undefined })
-      .then(() => {
-        setPlaced({ reference: "see Orders", total: buy.price_pence - discount })
-        toast.success("Order placed")
+      .then((order) => {
+        setPlaced(order)
+        // The server prices the order. If the coupon lapsed between the quote
+        // and the write, say so rather than showing a total nobody will be
+        // charged.
+        if (coupon.trim() && !order.couponCode) {
+          toast.warning("The coupon could not be applied", {
+            description: "Your order was placed at the full price.",
+          })
+        } else {
+          toast.success("Order placed")
+        }
       })
-      .catch(() => toast.error("Could not place order"))
+      .catch((err: unknown) => {
+        console.error("[StoreCataloguePage:placeOrder]", err)
+        toast.error("Could not place order", {
+          description: "Nothing was charged. Please try again.",
+        })
+      })
   }
 
   function resetBuy() {
@@ -266,27 +282,94 @@ export default function StoreCataloguePage() {
             <>
               <DialogHeader>
                 <DialogTitle>Order placed</DialogTitle>
+                <DialogDescription>
+                  Nothing has been taken yet. Your place is held once we confirm
+                  the payment.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-3 text-sm">
-                <p>
-                  Your order is pending payment of{" "}
-                  <span className="font-medium">{gbp(placed.total)}</span>. Pay by{" "}
-                  {method === "paypal" ? "PayPal" : "bank transfer"} and we will
-                  confirm it.
-                </p>
-                <div className="rounded-lg border border-border p-3">
-                  <p className="flex items-center gap-1.5 text-xs font-medium">
-                    <Landmark className="size-3.5" /> Bank transfer
+                <div className="rounded-lg border border-brand-gold/40 bg-brand-gold/10 p-3">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Your payment reference
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {COMPANY.legalName} · Company {COMPANY.companyNumber}
+                  <p className="mt-0.5 font-mono text-lg font-semibold text-brand-navy">
+                    {placed.reference}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Reference your name · email remittance to {COMPANY.email}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Quote this on the payment. It is how we match it to your
+                    order.
                   </p>
                 </div>
+
+                <p>
+                  Amount to pay:{" "}
+                  <span className="font-medium">{gbp(placed.totalPence)}</span>
+                  {placed.discountPence > 0 ? (
+                    <span className="text-muted-foreground">
+                      {" "}
+                      (coupon {placed.couponCode} took off{" "}
+                      {gbp(placed.discountPence)})
+                    </span>
+                  ) : null}
+                </p>
+
+                <div className="rounded-lg border border-border p-3">
+                  <p className="flex items-center gap-1.5 text-xs font-medium">
+                    <Landmark className="size-3.5" />
+                    {method === "paypal" ? "PayPal" : "Bank transfer"}
+                  </p>
+                  {method === "paypal" ? (
+                    PAYMENT.paypalAddress ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Send to{" "}
+                        <span className="font-medium text-foreground">
+                          {PAYMENT.paypalAddress}
+                        </span>
+                        , quoting {placed.reference}.
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        We will email the PayPal details to you, quoting this
+                        reference.
+                      </p>
+                    )
+                  ) : PAYMENT.bankSortCode && PAYMENT.bankAccountNumber ? (
+                    <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                      <p>
+                        Account name:{" "}
+                        <span className="font-medium text-foreground">
+                          {PAYMENT.bankAccountName || COMPANY.legalName}
+                        </span>
+                      </p>
+                      <p>
+                        Sort code:{" "}
+                        <span className="font-mono text-foreground">
+                          {PAYMENT.bankSortCode}
+                        </span>
+                      </p>
+                      <p>
+                        Account number:{" "}
+                        <span className="font-mono text-foreground">
+                          {PAYMENT.bankAccountNumber}
+                        </span>
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      We will email the bank details to you, quoting this
+                      reference.
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {COMPANY.legalName} · Company {COMPANY.companyNumber}
+                  </p>
+                </div>
+
                 <p className="text-xs text-muted-foreground">
-                  Track status under Store → Orders.
+                  We check payments and confirm within{" "}
+                  {PAYMENT.confirmationWindow}. Track the status under Store →
+                  Orders, or email {PAYMENT.supportEmail} quoting{" "}
+                  {placed.reference}.
                 </p>
               </div>
               <DialogFooter>

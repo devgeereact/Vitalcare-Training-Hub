@@ -26,10 +26,15 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   /**
-   * Chromium at explicit widths rather than the iPhone device descriptors,
-   * which need WebKit and a second browser download. The widths are the ones
-   * the layout has to hold at. Install WebKit (`npx playwright install webkit`)
-   * and add a Mobile Safari project when engine differences need covering.
+   * Chromium at explicit widths, because those widths are the ones the layout
+   * has to hold at, plus one WebKit project.
+   *
+   * WebKit matters here more than the count of viewports does: every iPhone
+   * browser is WebKit, whatever its badge says, and a good share of the people
+   * who book healthcare training do it on a phone. Run
+   * `npx playwright install webkit` once. Firefox is not covered; it is the
+   * smallest slice of this audience and the assertions here are structural
+   * rather than engine-specific.
    */
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
@@ -42,6 +47,8 @@ export default defineConfig({
         hasTouch: true,
       },
     })),
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+    { name: "mobile-safari-390", use: { ...devices["iPhone 14"] } },
   ],
   // Only start a local server when testing the local build.
   webServer: externalTarget

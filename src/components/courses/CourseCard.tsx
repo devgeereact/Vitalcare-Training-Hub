@@ -79,7 +79,7 @@ export function CourseCard({
     >
       <div className="relative">
         {enrolled ? (
-          <span className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
+          <span className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-success-ink px-2.5 py-1 text-xs font-semibold text-white shadow-sm">
             <ShieldCheck className="size-3" aria-hidden /> Enrolled
           </span>
         ) : null}
@@ -96,7 +96,7 @@ export function CourseCard({
 
       <div className="flex flex-1 flex-col p-4">
         {categoryName ? (
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-gold">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-gold-ink">
             {categoryName}
           </p>
         ) : null}
@@ -134,7 +134,7 @@ export function CourseCard({
           <div className="mt-3">
             <Badge
               variant="outline"
-              className="gap-1 border-success/30 bg-success/10 text-success"
+              className="gap-1 border-success/30 bg-success/10 text-success-ink"
             >
               <ShieldCheck className="size-3" aria-hidden /> CSTF aligned
             </Badge>

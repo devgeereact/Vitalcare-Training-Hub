@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase/client"
+import { addCalendarMonthsIso } from "@/lib/dates"
 import type { UserRole } from "@/types/database.types"
 
 /** Roles treated as internal staff for compliance tracking (all non-learners). */
@@ -26,19 +27,30 @@ export type ComplianceStatus =
   | "overdue"
   | "not_recorded"
 
-/** Derive compliance status and next-due date from the latest completion. */
+/**
+ * Derive compliance status and next-due date from the latest completion.
+ *
+ * The due date is a calendar-month addition that matches PostgreSQL, so the
+ * matrix, the certificate and the reminder job all name the same day. See
+ * `@/lib/dates`. A renewal period of zero months is treated as no renewal,
+ * matching the database, where `coalesce(renewal_months, 0) > 0` gates expiry.
+ */
 export function complianceStatus(
   completedOn: string | null,
   renewalMonths: number | null,
 ): { status: ComplianceStatus; dueOn: string | null } {
   if (!completedOn) return { status: "not_recorded", dueOn: null }
-  if (renewalMonths === null || renewalMonths === undefined) {
+  if (!renewalMonths || renewalMonths <= 0) {
     return { status: "current", dueOn: null }
   }
-  const due = new Date(completedOn)
-  due.setMonth(due.getMonth() + renewalMonths)
-  const dueOn = due.toISOString().slice(0, 10)
-  const days = Math.ceil((due.getTime() - Date.now()) / DAY_MS)
+  const dueOn = addCalendarMonthsIso(completedOn, renewalMonths)
+  if (!dueOn) return { status: "not_recorded", dueOn: null }
+  // Compare whole days from the start of today, so a due date does not flip
+  // between "due soon" and "overdue" as the clock passes midday.
+  const due = new Date(`${dueOn}T00:00:00.000Z`)
+  const now = new Date()
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  const days = Math.round((due.getTime() - today) / DAY_MS)
   if (days < 0) return { status: "overdue", dueOn }
   if (days <= 30) return { status: "due_soon", dueOn }
   return { status: "current", dueOn }
@@ -137,9 +149,13 @@ export async function getStaffMatrix(): Promise<StaffMatrix> {
   const courseIds = courses.map((c) => c.courseId)
   const staffIds = staffList.map((s) => s.id)
 
+  // `renewal_months` is read as well as `completed_on`. Each record stores the
+  // renewal period that applied when the training was recorded, and that
+  // snapshot is what the record means. Reading the course's current period
+  // instead moved historical due dates every time somebody edited a course.
   const { data: records, error: rErr } = await supabase
     .from("staff_training_records")
-    .select("staff_id, course_id, completed_on")
+    .select("staff_id, course_id, completed_on, renewal_months")
     .in("staff_id", staffIds)
     .in("course_id", courseIds)
     .is("deleted_at", null)
@@ -148,22 +164,29 @@ export async function getStaffMatrix(): Promise<StaffMatrix> {
     throw rErr
   }
 
-  // Latest completion per staff+course.
-  const latest = new Map<string, string>()
+  // Latest completion per staff+course, with the period saved against it.
+  const latest = new Map<string, { completedOn: string; renewalMonths: number | null }>()
   for (const rec of records ?? []) {
     const key = `${rec.staff_id}:${rec.course_id}`
     const prev = latest.get(key)
-    if (!prev || rec.completed_on > prev) latest.set(key, rec.completed_on)
+    if (!prev || rec.completed_on > prev.completedOn) {
+      latest.set(key, {
+        completedOn: rec.completed_on,
+        renewalMonths: rec.renewal_months,
+      })
+    }
   }
 
   const rows: MatrixStaffRow[] = staffList.map((s) => {
     const cells: Record<string, MatrixCell> = {}
     for (const c of courses) {
-      const completedOn = latest.get(`${s.id}:${c.courseId}`) ?? null
-      const { status, dueOn } = complianceStatus(
-        completedOn,
-        renewalByCourse.get(c.courseId) ?? null,
-      )
+      const record = latest.get(`${s.id}:${c.courseId}`) ?? null
+      const completedOn = record?.completedOn ?? null
+      // Older records predate the snapshot column and store null. Those fall
+      // back to the course's current period, which is the only figure there is.
+      const renewalMonths =
+        record?.renewalMonths ?? renewalByCourse.get(c.courseId) ?? null
+      const { status, dueOn } = complianceStatus(completedOn, renewalMonths)
       cells[c.courseId] = { completedOn, dueOn, status }
     }
     return {

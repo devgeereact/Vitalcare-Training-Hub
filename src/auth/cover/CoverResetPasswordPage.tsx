@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2, ShieldAlert } from "lucide-react"
 import { toast } from "sonner"
 
 import { AuthShell } from "@/auth/cover/AuthShell"
@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { updatePassword } from "@/lib/supabase/auth"
+import { Skeleton } from "@/components/ui/skeleton"
+import { supabase } from "@/lib/supabase/client"
+import { signOut, updatePassword } from "@/lib/supabase/auth"
 import {
   resetPasswordSchema,
   type ResetPasswordValues,
@@ -19,10 +21,103 @@ import {
 const FOCUS =
   "focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2"
 
+/**
+ * How long to wait for the Supabase client to turn the link in the address bar
+ * into a recovery session. It parses the URL on start-up, which is
+ * asynchronous, so checking once immediately reports "no session" for a link
+ * that is perfectly good.
+ */
+const SESSION_WAIT_MS = 5000
+
+type LinkState = "checking" | "ready" | "expired" | "invalid"
+
+/**
+ * Read the error Supabase puts in the address bar when a recovery link cannot
+ * be used. It arrives in the hash fragment for implicit links and the query
+ * string for PKCE ones, so both are checked.
+ */
+function linkError(): { code: string; description: string } | null {
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""))
+  const query = new URLSearchParams(window.location.search)
+  const error = hash.get("error") ?? query.get("error")
+  if (!error) return null
+  return {
+    code: hash.get("error_code") ?? query.get("error_code") ?? error,
+    description:
+      hash.get("error_description") ?? query.get("error_description") ?? "",
+  }
+}
+
 export default function CoverResetPasswordPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [linkState, setLinkState] = useState<LinkState>("checking")
+
+  /**
+   * Decide whether this page has a recovery session before showing the form.
+   *
+   * Without this the form appeared for everybody, including someone arriving
+   * on an expired link. They chose a password, submitted it, and got
+   * "Something went wrong. Please try again." from a session that was never
+   * going to exist, with no way to tell that the link, not the password, was
+   * the problem.
+   */
+  useEffect(() => {
+    let active = true
+    let settled = false
+
+    const settle = (state: LinkState): void => {
+      if (!active || settled) return
+      settled = true
+      setLinkState(state)
+    }
+
+    const failure = linkError()
+    if (failure) {
+      console.error("[CoverResetPasswordPage] link rejected", failure.code)
+      settle(
+        failure.code.includes("expired") || failure.code.includes("otp")
+          ? "expired"
+          : "invalid",
+      )
+      return
+    }
+
+    const cleanups: Array<() => void> = []
+
+    async function run(): Promise<void> {
+      const { data, error } = await supabase.auth.getSession()
+      if (error) {
+        console.error("[CoverResetPasswordPage] getSession", error)
+        settle("invalid")
+        return
+      }
+      if (data.session) {
+        settle("ready")
+        return
+      }
+
+      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session) settle("ready")
+      })
+      const timer = window.setTimeout(async () => {
+        const { data: again } = await supabase.auth.getSession()
+        settle(again.session ? "ready" : "invalid")
+      }, SESSION_WAIT_MS)
+
+      cleanups.push(() => {
+        sub.subscription.unsubscribe()
+        window.clearTimeout(timer)
+      })
+    }
+
+    void run()
+    return () => {
+      active = false
+      cleanups.forEach((c) => c())
+    }
+  }, [])
 
   const {
     register,
@@ -39,8 +134,61 @@ export default function CoverResetPasswordPage() {
       setFormError(error)
       return
     }
+    // End the recovery session. Leaving it open signs the person in on a link
+    // from their inbox, which is not what "set a new password" promised, and
+    // it means the next screen disagrees with the one that sent them here.
+    await signOut()
     toast.success("Password updated. Sign in with your new password.")
     navigate("/sign-in", { replace: true })
+  }
+
+  if (linkState === "checking") {
+    return (
+      <AuthShell
+        heading="Set a new password"
+        subheading="Checking your reset link."
+      >
+        <div className="flex flex-col gap-4" aria-busy="true">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <span className="sr-only">Checking your reset link</span>
+        </div>
+      </AuthShell>
+    )
+  }
+
+  if (linkState !== "ready") {
+    return (
+      <AuthShell
+        heading={
+          linkState === "expired" ? "That link has expired" : "That link cannot be used"
+        }
+        subheading="Reset links are single use and time limited."
+      >
+        <div className="flex flex-col gap-6">
+          <Alert variant="destructive">
+            <ShieldAlert className="size-4" />
+            <AlertDescription>
+              {linkState === "expired"
+                ? "This reset link has expired or has already been used. Request a new one and use the most recent email."
+                : "We could not read this reset link. It may be incomplete, already used, or opened in a different browser from the one that requested it."}
+            </AlertDescription>
+          </Alert>
+          <Button asChild className={`w-full ${FOCUS}`}>
+            <Link to="/forgot-password">Request a new link</Link>
+          </Button>
+          <Link
+            to="/sign-in"
+            className="text-center text-sm text-primary underline-offset-4 hover:underline"
+          >
+            Back to sign in
+          </Link>
+        </div>
+      </AuthShell>
+    )
   }
 
   return (

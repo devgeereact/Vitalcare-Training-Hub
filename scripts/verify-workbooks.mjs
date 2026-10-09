@@ -6,7 +6,8 @@ import { buildCertificateLogTemplate, buildCertificateLogLive } from "../src/lib
 import { buildFinanceTrackerTemplate, buildFinanceTrackerLive } from "../src/lib/exports/builders/finance-tracker.ts"
 import { buildLearnerProgressTemplate } from "../src/lib/exports/builders/learner-progress.ts"
 import { buildTrainingMatrix, buildTrainingMatrixLive } from "../src/lib/exports/builders/training-matrix.ts"
-import { buildBusinessOverviewTemplate } from "../src/lib/exports/builders/business-overview.ts"
+import { buildBusinessOverviewTemplate, buildBusinessOverviewLive } from "../src/lib/exports/builders/business-overview.ts"
+import { VAT } from "../src/lib/constants.ts"
 
 function renderSpec(spec) {
   const wb = new ExcelJS.Workbook()
@@ -64,10 +65,27 @@ console.log("\n# targeted assertions")
   const re = new ExcelJS.Workbook(); await re.xlsx.load(buf)
   const income = re.getWorksheet("Income")
   check("Income G2 formula =E2*F2", income.getRow(2).getCell(7).value?.formula === "E2*F2")
-  check("Income H2 VAT =G2*0.2", income.getRow(2).getCell(8).value?.formula === "G2*0.2")
+  // VAT appears only when the company records itself as VAT registered. Both
+  // arms are asserted, so flipping the constant cannot quietly break the sheet.
+  const headers = income.getRow(1).values.filter(Boolean).map(String)
+  const vatHeader = headers.find((h) => h.startsWith("VAT"))
+  if (VAT.registered) {
+    check(`VAT column present at ${VAT.ratePercent}%`, vatHeader === `VAT ${VAT.ratePercent}% (£)`)
+    check("VAT formula uses the recorded rate",
+      income.getRow(2).getCell(8).value?.formula === `G2*${VAT.ratePercent / 100}`)
+  } else {
+    check("no VAT column while not VAT registered", vatHeader === undefined)
+  }
+  check("Invoiced and Received are separate columns",
+    headers.includes("Invoiced (£)") && headers.includes("Received (£)"))
+  const receivedIdx = headers.indexOf("Received (£)") + 1
+  check("Received counts only paid invoices",
+    String(income.getRow(2).getCell(receivedIdx).value?.formula).startsWith("IF("))
   // Totals row sits after 12 template rows -> row 14.
   check("TOTALS label row 14", income.getRow(14).getCell(1).value === "TOTALS")
   check("SUM formula stamped {last}=13", income.getRow(14).getCell(7).value?.formula === "SUM(G2:G13)")
+  check("blank sheets are named as templates",
+    re.worksheets.some((w) => w.name.includes("(blank template)")))
 }
 {
   const wb = renderSpec(buildFinanceTrackerLive([
@@ -79,7 +97,39 @@ console.log("\n# targeted assertions")
   const re = new ExcelJS.Workbook(); await re.xlsx.load(buf)
   const income = re.getWorksheet("Income")
   check("live Total pounds = 570 (pence/100)", income.getRow(2).getCell(7).value === 570)
-  check("live VAT still formula =G2*0.2", income.getRow(2).getCell(8).value?.formula === "G2*0.2")
+  const liveHeaders = income.getRow(1).values.filter(Boolean).map(String)
+  const liveReceived = liveHeaders.indexOf("Received (£)") + 1
+  check("live Received is a formula keyed on Status",
+    String(income.getRow(2).getCell(liveReceived).value?.formula).includes('="Paid"'))
+}
+{
+  // Business Overview: every live figure states the rule that produced it, and
+  // nothing is headed "Year to date" without a date behind it.
+  const wb = renderSpec(buildBusinessOverviewLive({
+    periodStart: "2026-01-01T00:00:00.000Z",
+    periodEnd: "2026-09-14T00:00:00.000Z",
+    learnersTrained: 7, completions: 11, sessionsDelivered: 4, sessionsScheduled: 2,
+    sessionsCancelled: 1, certificatesIssued: 9, enrolments: 20,
+    invoicedPence: 120000, receivedPence: 45000, orderReceiptsPence: 2500,
+  }))
+  const buf = await wb.xlsx.writeBuffer()
+  const re = new ExcelJS.Workbook(); await re.xlsx.load(buf)
+  const kpis = re.getWorksheet("KPIs")
+  const measures = []
+  for (let r = 2; r <= 20; r++) measures.push(String(kpis.getRow(r).getCell(1).value ?? ""))
+  check("period is stated", measures.includes("Period"))
+  check("learners trained is separate from accounts", measures.includes("Learners trained"))
+  check("delivered sessions separate from cancelled and future",
+    measures.includes("Sessions delivered") && measures.includes("Sessions cancelled")
+      && measures.includes("Sessions still to come"))
+  check("invoiced separate from received",
+    measures.includes("Invoiced (£)") && measures.includes("Received, invoices (£)"))
+  check("every measure carries its definition",
+    [2, 3, 4].every((r) => String(kpis.getRow(r).getCell(3).value ?? "").length > 10))
+  check("received invoices in pounds = 450", kpis.getRow(
+    measures.indexOf("Received, invoices (£)") + 2).getCell(2).value === 450)
+  check("Clients and Forecast are labelled blank templates",
+    re.worksheets.filter((w) => w.name.includes("(blank template)")).length === 2)
 }
 {
   const wb = renderSpec(buildCertificateLogTemplate())
