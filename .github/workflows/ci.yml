@@ -105,8 +105,9 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      # playwright.config.ts runs Chromium and WebKit projects, so both are needed.
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
 
       # The sitemap generator reaches for the database and warns rather than
       # failing when it cannot, so the build works here without credentials.
