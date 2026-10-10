@@ -162,8 +162,12 @@ function ConnectDriveButton() {
           })
           if (error || !data?.url) throw error ?? new Error("No URL")
           window.location.href = data.url as string
-        } catch {
-          toast.error("Set GDRIVE_CLIENT_ID and GDRIVE_CLIENT_SECRET first")
+        } catch (err) {
+          console.error("[ConnectDriveButton]", err)
+          toast.error("Could not start the Google Drive connection", {
+            description:
+              "Check GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET and the OAUTH_STATE_SECRET Edge Function secret.",
+          })
           setBusy(false)
         }
       }}

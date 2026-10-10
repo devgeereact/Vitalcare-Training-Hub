@@ -5,10 +5,17 @@
 //
 // Deploy:  supabase functions deploy google-drive-callback --no-verify-jwt
 // Settings used (integration_settings or env): GDRIVE_CLIENT_ID, GDRIVE_CLIENT_SECRET
+// Edge Function secret: OAUTH_STATE_SECRET (env only, never integration_settings)
 // Register this URL as an Authorised redirect URI on the Drive OAuth client:
 //   https://mongirnapzzizmzcrkqp.supabase.co/functions/v1/google-drive-callback
+//
+// `state` is signed by the integrations function (action drive_auth_url,
+// super-admin only). Unsigned, expired or Calendar-purpose states are refused
+// before the code is exchanged, and the signer must still be staff.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { isStaffUserId } from "../_shared/auth.ts"
+import { requireOAuthStateSecret, verifyOAuthState } from "../_shared/oauth-state.ts"
 import { getSecret } from "../_shared/secrets.ts"
 
 const REDIRECT_URI =
@@ -31,6 +38,24 @@ Deno.serve(async (req) => {
   )
 
   if (!code) return redirect(`${dest}?drive=error`)
+
+  // Fail closed: without the secret no state can be trusted.
+  let stateSecret: string
+  try {
+    stateSecret = requireOAuthStateSecret(Deno.env.get("OAUTH_STATE_SECRET"))
+  } catch (err) {
+    console.error("[google-drive-callback]", err instanceof Error ? err.message : err)
+    return redirect(`${dest}?drive=error`)
+  }
+  const verified = await verifyOAuthState(stateSecret, url.searchParams.get("state") ?? "", "drive")
+  if (!verified.ok) {
+    console.error("[google-drive-callback] state rejected:", verified.reason)
+    return redirect(`${dest}?drive=error`)
+  }
+  if (!(await isStaffUserId(admin, verified.userId))) {
+    console.error("[google-drive-callback] state signer is not staff")
+    return redirect(`${dest}?drive=error`)
+  }
 
   const clientId = await getSecret(admin, "GDRIVE_CLIENT_ID")
   const clientSecret = await getSecret(admin, "GDRIVE_CLIENT_SECRET")

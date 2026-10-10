@@ -1,8 +1,8 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { CheckCircle2, Video } from "lucide-react"
+import { CheckCircle2, Loader2, Video } from "lucide-react"
 
 import {
   Card,
@@ -12,7 +12,6 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/hooks/use-auth"
 import { useUser } from "@/hooks/use-user"
 import { supabase } from "@/lib/supabase/client"
 
@@ -31,8 +30,8 @@ const OAUTH_SCOPES = [
  * status and reconnect control, and surfaces the redirect result toast.
  */
 export default function GoogleIntegrationCard(): React.ReactElement {
-  const { user } = useAuth()
   const { isSuperAdmin } = useUser()
+  const [connecting, setConnecting] = useState(false)
   const [params, setParams] = useSearchParams()
 
   const google = useQuery({
@@ -70,19 +69,37 @@ export default function GoogleIntegrationCard(): React.ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function connectGoogle(): void {
-    const url =
-      "https://accounts.google.com/o/oauth2/v2/auth?" +
-      new URLSearchParams({
-        client_id: GOOGLE_CLIENT_ID,
-        redirect_uri: OAUTH_REDIRECT,
-        response_type: "code",
-        scope: OAUTH_SCOPES,
-        access_type: "offline",
-        prompt: "consent",
-        state: user?.id ?? "",
-      }).toString()
-    window.location.href = url
+  async function connectGoogle(): Promise<void> {
+    setConnecting(true)
+    try {
+      // The callback has no Supabase session, so it trusts only a state the
+      // server signed for this user (super-admin only, valid ten minutes).
+      const { data, error } = await supabase.functions.invoke("integrations", {
+        body: { action: "calendar_oauth_state" },
+      })
+      const state: unknown = data?.state
+      if (error || typeof state !== "string" || !state) {
+        throw error ?? new Error("No state returned")
+      }
+      const url =
+        "https://accounts.google.com/o/oauth2/v2/auth?" +
+        new URLSearchParams({
+          client_id: GOOGLE_CLIENT_ID,
+          redirect_uri: OAUTH_REDIRECT,
+          response_type: "code",
+          scope: OAUTH_SCOPES,
+          access_type: "offline",
+          prompt: "consent",
+          state,
+        }).toString()
+      window.location.href = url
+    } catch (err) {
+      console.error("[GoogleIntegrationCard:connect]", err)
+      toast.error("Could not start the Google connection", {
+        description: "Please try again. If it keeps failing, check the OAUTH_STATE_SECRET Edge Function secret.",
+      })
+      setConnecting(false)
+    }
   }
 
   return (
@@ -114,7 +131,9 @@ export default function GoogleIntegrationCard(): React.ReactElement {
           <Button
             variant={google.data ? "outline" : "default"}
             onClick={connectGoogle}
+            disabled={connecting}
           >
+            {connecting ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
             {google.data ? "Reconnect" : "Connect Google"}
           </Button>
         </div>
