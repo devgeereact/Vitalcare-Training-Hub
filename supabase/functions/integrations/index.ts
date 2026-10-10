@@ -4,10 +4,16 @@
 // Never returns secret values — only whether each key is configured.
 //
 // Deploy: supabase functions deploy integrations
-// Secrets: SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (auto)
+// Secrets: SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (auto), OAUTH_STATE_SECRET
+//          (signs the Google OAuth state; see _shared/oauth-state.ts)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getSecret } from "../_shared/secrets.ts"
+import {
+  type OAuthPurpose,
+  requireOAuthStateSecret,
+  signOAuthState,
+} from "../_shared/oauth-state.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -145,9 +151,29 @@ Deno.serve(async (req) => {
     return json({ ok: true })
   }
 
+  // Signed, ten-minute state for the Google callbacks, which have no JWT.
+  // Fails closed when OAUTH_STATE_SECRET is missing.
+  const oauthState = async (purpose: OAuthPurpose): Promise<string | null> => {
+    try {
+      const secret = requireOAuthStateSecret(Deno.env.get("OAUTH_STATE_SECRET"))
+      return await signOAuthState(secret, u.user.id, purpose)
+    } catch (err) {
+      console.error("[integrations:oauth_state]", err instanceof Error ? err.message : err)
+      return null
+    }
+  }
+
+  if (action === "calendar_oauth_state") {
+    const state = await oauthState("calendar")
+    if (!state) return json({ error: "Set the OAUTH_STATE_SECRET Edge Function secret first" }, 500)
+    return json({ state })
+  }
+
   if (action === "drive_auth_url") {
     const clientId = await getSecret(admin, "GDRIVE_CLIENT_ID")
     if (!clientId) return json({ error: "Set GDRIVE_CLIENT_ID first" }, 400)
+    const state = await oauthState("drive")
+    if (!state) return json({ error: "Set the OAUTH_STATE_SECRET Edge Function secret first" }, 500)
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri:
@@ -156,6 +182,7 @@ Deno.serve(async (req) => {
       scope: "https://www.googleapis.com/auth/drive.file",
       access_type: "offline",
       prompt: "consent",
+      state,
     })
     return json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params}` })
   }
